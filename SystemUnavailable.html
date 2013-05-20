@@ -1,0 +1,40 @@
+﻿ 
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<script runat="server">
+
+</script>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head runat="server">
+    <title></title>
+</head>
+<body>
+    <form id="form1" runat="server">
+    <div>
+    The system is currently unavailable. Please <a href="/default.aspx">try your request again later.</a>
+    <div id="divAdditionalInfo"></div>
+    </div>
+    </form>
+    <script language="javascript">
+        function getArgs() {
+            var args = new Object();
+            var query = location.search.substring(1);
+            var pairs = query.split("&");
+            for (var i = 0; i < pairs.length; i++) {
+                var pos = pairs[i].indexOf('=');
+                if (pos == -1) continue;
+                var argname = pairs[i].substring(0, pos);
+                var value = pairs[i].substring(pos + 1);
+                args[argname] = unescape(value);
+            }
+            return args;
+        }
+        var args = getArgs();
+        if (args.AdditionalInfo) {
+            var divAdditionalInfo = document.getElementById("divAdditionalInfo");
+            divAdditionalInfo.innerHTML = args.AdditionalInfo;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,62 @@
+﻿<%@ Master Language="C#" MasterPageFile="~/App_Master/GeneralPage.master" AutoEventWireup="true"
+    CodeFile="DataPage.master.cs" Inherits="App_Master_DataPage" %>
+
+<asp:Content ID="Content6" ContentPlaceHolderID="head" runat="Server">
+</asp:Content>
+<asp:Content ID="Content1" ContentPlaceHolderID="PageTitle" runat="Server">
+    <asp:ContentPlaceHolder ID="PageTitle" runat="server">
+    </asp:ContentPlaceHolder>
+</asp:Content>
+<asp:Content ContentPlaceHolderID="BreadcrumbBar" runat="server">
+    <asp:ContentPlaceHolder ID="BreadcrumbBar" runat="server">
+    </asp:ContentPlaceHolder>
+</asp:Content>
+<asp:Content ID="Content2" ContentPlaceHolderID="TopRightContent" runat="Server">
+</asp:Content>
+<asp:Content ID="Content3" ContentPlaceHolderID="TopMenu" runat="Server">
+</asp:Content>
+<asp:Content ID="Content4" ContentPlaceHolderID="PageContent" runat="Server">
+    <!-- left column -->
+    <div id="colLeftSml">
+        <!-- side navigation -->
+        <div id="sideNavWrap">
+            <div id="sideNavCont">
+                <div id="sideNavContent">
+                    <div id="sideNavHeader">
+                        <div class="sectHeaderTitle hIconClipboardPencil">
+                            <h2>
+                                Steps</h2>
+                        </div>
+                    </div>
+                    <div id="sideNavList">
+                        <asp:ContentPlaceHolder ID="Steps" runat="server">
+                        </asp:ContentPlaceHolder>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- / side navigation -->
+        <!-- useful tips -->
+        <div class="sectContSml" id="divOtherLinks" runat="server" visible="false">
+            <div class="sectHeaderTitle hIconMagn">
+                <h2>
+                    Other Links</h2>
+            </div>
+            <asp:ContentPlaceHolder ID="Tips" runat="server">
+            </asp:ContentPlaceHolder>
+        </div>
+        <!-- / useful tips -->
+    </div>
+    <!-- / left column -->
+    <!-- right column -->
+    <div id="colRightLrg" class="colRightSteps">
+        <div id="colRightContent">
+            <asp:ContentPlaceHolder ID="DataEntry" runat="server">
+            </asp:ContentPlaceHolder>
+            <div class="clearBothNoSPC">
+            </div>
+        </div>
+        <!-- / fifth sample step -->
+    </div>
+    <!-- / right column -->
+</asp:Content>

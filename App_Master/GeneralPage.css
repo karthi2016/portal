@@ -1,0 +1,145 @@
+/*---------------------------------------------------------/
+|	
+|	Author: Copyright (c) 2009 Acro Media Inc. 
+|	Purpose: CSS For MemberSuite
+| Info: Site is Left Aligned, Max Width: 100%;
+| Template: Unique Template 5
++---------------------------------------------------------*/
+
+/*---------------------------------------------------------/
+|	Sample Elements
++---------------------------------------------------------*/
+
+/* -- My Account -- */
+
+#myAccountProfileImg
+{
+    float: left;
+}
+#myAccountProfileImg img
+{
+    display: block;
+    margin: 0 15px 11px 0;
+}
+#myAccountProfileInfo
+{
+    float: left;
+    margin: 0 0 11px 0;
+}
+
+
+/* -- My Associations -- */
+
+.myAssociationTitle
+{
+    float: left;
+    width: 179px;
+}
+.myAssociationLink
+{
+    float: left;
+}
+
+/* -- My Balance -- */
+
+.sectContMyBalance
+{
+    background: url(/images/bg_sect_grey_box.gif) no-repeat;
+    width: 430px;
+    height: 130px;
+    margin: 0 0 10px 0;
+}
+.myBalanceContent
+{
+    padding: 13px 0 19px 21px;
+}
+.sectContMyBalanceContent
+{
+    padding: 13px 0 19px 21px;
+}
+.myBalanceContentList
+{
+    margin: 26px 0 0 0;
+    padding: 0;
+    list-style: none;
+}
+.myBalanceContentList li
+{
+    margin: 0;
+    padding: 0 0 5px 0;
+    background: none;
+}
+
+/* -- My Orders -- */
+
+.myOrdersList
+{
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.myOrdersList li
+{
+    margin: 0;
+    padding: 0;
+    float: left;
+    width: 195px;
+    background: none;
+}
+
+/* -- Recommended For You -- */
+
+.recommendedForYouLink
+{
+    clear: both;
+    padding: 3px 0 12px 0;
+}
+.recommendedForYouImage
+{
+    float: left;
+}
+.recommendedForYouImage img
+{
+    display: block;
+    margin: 0 20px 21px 0;
+}
+
+.recommendedForYouDetails
+{
+    float: left;
+    width: 250px;
+}
+.price
+{
+    color: Green;
+    font-weight: bold;
+}
+.recommendedForYouFootnote
+{
+    padding: 0 0 20px 0;
+}
+
+.section
+{
+    background: url(/images/bg_section_1col_top_fade.gif) no-repeat;
+    padding: 13px 0 19px 21px;
+    height: 100%;
+}
+
+.sectionHeaderTitle
+{
+    padding-top: 4px;
+	height: 28px;
+	width: 820px;
+}
+.sectionContent
+{
+    width: 825px;
+    margin-top: 10px;
+}
+
+
+TABLE TD .customFieldCell
+{
+	width: 250px;
+}

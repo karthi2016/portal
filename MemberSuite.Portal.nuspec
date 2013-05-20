@@ -1,0 +1,12 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package>
+  <metadata>
+    <id>MemberSuite.Portal</id>
+    <version>1.0.0.0</version>
+    <authors>
+      Ryan, Andrew
+    </authors>
+    <description>The portal side of MemberSuite</description>
+    <language>en-US</language>
+  </metadata>
+</package>

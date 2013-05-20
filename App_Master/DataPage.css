@@ -1,0 +1,74 @@
+/*---------------------------------------------------------/
+|	
+|	Author: Copyright (c) 2009 Acro Media Inc. 
+|	Purpose: CSS For MemberSuite
+| Info: Site is Left Aligned, Max Width: 100%;
+| Template: Unique Template 6
++---------------------------------------------------------*/
+
+/*---------------------------------------------------------/
+|	Section Containers
++---------------------------------------------------------*/
+
+#colLeftSml
+{
+    float: left;
+    width: 255px;
+}
+#colLeftSml .sectContSml
+{
+    background: url(/images/bg_section_steps_sml_top_fade.gif) no-repeat;
+}
+.sectContSml
+{
+    background: url(/images/bg_section_sml_top_fade.gif) no-repeat;
+    padding: 13px 0 19px 21px;
+    height: 100%;
+}
+.sectContSml .sectHeaderTitle
+{
+    height: 32px !important;
+    width: 20px;
+}
+
+/* -- Side Steps Navigation -- */
+
+#colLeftSml #sideNavWrap
+{
+    background: url(/images/bg_side_steps_nav_tile.gif) repeat-y !important;
+}
+#colLeftSml #sideNavCont
+{
+    background: url(/images/bg_side_steps_nav_bottom.gif) bottom left no-repeat !important;
+}
+#colLeftSml #sideNavContent
+{
+    background: url(/images/bg_side_steps_nav_top.gif) top left no-repeat !important;
+}
+
+/* -- Modify Link Width Based On Larger Left Column Navigation Width -- */
+
+#colLeftSml #sideNavList li
+{
+    padding-left: 10px;
+    width: 225px !important;
+}
+
+#colLeftSml #sideNavList li.current
+{
+    background-color: #808080;
+    font-weight: bold;
+    color: #FFFFFF;
+}
+
+#colRightLrg
+{
+    float: right;
+    width: 605px;
+}
+.sectContLrg
+{
+    background: url(/images/bg_section_lrg_top_fade.gif) no-repeat;
+    padding: 13px 0 19px 21px;
+    height: 100%;
+}

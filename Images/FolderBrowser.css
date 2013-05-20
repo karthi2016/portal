@@ -1,0 +1,90 @@
+﻿
+#divMain
+{
+    width: 700px;
+    margin: 0px auto;
+}
+
+#divSortBy
+{
+     
+    padding-top: 0px;
+}
+
+.folderTable
+{
+    width: 100%;
+    
+      
+    
+}
+
+.documentItemRow:hover
+{
+    background-color: #E0EAEB;
+}
+
+.documentItemRow:hover .documentIcon
+{
+    background-color: white;
+}
+
+
+
+.folderTable A
+{
+    text-decoration: none;
+    
+}
+#divFolderDescription
+{
+    color: #C0C0C0;
+    text-align: center;
+    font-style: italic;
+    padding-top: 40px;
+    padding-bottom: 10px;
+}
+
+.divSearch
+{
+    text-align: right;
+  
+    
+}
+
+.divFolderName
+{
+    font-weight: bold;
+    margin-left: 110px;
+}
+
+.divFolderActions
+{
+    vertical-align: middle !important;
+}
+
+.divFolderActions A
+{
+    text-decoration: none;
+}
+
+.divFolderDetails
+{
+}
+
+.emtpyFolderDeclaration
+{
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.editImage
+{
+    display: none;
+     
+}
+
+.documentItemRow:hover .editImage
+{
+    display: inline;
+}

@@ -1,0 +1,30 @@
+﻿#siteWrapperTop
+{
+	background: url(images/bg_site_top_tile.gif) repeat-x;
+}
+#siteWrapperTopMiddle
+{
+
+}
+
+
+.highlight { color: #cc0000; }    
+
+table tr th
+{
+	background-color:#C0C0C0;
+	
+}
+
+h1
+{
+	color: #003399;
+}
+h2
+{
+	color: #0066FF;
+}
+h3
+{
+	color: #003399;
+}

@@ -1,0 +1,224 @@
+﻿<%@ Master Language="C#" AutoEventWireup="true" CodeFile="GeneralPage.master.cs"
+    Inherits="App_Master_GeneralPage" %>
+
+<%@ Register Assembly="Telerik.Web.UI" Namespace="Telerik.Web.UI" TagPrefix="telerik" %>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head id="Head1" runat="server">
+    <asp:ContentPlaceHolder ID="head" runat="server">
+    </asp:ContentPlaceHolder>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta http-equiv="description" content="" />
+    <meta http-equiv="keywords" content="" />
+    <link rel="shortcut icon" href="/images/favicon.ico" type="image/x-icon" />
+    <link rel="stylesheet" type="text/css" href="GeneralPage.css" />
+    <link rel="stylesheet" type="text/css" href="DataPage.css" />
+    <link rel="stylesheet" type="text/css" href="/images/icons.css" />
+    <link rel="stylesheet" type="text/css" href="/images/portal.css" />
+    <script type="text/javascript" src="/js/jquery-1.2.6.min.js"></script>
+    <script type="text/javascript" src="/js/site.js"></script>
+    <script type="text/javascript" src="/js/portal.js"></script>
+</head>
+<body>
+    <!-- site wrapper -->
+    <form id="form1" runat="server">
+    <asp:ScriptManager ID="ScriptManager1" runat="server">
+    </asp:ScriptManager>
+    <telerik:RadWindowManager ID="rwmWindowManager" Skin="Default" runat="server" />
+    <telerik:RadWindow ID="rwTimeoutWarning" ReloadOnShow="false" EnableEmbeddedSkins="false"
+        EnableEmbeddedBaseStylesheet="false" Width="300" Height="225" Top="-10000" Left="-10000"
+        VisibleStatusbar="false" Title="Inactivity Warning" KeepInScreenBounds="false"
+        Behaviors="Move" runat="server" NavigateUrl="/KeepAlive.aspx" VisibleOnPageLoad="true"
+        OnClientClose="OnTimeoutWindowClose">
+    </telerik:RadWindow>
+    <!-- Inline Styles -->
+    <style type="text/css">
+         <asp:PlaceHolder ID="phDropShadowStyles" runat="server">
+    #siteContentContWrapper
+{
+	background: url(/images/bg_site_container_tile.gif) repeat-y;
+}
+#siteContentCont
+{
+	padding: 0 10px 0 10px;
+	background: url(/images/bg_site_content_top.gif) top left no-repeat;
+}
+#siteFooter
+{
+	background: #a8a8a8 url(/images/bg_site_content_bottom.gif) bottom left no-repeat;
+}
+#siteContentWrapper
+{
+	padding: 20px 0px 30px 20px;
+	width: 870px;
+	min-height: 300px;
+	height: auto !important;
+	height: 300px;
+	background: url(/images/bg_site_body_content_bottom.gif) bottom left no-repeat;
+}
+    </asp:PlaceHolder> 
+    <asp:PlaceHolder ID="phNoDropShadowStyles" runat="server">
+#siteContentWrapper
+{
+	padding: 20px 0px 30px 20px;
+	width: 870px;
+	min-height: 300px;
+	height: auto !important;
+	height: 300px;
+}
+    </asp:PlaceHolder><asp:Literal ID="lInlineStyles" runat="server" />
+    </style>
+    <asp:Literal ID="SkinHeaderContent" runat="server">
+    <div id="siteWrapper">
+        <div id="siteWrapperTop">
+            <div id="siteWrapperBottom">
+                <div id="siteWrapperMiddle">
+                    <div id="siteWrapperTopMiddle">
+                        <!-- site container -->
+                        <div id="siteContainer">
+                            <!-- site header -->
+                            <div id="siteHeader">
+                                <div id="siteHeaderContent">
+                                    <a href="{homepageurl}">
+                                        <img src="{imageurl}" alt="Header Banner" /></a>
+                                </div>
+                            </div>
+    </asp:Literal>
+    <div id="SkinBodyContent">
+        <!-- / site header -->
+        <!-- primary navigation -->
+        <asp:PlaceHolder ID="phTabs" runat="server">
+            <div id="priNavCont">
+                <div id="priNavContent">
+                    <ul id="priNav">
+                        <li><a href="/default.aspx"><span>
+                            <asp:Literal ID="lHomeText" runat="server">Home</asp:Literal></span></a></li>
+                        <li runat="server" id="liOnlineStore"><a href="/onlinestorefront/BrowseMerchandise.aspx">
+                            <span>Online Store</span></a></li>
+                        <li runat="server" id="liUpcomingEvents"><a href="/events/BrowseEvents.aspx"><span>Upcoming
+                            Events</span></a></li>
+                        <asp:Repeater ID="rptTabs" runat="server" OnItemDataBound="rptTabs_DataBound">
+                            <ItemTemplate>
+                                <li>
+                                    <asp:HyperLink ID="hlPortalLink" runat="server" />
+                                </li>
+                            </ItemTemplate>
+                        </asp:Repeater>
+                    </ul>
+                </div>
+            </div>
+        </asp:PlaceHolder>
+        <asp:ContentPlaceHolder ID="TopMenu" runat="server">
+        </asp:ContentPlaceHolder>
+        <!-- / primary navigation -->
+        <!-- site content -->
+        <div id="siteContentContWrapper">
+            <div id="siteContentCont">
+                <div id="siteContentWrapper">
+                    <asp:PlaceHolder ID="phInfoBanner" runat="server">
+                        <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                            <tr>
+                                <td style="width: 10%">
+                                    <img alt="Folder" src="/images/icon_folder.gif" style="vertical-align: middle" />&nbsp;&nbsp;<b>ID:</b>
+                                    <asp:Literal ID="lCurrentUserID" runat="server" />
+                                </td>
+                                <td style="width: 20%">
+                                    <img alt="" src="/images/icon_person.gif" style="vertical-align: middle" />&nbsp;&nbsp;<b>
+                                        <asp:Literal ID="lCurrentUserName" runat="server" />
+                                        <%--                                        
+                                            MS-1151
+                                            Moved to MyProfile.ascx.cs
+                                            <asp:DropDownList ID="ddlMultipleUsers" OnSelectedIndexChanged="ddlMultiplesUsers_SelectedIndexChanged"
+                                            runat="server" AutoPostBack="true" Visible="false" />
+                                        --%>
+                                    </b>
+                                    <asp:LinkButton ID="lbBackgroundUser" CausesValidation="false" runat="server" OnClick="lbBackgroundUser_Click"
+                                        Text="(back to Console)"></asp:LinkButton>
+                                </td>
+                                <td style="width: 10%; text-align: right">
+                                    <asp:HyperLink ID="hlPrintPage" runat="server" Target="_blank">
+                                <img alt="Print" src="/images/icons/printer.gif" height=26 style="vertical-align: middle" /></asp:HyperLink>&nbsp;&nbsp;
+                                    <img alt="" src="/images/icon_computer.gif" style="vertical-align: middle" />&nbsp;&nbsp;
+                                    <asp:LinkButton ID="lblLogout" Font-Bold="true" CausesValidation="false" runat="server"
+                                        OnClick="lblLogout_Click">Logout</asp:LinkButton>
+                                </td>
+                            </tr>
+                        </table>
+                        <hr width="100%" />
+                    </asp:PlaceHolder>
+                    <!-- site content header -->
+                    <div id="siteContentHeader">
+                        <div id="pageTitleCont">
+                            <asp:HyperLink ID="hlHome" runat="server" NavigateUrl="/default.aspx">Home &gt;</asp:HyperLink>
+                            <asp:ContentPlaceHolder ID="BreadcrumbBar" runat="server">
+                            </asp:ContentPlaceHolder>
+                            <h1>
+                                <asp:ContentPlaceHolder ID="PageTitle" runat="server">
+                                </asp:ContentPlaceHolder>
+                            </h1>
+                        </div>
+                        <div id="topRightUserNavCont">
+                            <asp:ContentPlaceHolder ID="TopRightContent" runat="server" />
+                        </div>
+                        <div class="clearBothNoSPC">
+                        </div>
+                    </div>
+                    <!-- / site content header -->
+                    <!-- page content -->
+                    <asp:Panel ID="pnlMessage" runat="server" Width="100%" BackColor="Green" Style="text-align: center"
+                        Visible="false" EnableViewState="false">
+                        <font color="white"><b>
+                            <asp:Literal ID="lMessage" runat="server" />
+                        </b></font>
+                    </asp:Panel>
+                    <asp:ValidationSummary ID="vsSummary" DisplayMode="BulletList" ShowSummary="false"
+                        ShowMessageBox="true" HeaderText="We were unable to continue for the following reasons:"
+                        runat="server" />
+                    <asp:ContentPlaceHolder ID="PageContent" runat="server">
+                    </asp:ContentPlaceHolder>
+                    <!-- / page content -->
+                    <div class="clearBothNoSPC">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- / site content -->
+        <!-- site footer -->
+        <div id="siteFooter">
+            <div id="siteFooterContent">
+                <asp:ContentPlaceHolder ID="FooterContent" runat="server">
+                </asp:ContentPlaceHolder>
+            </div>
+        </div>
+        <!-- / site footer -->
+    </div>
+    <!-- bottom footer -->
+    <asp:PlaceHolder ID="phBottomFooter" runat="server">
+        <div style="float: right; font-size: 8pt">
+            <a href="http://www.membersuite.com" target="_blank">Association Management Software</a>
+            by <a href="http://www.membersuite.com" target="_blank">MemberSuite</a>
+        </div>
+        <div id="siteFooterLogoCont">
+            <font size="1">
+                <asp:LinkButton ID="lbCustomize" Visible="false" CausesValidation="false" OnClick="lbCustomize_Click"
+                    runat="server">Customize this Page</asp:LinkButton>
+                &nbsp;&nbsp; Core Version:
+                <asp:Label ID="lblVersion" runat="server" /></font>
+            <div class="clearBothNoSPC">
+            </div>
+        </div>
+    </asp:PlaceHolder>
+    <!-- / bottom footer -->
+    <asp:Literal ID="SkinFooterContent" runat="server">
+                        </div>
+                        <!-- / site container -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    </asp:Literal>
+    <!-- / site wrapper -->
+    </form>
+</body>
+</html>

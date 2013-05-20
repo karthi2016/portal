@@ -1,0 +1,46 @@
+/*---------------------------------------------------------/
+|	
+|	Author: Copyright (c) 2009 Acro Media Inc. 
+|	Purpose: CSS For MemberSuite
+| Info: Site is Center Aligned, Max Width: 960px;
+|  
++---------------------------------------------------------*/
+
+/*---------------------------------------------------------/
+|	Icons
++---------------------------------------------------------*/
+
+/* -- Icon Buttons -- */    
+
+.iconBtnCart { background: url(/images/icons/cart.gif) 0 3px no-repeat; padding: 0 0 0 23px; }  
+.iconBtnGear { background: url(/images/icons/gear.gif) 0 1px no-repeat; padding: 0 0 0 23px; }        
+.iconBtnRefresh { background: url(/images/icons/refresh.gif) 0 3px no-repeat; padding: 0 0 0 23px; }   
+.iconBtnMagn { background: url(/images/icons/magn.gif) 0 1px no-repeat; padding: 0 0 0 23px; }   
+
+/* -- Header Icons -- */  
+
+.hIconGlobe { background: url(/images/icons/h_globe.gif) no-repeat; padding-left: 36px; } 
+.hIconBook { background: url(/images/icons/h_book.gif) no-repeat; padding-left: 36px; }
+.hIconDollar { background: url(/images/icons/h_dollar.gif) no-repeat; padding-left: 36px; }
+.hIconCart { background: url(/images/icons/h_cart.gif) no-repeat; padding-left: 36px; }
+.hIconClipboard { background: url(/images/icons/h_clipboard.gif) no-repeat; padding-left: 36px; }
+.hIconCommittees { background: url(/images/icons/pri_nav_committees.png) no-repeat; padding-left: 36px; }
+.hIconBookStar { background: url(/images/icons/h_book_star.gif) no-repeat; padding-left: 36px; }
+.hIconCal { background: url(/images/icons/h_cal.gif) no-repeat; padding-left: 36px; }
+.hIconStar { background: url(/images/icons/h_star.gif) no-repeat; padding-left: 36px; }
+.hIconClipboardPencil { background: url(/images/icons/h_clipboard_pencil.gif) no-repeat; padding-left: 36px; }
+.hIconMagn { background: url(/images/icons/h_magn.gif) no-repeat; padding-left: 36px; }
+.hIconScreens { background: url(/images/icons/h_screens.gif) no-repeat; padding-left: 36px; }
+.hIconFilmstrip { background: url(/images/icons/h_filmstrip.gif) no-repeat; padding-left: 36px; }
+.hIconQBubble { background: url(/images/icons/h_qbubble.gif) no-repeat; padding-left: 36px; }
+.hIconLetterFeather { background: url(/images/icons/h_letter_feather.gif) no-repeat; padding-left: 36px; }
+
+/* -- Misc Icon Usage -- */
+
+.starRating {
+  display: block;
+  width: 10px;
+  height: 11px;
+  background: url(/images/icons/star_sml.gif) 0 -89px no-repeat;
+  }
+  .starRating.highlight { background-position: 0 0; }
