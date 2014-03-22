@@ -94,9 +94,15 @@ public partial class events_Register_RegistrationForm : PortalPage
         using (var api = GetServiceAPIProxy())
         {
             targetRegistrationFields = api.GetOrderForm(targetOrder).ResultValue;
+            
         }
 
-        if (string.IsNullOrWhiteSpace(targetEvent.AcknowledgementText) && (targetRegistrationFields == null || targetRegistrationFields.Count == 0))
+        if (targetRegistrationFields != null)
+            targetRegistrationFields.RemoveAll(x => (x.IsReadOnly.HasValue && x.IsReadOnly.Value)
+                || ! x.Enabled );  // get rid of the read only fields
+
+        if (string.IsNullOrWhiteSpace(targetEvent.AcknowledgementText) && (targetRegistrationFields == null || 
+            !targetRegistrationFields.Where( x=>x.DisplayType != FieldDisplayType.Separator ).Any()))
         {
             // go directly the order screen
             GoToOrderForm();
@@ -109,7 +115,7 @@ public partial class events_Register_RegistrationForm : PortalPage
         foreach (var field in targetRegistrationFields)
         {
             field.DataSource = RegularExpressions.GetSafeFieldName(field.DataSource); // rename the data source
-            field.DataSourceExpression = field.Name; // set the name
+            field.DataSourceExpression = string.Format( "{0}|{1}", field.DataSource, field.Name); // set the name
         }
     }
     
@@ -158,19 +164,23 @@ public partial class events_Register_RegistrationForm : PortalPage
     protected DataEntryViewMetadata createViewMetadataFromRegistrationFields()
     {
         DataEntryViewMetadata result = new DataEntryViewMetadata();
-        ViewMetadata.ControlSection baseSection = new ViewMetadata.ControlSection
-                                                      {
-                                                          Label = "Registration Information",
-                                                          SubSections = new List<ViewMetadata.ControlSection>()
-                                                      };
-
-        var currentSection = new ViewMetadata.ControlSection();
-        currentSection.LeftControls = new List<ControlMetadata>();
-        baseSection.SubSections.Add(currentSection);
+        ViewMetadata.ControlSection baseSection = null;
+        
+        result.Sections = new List<ViewMetadata.ControlSection> ();
         foreach (var field in targetRegistrationFields)
         {
-            if (field.DisplayType == FieldDisplayType.Separator)
+            if (field.DisplayType == FieldDisplayType.Separator || baseSection == null )
+            {
+                // create a new section
+                baseSection = new ViewMetadata.ControlSection
+                    {
+                        Label = field.Label,
+                        SubSections = new List<ViewMetadata.ControlSection>()
+                    };
+                result.Sections.Add(baseSection);
                 continue;
+            }
+
 
             //MS-1358
             field.IsRequired = field.IsRequiredInPortal;
@@ -179,9 +189,12 @@ public partial class events_Register_RegistrationForm : PortalPage
             if (field.DisplayType == FieldDisplayType.LargeTextBox)
                 field.UseEntireRow = true;
 
-            currentSection.LeftControls.Add(field);
+            baseSection.LeftControls.Add(field);
         }
-        result.Sections = new List<ViewMetadata.ControlSection> {baseSection};
+
+        // remove empty sections
+        result.Sections.RemoveAll(x => x.LeftControls  == null || x.LeftControls.Count == 0);
+        
         return result;
     }
 
@@ -222,30 +235,55 @@ public partial class events_Register_RegistrationForm : PortalPage
         cfsRegistrationFields.Harvest();
         MemberSuiteObject mso = cfsRegistrationFields.MemberSuiteObject;
 
+        if (targetOrder.LineItems == null)
+            targetOrder.LineItems = new List<msOrderLineItem>();
+
+        if (mso == null)
+            throw new ApplicationException("No MemberSuiteObject");
+
         foreach (var li in targetOrder.LineItems)
         {
             if (li.OrderLineItemID == null) continue;
 
             // otherwise, copy all of the values
             li.Options = new List<NameValueStringPair>();
-            foreach (var entry in mso.Fields)
+            var relevantFields = (from f in mso.Fields
+                                  where f.Key != null && f.Key.StartsWith( RegularExpressions.GetSafeFieldName( li.OrderLineItemID))
+                                  select f);
+            foreach (var entry in relevantFields)
             {
-                string value = null;
+                object value = null;
 
                 if (entry.Value != null)
                 {
                     if (entry.Value is List<string>)
                     {
-                        var valueAsList = (List<string>)entry.Value;
+                        var valueAsList = (List<string>) entry.Value;
                         value = string.Join("|", valueAsList);
+                    }
+
+                    if (entry.Key.EndsWith("_Contents"))
+                    {
+                        value = entry.Value;
                     }
                     else
                     {
-                        value = entry.Value.ToString();
+                        if(value == null)
+                            value = entry.Value.ToString();
                     }
-                }
 
-                li.Options.Add(new NameValueStringPair(entry.Key, value));
+
+                    var name = entry.Key.Split('|')[1];
+
+                    // MS-4322 - need to account for demographics here
+                    if (!name.EndsWith("__q"))
+                        li[name] = value;
+                    else
+                        li.Options.Add(new NameValueStringPair(name, value.ToString()));
+
+                    if (name == MemberSuiteConstants.Events.NAME_ON_REGISTRATION_FIELD)
+                        li.Description = value.ToString(); // set the description of the line item
+                }
             }
         }
     }
@@ -287,6 +325,7 @@ public partial class events_Register_RegistrationForm : PortalPage
         }
 
         //Add the cloned order as the "shopping cart" for the order processing wizard
+        MultiStepWizards.PlaceAnOrder.OrderCompleteUrl = "/events/ViewEvent.aspx?contextID=" + targetEvent.ID;
         MultiStepWizards.PlaceAnOrder.InitiateOrderProcess( targetOrder );
       
     }

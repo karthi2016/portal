@@ -87,6 +87,9 @@ public partial class chapters_ViewChapter : PortalPage
         {
             trChapterBalance.Visible = true;
             blLeaderTasks.Items.Add(new ListItem("View Chapter Account History", "viewaccounthistory"));
+
+            //MS-4275 - need to put in ViewState, or else page forgets it on postback
+            ViewState["LinkedOrganizationID"] = Convert.ToString( drLinkedOrganization["ID"] );
         }
 
 
@@ -278,7 +281,9 @@ public partial class chapters_ViewChapter : PortalPage
                 nextUrl = string.Format("~/chapters/ViewChapterMembers_SelectFields.aspx?contextID={0}", ContextID);
                 break;
             case "viewaccounthistory":
-                nextUrl = string.Format("~/financial/AccountHistory.aspx?contextID={0}&leaderOfId={1}", drLinkedOrganization["ID"], ContextID);
+                //MS-4275 - need to put in ViewState, or else page forgets it on postback
+                string linkedOrg = (string) ViewState["LinkedOrganizationID"];
+                nextUrl = string.Format("~/financial/AccountHistory.aspx?contextID={0}&leaderOfId={1}", linkedOrg, ContextID);
                 break;
         }
 

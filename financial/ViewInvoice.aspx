@@ -102,7 +102,7 @@
             <Columns>
                 <asp:BoundField DataField="Product.Name" HeaderText="Product" HeaderStyle-HorizontalAlign="Left" />
                 <asp:BoundField DataField="Description" HeaderText="Desc" HeaderStyle-HorizontalAlign="Left" />
-                <asp:BoundField DataField="Quantity" HeaderText="Quantity" DataFormatString="{0:C}"
+                <asp:BoundField DataField="Quantity" HeaderText="Quantity" DataFormatString="{0}"
                     HeaderStyle-HorizontalAlign="Left" />
                 <asp:BoundField DataField="UnitPrice" HeaderText="Unit Price" DataFormatString="{0:C}"
                     HeaderStyle-HorizontalAlign="Left" />

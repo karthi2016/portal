@@ -26,7 +26,7 @@
     <h2>
     <asp:Literal ID="lSelectBooths" runat="server">Select Your Booth(s) Below:</asp:Literal></h2>
     <cc1:DualListBox runat="server" ID="dlbCategories" Width="400" />
-      <div id="divOtherProducts" runat="server" style="padding-top: 20px">
+      <div id="divOtherProducts" runat="server" style="padding-top: 20px" visible="false">
         <h2>
             <asp:Literal ID="lAdditionalItems" runat="server">Additional Items</asp:Literal></h2>
         <asp:Literal ID="lIfYouWouldLikeToAddAnyItems" runat="server">

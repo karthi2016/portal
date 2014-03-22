@@ -217,7 +217,8 @@ public partial class chapters_ViewChapterMembers_Results : PortalPage
         if (Download)
         {
             string nextUrl = executeDownloadableSearch();
-            Response.Redirect(nextUrl);
+            
+            Response.Redirect(nextUrl ?? "~/SearchQueued.aspx");
         }
 
         loadDataFromConcierge();

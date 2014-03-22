@@ -9,8 +9,8 @@ using System.Security.Cryptography.X509Certificates;
 using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
-using Amazon.DynamoDB;
-using Amazon.SessionProvider;
+//using Amazon.DynamoDB;
+//using Amazon.SessionProvider;
 using MemberSuite.SDK.Concierge;
 using MemberSuite.SDK.Results;
 using MemberSuite.SDK.Types;
@@ -59,27 +59,30 @@ public partial class Login : PortalPage
 
         ((App_Master_GeneralPage)Page.Master).HideHomeBreadcrumb = true;
 
+        if (PortalConfiguration.Current.PortalLoginRedirect != null) // MS-3932 we need to be somewhere else
+            GoTo(PortalConfiguration.Current.PortalLoginRedirect);
+
         setupForms();
     }
 
     private void testDynamoDB()
     {
-        DynamoDBSessionStateStore store = new DynamoDBSessionStateStore();
-        NameValueCollection nvc = new NameValueCollection();
+        //DynamoDBSessionStateStore store = new DynamoDBSessionStateStore();
+        //NameValueCollection nvc = new NameValueCollection();
 
-        nvc.Add("region", "us-east-1");
+        //nvc.Add("region", "us-east-1");
 
-        string table = Request.QueryString["table"] ?? "dev_portalsessions";
-        nvc.Add("table", table );
+        //string table = Request.QueryString["table"] ?? "dev_portalsessions";
+        //nvc.Add("table", table );
 
-        try
-        {
-            store.Initialize("SomeSession", nvc);
-        }
-        catch (AmazonDynamoDBException ex)
-        {
-            Response.Write("Dynamo DB Exception<BR/>Code:" + ex.ErrorCode + "<BR/>Type:" + ex.ErrorType);
-        }
+        //try
+        //{
+        //    store.Initialize("SomeSession", nvc);
+        //}
+        //catch (AmazonDynamoDBException ex)
+        //{
+        //    Response.Write("Dynamo DB Exception<BR/>Code:" + ex.ErrorCode + "<BR/>Type:" + ex.ErrorType);
+        //}
     }
 
     private void setupForms()

@@ -17,7 +17,7 @@
                 <p />
                 <ul style="margin-left: -20px">
                     <asp:HyperLink ID="Widget_Fundraising_hlMakeDonation" runat="server" NavigateUrl="/donations/MakeDonation.aspx"><li>Make a Donation</li></asp:HyperLink> 
-                    <asp:HyperLink ID="Widget_Fundraising_ViewDonationHistory" runat="server" NavigateUrl="/donations/BrowseDonations.aspx"><li>View Donation History</li></asp:HyperLink>
+                    <asp:HyperLink ID="Widget_Fundraising_ViewDonationHistory" runat="server" NavigateUrl="/donations/BrowseDonations.aspx"><li>View My Giving History</li></asp:HyperLink>
                      
                 </ul>
                 <%--This is the placeholder for portal form generation. Removing it will render portal forms for this widget inoperable.--%>

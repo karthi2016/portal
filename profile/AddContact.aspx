@@ -15,7 +15,10 @@
 </asp:Content>
 <asp:Content ID="Content6" ContentPlaceHolderID="PageContent" runat="Server">
     <div class="section" style="margin-top: 10px">
-    <asp:Literal ID="PageText" runat="server" />
+        <asp:Literal ID="PageText" runat="server" />
+        <asp:ValidationSummary ID="vsNewUserSummary" DisplayMode="BulletList" ForeColor="Red"
+            Font-Bold="true" ShowSummary="true" HeaderText="We were unable to continue for the following reasons:"
+            runat="server" />
         <asp:Wizard ID="wizAddContact" runat="server" DisplaySideBar="false" OnFinishButtonClick="wizAddContact_FinishButtonClick"
             OnNextButtonClick="wizAddContact_NextButtonClick" OnCancelButtonClick="wizAddContact_CancelButtonClick"
             CssClass="sectionContent" Width="300">
@@ -24,13 +27,14 @@
                     <asp:Label runat="server" ID="lblAlreadyExists" Visible="false" CssClass="redHighlight"></asp:Label>
                     <div class="sectionContent">
                         <p>
-                        <asp:Literal ID="lAddContact" runat="server">If we can, we’re going to add an existing contact to your organization by using
+                            <asp:Literal ID="lAddContact" runat="server">If we can, we’re going to add an existing contact to your organization by using
                             the email address. If the email doesn’t exist, we’ll ask you for additional information.</asp:Literal>
                         </p>
                         <table>
                             <tr>
                                 <td class="columnHeader" width="25%">
-                                    <asp:Literal ID="lEmailAddress" runat="server">Email Address:</asp:Literal><span class="requiredField">*</span>
+                                    <asp:Literal ID="lEmailAddress" runat="server">Email Address:</asp:Literal><span
+                                        class="requiredField">*</span>
                                 </td>
                                 <td>
                                     <asp:TextBox runat="server" ID="tbEmailAddress" />
@@ -51,6 +55,8 @@
                     <br />
                 </asp:WizardStep>
                 <asp:WizardStep ID="wizNotFound">
+                    <asp:CustomValidator ID="cvContactRestriction" runat="server" Display="None" ForeColor="Red"
+                        Font-Bold="true" />
                     <div class="sectionContent">
                         <p>
                             <asp:Literal ID="lUnableToLocate" runat="server">We were unable to locate an individual with that email address. Please enter the
@@ -58,7 +64,7 @@
                         </p>
                         <table>
                             <tr>
-                                <td class="columnHeader"  width="25%">
+                                <td class="columnHeader" width="25%">
                                     <asp:Literal ID="lFirstName" runat="server">First Name:</asp:Literal><span class="requiredField">*</span>
                                 </td>
                                 <td>
@@ -92,7 +98,8 @@
                             </tr>
                             <tr>
                                 <td colspan="2">
-                                    <asp:CheckBox runat="server" ID="chkSendInvitation" /><asp:Literal ID="lSendInvitation" runat="server"><b>Would you like to send this
+                                    <asp:CheckBox runat="server" ID="chkSendInvitation" /><asp:Literal ID="lSendInvitation"
+                                        runat="server"><b>Would you like to send this
                                         individual an invitation to login?</b></asp:Literal>
                                 </td>
                             </tr>
@@ -109,7 +116,7 @@
                         </p>
                         <table>
                             <tr>
-                                <td class="columnHeader"  width="25%">
+                                <td class="columnHeader" width="25%">
                                     First Name:
                                 </td>
                                 <td>

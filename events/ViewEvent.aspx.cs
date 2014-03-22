@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Data;
 using System.Linq;
 using System.Web;
@@ -85,6 +86,11 @@ public partial class events_ViewEvent : PortalPage
 
         hlDiscussionBoard.Visible = IsModuleActive("Discussions");
         hlDiscussionBoard.NavigateUrl += ContextID;
+
+        hlDownloadIcal.NavigateUrl = string.Format("{0}/ical?a={1}&e={2}",
+                                                   ConfigurationManager.AppSettings["ImageServerUri"],
+                                                   ConciergeAPIProxyGenerator.AssociationId ,
+                                                   targetEvent.ID);
     }
 
     private void initializeExhibits()
@@ -171,9 +177,11 @@ public partial class events_ViewEvent : PortalPage
             Search sRegistrations = new Search {Type = msEventRegistration.CLASS_NAME, ID = "Registrations"};
             sRegistrations.AddOutputColumn("ID");
             sRegistrations.AddOutputColumn("Name");
+            sRegistrations.AddOutputColumn("Fee.Name");
             sRegistrations.AddOutputColumn("CreatedDate");
             sRegistrations.AddCriteria(Expr.Equals("Owner.ID", ConciergeAPI.CurrentEntity.ID));
             sRegistrations.AddCriteria(Expr.Equals("Event.ID", ContextID));
+            sRegistrations.AddCriteria(Expr.IsBlank(msRegistrationBase.FIELDS.CancellationDate));
             searches.Add(sRegistrations);
         }
 
@@ -197,20 +205,44 @@ public partial class events_ViewEvent : PortalPage
         }
 
         // is it closed?
-        if (targetEvent.RegistrationCloseDate != null && targetEvent.RegistrationCloseDate < DateTime.Now)
+        if (EventLogic.IsRegistrationClosed( targetEvent ))
         {
             lblRegistrationClosed.Text = "Registration for this event is closed.";
             hlRegistration.Visible = false;
             return;
         }
 
-        if ( ConciergeAPI.CurrentEntity != null && EventLogic.IsRegistered( targetEvent.ID, ConciergeAPI.CurrentEntity.ID ))
+        hlRegistration.NavigateUrl = string.Format("~/events/RegisterForEvent.aspx?contextID={0}", ContextID);
+
+        if ( targetEvent.RegistrationMode == EventRegistrationMode.Normal &&
+            ConciergeAPI.CurrentEntity != null && EventLogic.IsRegistered( targetEvent.ID, ConciergeAPI.CurrentEntity.ID )
+            
+            )
         {
             // MS-3032
-            //lblRegistrationClosed.Text = "You have already registered for this event.";
-            hlRegistration.Visible = true; 
-            hlRegistration.NavigateUrl = string.Format("~/events/RegisterForEvent.aspx?contextID={0}", ContextID);
+            lblRegistrationClosed.Text = "You have already registered for this event.";
+            hlRegistration.Visible = false; 
+
+            // now, can we register a guest?
+            using (var api = GetServiceAPIProxy())
+            {
+                if (
+                    api.GetApplicableRegistrationFees(targetEvent.ID, CurrentEntity.ID)
+                       .ResultValue.Exists(x => x.IsGuestRegistration))
+                    // guest registration is available
+                    liRegisterAGuest.Visible = true;
+            }
+
             return;
+        }
+
+        if (targetEvent.RegistrationMode == EventRegistrationMode.Tabled) // tabled event
+        {
+            hlRegistration.Visible = false;
+            hlPurchaseSeats.Visible = true;
+            hlViewMySeats.Visible = true;
+            hlPurchaseSeats.NavigateUrl = string.Format("PurchaseTableSeats.aspx?contextID=" + ContextID);
+            hlViewMySeats.NavigateUrl = string.Format("ViewTableSeats.aspx?contextID=" + ContextID);
         }
 
         hlRegistration.NavigateUrl = string.Format("~/events/RegisterForEvent.aspx?contextID={0}", ContextID);

@@ -215,6 +215,12 @@ public partial class financial_AccountHistory : PortalPage
                         hlView.NavigateUrl = nextUrl;
                         break;
 
+                    case "Gift":
+                        nextUrl = "/donations/ViewGift.aspx?contextID=" + drv["ID"];
+                        
+                        hlView.NavigateUrl = nextUrl;
+                        break;
+
                     default:
                         hlView.Visible = false;
                         break;

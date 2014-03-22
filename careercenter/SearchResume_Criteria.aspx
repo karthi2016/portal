@@ -28,6 +28,16 @@
             </asp:Literal>
             <p>
             </p>
+            <table>
+                <tr>
+                    <td class="columnHeader">
+                        Keywords:
+                    </td>
+                    <td>
+                        <asp:TextBox ID="tbKeywords" runat="server"/>
+                    </td>
+                </tr>
+            </table>
             <uc1:CustomFieldSet ID="cfsSearchCriteria" runat="server" SuppressValidation="true" />
         </div>
     </div>

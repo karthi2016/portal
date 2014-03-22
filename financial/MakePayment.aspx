@@ -80,53 +80,7 @@
             }
 
   
-            function togglePaymentOptions()
-            {
-                var rfvCreditCard = document.getElementById( '<%=rfvCreditCardNumber.ClientID %>');
-                var tbCreditCard = document.getElementById( '<%=tbCreditCardNumber.ClientID %>');
-                var spnCreditCardRequired = document.getElementById("spnCreditCardRequired");
-
-                var rfvName = document.getElementById( '<%=rfvCCNameOnCard.ClientID %>');
-                var tbName = document.getElementById( '<%=tbName.ClientID %>');
-                var spnNameRequired = document.getElementById("spnNameRequired");
-                
-                var rfvSecurityCode = document.getElementById( '<%=rfvCardSecurity.ClientID %>');
-                var tbSecurityCode = document.getElementById( '<%=tbCVV.ClientID %>');
-                var spnCVVRequired = document.getElementById("spnCVVRequired");
-                
-                var mdpExpiration = document.getElementById( '<%=myExpiration.ClientID %>');
-                var spnExpirationRequired = document.getElementById("spnExpirationRequired");
-                
-                var tbAmount = document.getElementById('<%= tbAmount.ClientID %>');
-                var totalAmount = parseFloat( tbAmount.value );
-
-                if ( isNaN( totalAmount) )
-                     totalAmount = 0;
-
-                var enable = false;
-                var visibility = "hidden";
-
-                if(totalAmount > 0)
-                {  
-                    enable = true;   
-                    visibility = "visible";
-                }
-                
-
-                tbCreditCard.disabled = !enable;
-                tbName.disabled = !enable;
-                tbSecurityCode.disabled = !enable;
-                mdpExpiration.disabled = !enable;  
-
-                spnCreditCardRequired.style.visibility = visibility;
-                spnNameRequired.style.visibility = visibility;
-                spnCVVRequired.style.visibility = visibility;
-                spnExpirationRequired.style.visibility = visibility;
-
-                ValidatorEnable(rfvCreditCard,enable);
-                ValidatorEnable(rfvName,enable);
-                ValidatorEnable(rfvSecurityCode,enable);
-            }
+          
     </script>
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="TopMenu" runat="Server">
@@ -141,7 +95,6 @@
 </asp:Content>
 <asp:Content ID="Content6" ContentPlaceHolderID="PageContent" runat="Server">
     <asp:Literal ID="PageText" runat="server" />
-   
     <div class="section" style="margin-top: 10px">
         <div class="sectionHeaderTitle">
             <h2>
@@ -220,7 +173,8 @@
                             ValueToCompare="-1" Type="Currency" Operator="GreaterThan" ErrorMessage="Please specify a valid total to charge"
                             Display="None">                    
                         </asp:CompareValidator>
-                        <asp:RequiredFieldValidator ID="RequiredFieldValidator1" runat="server" ControlToValidate="tbAmount" Display="None" ErrorMessage="You must enter a payment amount. Click on the checkboxes to select the invoices you'd like to pay." />
+                        <asp:RequiredFieldValidator ID="RequiredFieldValidator1" runat="server" ControlToValidate="tbAmount"
+                            Display="None" ErrorMessage="You must enter a payment amount. Click on the checkboxes to select the invoices you'd like to pay." />
                     </td>
                 </tr>
                 <tr>
@@ -243,81 +197,14 @@
             </table>
         </div>
     </div>
-    <div class="section" id="divPayment" runat="server">
-        <div class="sectionHeaderTitle">
-            <h2>
-                <asp:Literal ID="lPaymentInformation" runat="server">Payment Information</asp:Literal></h2>
-        </div>
-        <div class="sectionContent">
-            <table style="width: 100%">
-                <tr valign="top">
-                    <td>
-                        <div id="divCreditCard">
-                            <h3>
-                                <asp:Literal ID="lCreditCardInformation" runat="server">Credit Card Information</asp:Literal></h3>
-                            <table style="width: 500px">
-                                <tr>
-                                    <td class="columnHeader">
-                                        <asp:Literal ID="lNameOnCard" runat="server">Name on Card:</asp:Literal>
-                                        <span id="spnNameRequired" class="requiredField">*</span>
-                                    </td>
-                                    <td>
-                                        <asp:TextBox ID="tbName" runat="server" />
-                                        <asp:RequiredFieldValidator ID="rfvCCNameOnCard" runat="server" ControlToValidate="tbName"
-                                            Display="None" ErrorMessage="You have not entered the name on your credit card." />
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="columnHeader">
-                                        <asp:Literal ID="lCreditCardNumber" runat="server">Credit Card Number: </asp:Literal><span
-                                            id="spnCreditCardRequired" class="requiredField">*</span>
-                                    </td>
-                                    <td>
-                                        <asp:TextBox ID="tbCreditCardNumber" runat="server" />
-                                        <asp:RequiredFieldValidator ID="rfvCreditCardNumber" runat="server" ControlToValidate="tbCreditCardNumber"
-                                            Display="None" ErrorMessage="You have not entered your credit card number." />
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="columnHeader">
-                                        <asp:Literal ID="lCVV" runat="server">Credit Card Security Code (CVV):</asp:Literal>
-                                        <span id="spnCVVRequired" class="requiredField">*</span>
-                                    </td>
-                                    <td>
-                                        <asp:TextBox ID="tbCVV" runat="server" />
-                                        <asp:RequiredFieldValidator ID="rfvCardSecurity" runat="server" ControlToValidate="tbCVV"
-                                            Display="None" ErrorMessage="You have not entered the security code on the back of your card." />
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="columnHeader">
-                                        <asp:Literal ID="lCreditCardExp" runat="server">Credit Card Expiration:</asp:Literal>
-                                        <span id="spnExpirationRequired" class="requiredField">*</span>
-                                    </td>
-                                    <td>
-                                        <cc1:MonthYearPicker ID="myExpiration" runat="server" />
-                                    </td>
-                                </tr>
-                            </table>
-                        </div>
-                    </td>
-                    <td>
-                        <h3>
-                            <asp:Literal ID="lBillingAddress" runat="server">Billing Address</asp:Literal></h3>
-                        <cc1:AddressControl ID="acBillingAddress" IsRequired="true" EnableValidation="False"
-                            runat="server" />
-                    </td>
-                </tr>
-            </table>
-        </div>
-    </div>
-    <div class="sectionContent">
-        <div align="center" style="padding-top: 20px">
-            <asp:Button ID="btnContinue" OnClick="btnContinue_Click" Text="Continue" runat="server" />
-            <asp:Button ID="btnCancel" OnClick="btnCancel_Click" Text="Cancel" CausesValidation="false"
-                runat="server" />
-            <div class="clearBothNoSPC">
-            </div>
+    <hr style="width: 100%" />
+    <div style="text-align: center">
+        <asp:Button ID="btnContinue" OnClick="btnContinue_Click" Text="Continue to Billing Information"
+             runat="server" style="width:250px" />
+                or
+        <asp:LinkButton ID="lbCancel" runat="server" Text="Cancel Your Payment" OnClick="btnCancel_Click" CausesValidation="false" />
+     
+        <div class="clearBothNoSPC">
         </div>
     </div>
 </asp:Content>

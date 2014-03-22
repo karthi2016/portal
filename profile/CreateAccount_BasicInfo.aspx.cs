@@ -60,6 +60,9 @@ public partial class profile_CreateAccount_BasicInfo : PortalPage
     {
         base.InitializePage();
 
+        if (PortalConfiguration.Current.PortalLoginRedirect != null) // MS-3932 we need to be somewhere else
+            GoTo(PortalConfiguration.Current.PortalLoginRedirect);
+
         MultiStepWizards.CreateAccount.InitiatedByLeader = InitiatedByLeader;
 
         string pageTitle = Request.QueryString["pageTitle"];

@@ -33,6 +33,7 @@ public partial class profile_CreateAccount_Complete : PortalPage
     protected List<msAddressType> organizationAddressTypes;
     protected DataTable dtPortalSignupRelationshipTypes;
     protected DataView dvAllOrganizations;
+    private DataView _dvDuplicates;
 
     #endregion
 
@@ -261,7 +262,7 @@ public partial class profile_CreateAccount_Complete : PortalPage
                 default:
                     throw new ApplicationException("A Relationship Type has EnablePortalSignup set to true but is NOT an Individual/Organization Relationship Type.");
             }
-
+            targetOrganizationRelationship.IsPrimary = true;        // MS-4081
             MultiStepWizards.CreateAccount.TargetOrganizationRelationship = targetOrganizationRelationship;
         }
     }
@@ -732,6 +733,37 @@ public partial class profile_CreateAccount_Complete : PortalPage
         GoHome();
     }
 
+    private bool CheckDuplicateOrganization(string name)
+    {
+        using (var proxy = ConciergeAPIProxyGenerator.GenerateProxy())
+        {
+            var mso = new MemberSuiteObject();
+            mso.Fields.Add("Name", name);
+            mso.ClassType = "Organization";
+
+            var duplicateSearch = new Search { Type = mso.ClassType };
+            duplicateSearch.OutputColumns.AddRange(
+                new[] {
+                    new SearchOutputColumn { Name = "LocalID" },
+                    new SearchOutputColumn { Name = "Name" },
+                    new SearchOutputColumn { Name = "_Preferred_Address_City" },
+                    new SearchOutputColumn { Name = "_Preferred_Address_State" }
+                }); 
+
+            var duplicateResult = proxy.FindPotentialDuplicates(mso, null, duplicateSearch, 0, null).ResultValue;
+            if (duplicateResult.TotalRowCount > 0)
+            {
+                _dvDuplicates = new DataView(duplicateResult.Table);
+                gvDuplicates.DataSource = _dvDuplicates;
+                gvDuplicates.DataBind();
+
+                return true;
+            }
+
+            return false;
+        }
+    }
+
     #endregion
 
     #region Event Handlers
@@ -770,12 +802,22 @@ public partial class profile_CreateAccount_Complete : PortalPage
 
                 setConfirmationText();
                 break;
+
             case 1:
                 if (!unbindOrganization())
                 {
                     e.Cancel = true;
                     return;
                 }
+
+                var isDuplicateOrganization = CheckDuplicateOrganization(targetOrganization.Name);
+                if (!isDuplicateOrganization)
+                {
+                    wizCreateAccount.ActiveStepIndex = 3;                    
+                }
+                break;
+
+            case 2:
                 setConfirmationText();
                 break;
         }

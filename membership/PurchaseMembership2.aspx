@@ -2,7 +2,16 @@
     CodeFile="PurchaseMembership2.aspx.cs" Inherits="membership_PurchaseMembership2" %>
 
 <%@ Register Src="../controls/CustomFieldSet.ascx" TagName="CustomFieldSet" TagPrefix="uc1" %>
+<%@ Register TagPrefix="telerik" Namespace="Telerik.Web.UI" Assembly="Telerik.Web.UI, Version=2011.1.519.40, Culture=neutral, PublicKeyToken=121fae78165ba3d4" %>
 <asp:Content ID="Content1" ContentPlaceHolderID="BreadcrumbBar" runat="Server">
+</asp:Content>
+<asp:Content ID="Contexnt12" ContentPlaceHolderID="head" runat="server">
+    <style type="text/css">
+        .quantity
+        {
+            width: 30px;
+        }
+    </style>
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="PageTitle" runat="Server">
     Join/Renew Membership - Enter Membership Information
@@ -20,6 +29,11 @@
 <asp:Content ID="Content4" ContentPlaceHolderID="Tips" runat="Server">
 </asp:Content>
 <asp:Content ID="Content5" ContentPlaceHolderID="DataEntry" runat="Server">
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $(".quantity").NumericOnly();
+        });
+    </script>
     <asp:Literal ID="PageText" runat="server" />
     <div class="sectContLrg">
         <div class="sectHeaderTitle">
@@ -58,7 +72,7 @@
                 </td>
                 <td>
                     <asp:DropDownList Width="400px" ID="ddlSelectChapter" runat="server" />
-                    <asp:RequiredFieldValidator runat="server" ControlToValidate="ddlSelectChapter" ErrorMessage="Please select your primary chapter."
+                    <asp:RequiredFieldValidator ID="RequiredFieldValidator1" runat="server" ControlToValidate="ddlSelectChapter" ErrorMessage="Please select your primary chapter."
                         Display="None" />
                 </td>
             </tr>
@@ -109,7 +123,9 @@
         If you would like to add any of the items below to your membership, enter the quantities
         below.
         </asp:Literal>
-        <table style="width: 100%; margin-top: 20px">
+      
+      
+       <table style="width: 100%; margin-top: 20px">
             <asp:Repeater ID="rptAdditionalItems" runat="server" OnItemDataBound="rptAdditionalItems_ItemDataBound">
                 <ItemTemplate>
                     <tr>
@@ -130,6 +146,7 @@
                 </ItemTemplate>
             </asp:Repeater>
         </table>
+      
     </div>
     <div class="sectContLrg" id="divDonations" runat="server">
         <div class="sectHeaderTitle">

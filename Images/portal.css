@@ -31,7 +31,10 @@ body
 	color: #4f4f4f;
 	background: #fff;
 }
-
+input[type=submit],input[type=button] {
+    width:160px;
+    padding: 2px;
+}
 a
 {
 	text-decoration: none;

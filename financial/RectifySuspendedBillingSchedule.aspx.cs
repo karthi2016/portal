@@ -13,6 +13,8 @@ public partial class financial_RectifySuspendedBillingSchedule : PortalPage
 {
 
     protected DataRow targetSchedule;
+  
+    protected msOrder targetOrder;
 
     protected override void InitializeTargetObject()
     {
@@ -26,14 +28,35 @@ public partial class financial_RectifySuspendedBillingSchedule : PortalPage
         s.AddOutputColumn("Order.Date");
         s.AddOutputColumn("Order.Total");
         s.AddOutputColumn("Order");
+        s.AddOutputColumn("Order.BillTo");
         s.AddOutputColumn("Order.FutureBillingAmount");
 
         var sr = ExecuteSearch(s, 0, 1);
         if (sr.TotalRowCount == 0)
             GoToMissingRecordPage();
 
+
+
         targetSchedule = sr.Table.Rows[0];
 
+        if (Convert.ToString(targetSchedule["Order.BillTo"]) != ConciergeAPI.CurrentEntity.ID)
+            throw new ApplicationException("Access denied");
+
+
+        targetOrder = LoadObjectFromAPI<msOrder>(Convert.ToString(targetSchedule["Order"]));
+        if (targetOrder == null)
+            GoToMissingRecordPage();
+
+        using (var api = GetServiceAPIProxy())
+        {
+            var methods = api.DetermineAllowableOrderPaymentMethods(targetOrder).ResultValue;
+
+            // some payments NEVER make sense in this context
+            methods.AllowBillMeLater = false;
+
+            BillingInfoWidget.AllowableMethods = methods;
+        }
+        
 
 
     }
@@ -50,7 +73,7 @@ public partial class financial_RectifySuspendedBillingSchedule : PortalPage
     }
     protected void btnCancel_Click(object sender, EventArgs e)
     {
-        Response.Redirect("ViewOrder.aspx?contextID=" + targetSchedule["Order"]);
+        Response.Redirect("ViewInstallmentPlan.aspx?contextID=" + ContextID );
     }
     protected void btnUpdatePaymentInfo_Click(object sender, EventArgs e)
     {
@@ -59,12 +82,15 @@ public partial class financial_RectifySuspendedBillingSchedule : PortalPage
 
         string orderID = Convert.ToString( targetSchedule["Order"] );
         string orderLocalID = GetSearchResult(targetSchedule, "Order.LocalID", null);
+
+        var paymentManifest = BillingInfoWidget.GetPaymentInfo();
+
         using (var api = GetServiceAPIProxy())
         {
-            api.UpdateOrderBillingInfo(orderID, tbCreditCardNumber.Text, null, myExpiration.Date, acBillingAddress.Address);
+            api.UpdateBillingInfo(orderID, paymentManifest);
             QueueBannerMessage(string.Format("Order #{0} updated successfully.", orderLocalID));
             
         }
-        Response.Redirect("/financial/ViewOrder.aspx?contextID=" + orderID);
+        Response.Redirect("/financial/ViewInstallmentPlan.aspx?contextID=" + ContextID );
     }
 }

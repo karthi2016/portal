@@ -38,6 +38,16 @@
                         Display="None" ErrorMessage="Please select a type." />
                 </td>
             </tr>
+               <tr>
+                <td class="columnHeader" style="width: 120px">
+                    <asp:Literal ID="Literal1" runat="Server">Title:</asp:Literal>
+                    
+                </td>
+                <td>
+                    <asp:TextBox ID="tbTitle" runat="server" />
+                    
+                </td>
+            </tr>
             <tr>
                 <td class="columnHeader" style="width: 120px">
                     <asp:Literal ID="lFirstName" runat="Server">First Name:</asp:Literal>

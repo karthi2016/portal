@@ -86,6 +86,12 @@ public partial class competitions_ViewCompetitionEntry : PortalPage
         cfsEntryFields.Render();
 
         loadDataFromConcierge();
+
+        if (ConciergeAPI.CurrentEntity.ID == targetCompetitionEntry.Entrant) // don't show scores
+            trAvgScore.Visible = trTotalScore.Visible = false;
+
+        hlBackToJudging.NavigateUrl = string.Format("JudgeEntries.aspx?contextID={0}&roundID={1}",
+                                                    Request.QueryString["teamID"], targetCompetitionEntry.JudgingRound);
     }
 
     #endregion

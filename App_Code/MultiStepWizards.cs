@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Web;
+using MemberSuite.SDK.Manifests;
 using MemberSuite.SDK.Manifests.Searching;
 using MemberSuite.SDK.Searching;
 using MemberSuite.SDK.Types;
@@ -13,8 +14,23 @@ using MemberSuite.SDK.Types;
 /// </summary>
 public static class MultiStepWizards
 {
+    public static class MakePayment
+    {
+        public static void Clear()
+        {
+            Payment = null;
+        }
 
-    
+        public static msPayment Payment
+        {
+            get { return SessionManager.Get<msPayment>("MemberSuite:MakePayment.Payment"); }
+            set { SessionManager.Set("MemberSuite:MakePayment.Payment", value); }
+        }
+
+       
+    }
+
+
     public static class RenewMembership 
     {
         public static msMembership Membership
@@ -214,7 +230,8 @@ public static class MultiStepWizards
         public static void Clear()
         {
             ShoppingCart = null;
-            ObjectsToSave = null;
+            Payload = null;
+ 
         }
         /// <summary>
         /// Gets or sets the shopping cart, which is carried around by the user
@@ -237,16 +254,6 @@ public static class MultiStepWizards
         //    set { SessionManager.Set("MemberSuite:PlaceAnOrder.AntiDuplicationKey",value); }
         //}
 
-        /// <summary>
-        /// Gets or sets the objects to save upon order completion
-        /// </summary>
-        /// <value>The objects to save.</value>
-        public static List<MemberSuiteObject> ObjectsToSave
-        {
-            get { return SessionManager.Get<List<MemberSuiteObject>>("MemberSuite:PlaceAnOrder.ObjectsToSave"); }
-            set { SessionManager.Set("MemberSuite:PlaceAnOrder.ObjectsToSave",value); }
-        }
-
         
 
         /// <summary>
@@ -263,6 +270,12 @@ public static class MultiStepWizards
         {
             get { return SessionManager.Get<msOrder>("MemberSuite:PlaceAnOrder.TransientShoppingCart"); }
             set { SessionManager.Set("MemberSuite:PlaceAnOrder.TransientShoppingCart",value); }
+        }
+
+        public static OrderPayload Payload
+        {
+            get { return SessionManager.Get<OrderPayload>("MemberSuite:PlaceAnOrder.Payload"); }
+            set { SessionManager.Set("MemberSuite:PlaceAnOrder.Payload", value); }
         }
 
         public static string ContinueShoppingUrl
@@ -403,9 +416,15 @@ public static class MultiStepWizards
 
         public static void InitiateOrderProcess(msOrder targetOrder)
         {
+            InitiateOrderProcess(targetOrder, null);
+        }
+
+        public static void InitiateOrderProcess(msOrder targetOrder, OrderPayload payload)
+        {
             if (targetOrder != null)
             {
                 TransientShoppingCart = targetOrder;
+                Payload = payload;
                 HttpContext.Current.Response.Redirect("/orders/InitiateOrder.aspx?useTransient=true");
             }
             else

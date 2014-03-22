@@ -173,10 +173,13 @@ public partial class events_ManageGroupRegistration : PortalPage
 
     protected void btnCompleteGroup_Click(object sender, EventArgs e)
     {
-      
+
+        var order = MultiStepWizards.GroupRegistration.Order;
+
+        order.BillTo = order.ShipTo = targetOrganization.ID;
         MultiStepWizards.PlaceAnOrder.OrderCompleteUrl = Request.Url.ToString();    // come back here
 
-        MultiStepWizards.PlaceAnOrder.InitiateOrderProcess(MultiStepWizards.GroupRegistration.Order);
+        MultiStepWizards.PlaceAnOrder.InitiateOrderProcess(order);
       
          
     }

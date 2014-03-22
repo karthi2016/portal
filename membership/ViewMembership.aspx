@@ -56,10 +56,10 @@
                 <td>
                     <%=GetMembershipField("Status.Name") %>
                 </td>
-                <td class="columnHeader">
+                <td class="columnHeader" id="tdExpirationDateLabel" runat="server">
                     <asp:Literal ID="lExpirationDate" runat="server">Expiration Date:</asp:Literal>
                 </td>
-                <td>
+                <td  id="tdExpirationDate" runat="server">
                     <%=GetMembershipField("ExpirationDate","d") %>
                 </td>
             </tr>
@@ -166,6 +166,29 @@
             </Columns>
         </asp:GridView>
     </div>
+     <div class="section" style="margin-top: 10px" id="divBillingInformation" runat="server"  >
+        <div class="sectHeaderTitle">
+            <h2>
+                <asp:Literal ID="lBillingInfo" runat="server">Billing Information</asp:Literal></h2>
+        </div>
+        You can have this membership renewal automatically charged to your credit card. The current information is below.
+        <asp:HyperLink ID="hlUpdateBillingInfo2" runat="server" Text="Click here to update."></asp:HyperLink>
+        <table style="width: 100%; margin-top: 10px">
+            <tr id="tr1" runat="server">
+                <td class="columnHeader">
+                    <asp:Literal ID="lPaymentMethod" runat="server">Payment Method:</asp:Literal>
+                </td>
+                <td>
+                    <asp:Label ID="lblPaymentInfo" runat="server">You currently have no payment information associated with this membership.</asp:Label>
+                </td>
+                <td class="columnHeader">
+                </td>
+                <td>
+                </td>
+            </tr>
+             
+        </table>
+    </div>
     <div class="section" style="margin-top: 10px" id="divHistory" runat="server" visible="false">
         <div class="sectHeaderTitle">
             <h2>
@@ -193,6 +216,9 @@
             <ul>
                 <li runat="server" id="liContactInfo">
                     <asp:HyperLink ID="hlContactInfo" runat="server" Text="Update Contact Info"></asp:HyperLink>
+                </li>
+                 <li runat="server" id="li1">
+                    <asp:HyperLink ID="hlUpdateBillingInfo" runat="server" Text="Update Billing Information"></asp:HyperLink>
                 </li>
                 <li runat="server" id="liUpdateMembershipInfo">
                     <asp:HyperLink ID="hlUpdateMembershipInfo" runat="server" Text="Update Membership Info"></asp:HyperLink>

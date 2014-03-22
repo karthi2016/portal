@@ -35,6 +35,10 @@
     <ul style="margin-left: -20px">
         <asp:HyperLink ID="hlMakeAPayment" runat="server" NavigateUrl="~/financial/MakePayment.aspx"
             Visible="false"><li>Make a Payment</li></asp:HyperLink>
+              <asp:HyperLink ID="hlManagePaymentOptions" runat="server" NavigateUrl="~/financial/ManagePaymentOptions.aspx"
+             ><li>Manage Saved Payment Options</li></asp:HyperLink>
+                <asp:HyperLink ID="hlManageInstallmentPlans" runat="server" NavigateUrl="~/financial/ManageInstallmentPlans.aspx"
+             ><li>Manage Installment Plans</li></asp:HyperLink>
         <asp:HyperLink ID="hlRequestRefund" NavigateUrl="~/financial/RequestRefund.aspx"
             Visible="false" runat="server"><li>Request a Refund</li></asp:HyperLink>
         <asp:HyperLink ID="hlViewAccountHistory" NavigateUrl="~/financial/AccountHistory.aspx"

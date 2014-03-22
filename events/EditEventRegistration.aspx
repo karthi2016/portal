@@ -197,14 +197,7 @@
                         <asp:TextBox runat="server" ID="tbBadgeCountry" />
                     </td>
                 </tr>
-                <tr>
-                    <td class="columnHeader">
-                         <asp:Literal ID="lBadgeRegType" runat="server">Badge Registration Type:</asp:Literal>
-                    </td>
-                    <td align="left">
-                        <asp:TextBox runat="server" ID="tbBadgeRegistrationType" />
-                    </td>
-                </tr>
+               
             </table>
         </div>
     </div>

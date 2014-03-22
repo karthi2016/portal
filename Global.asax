@@ -6,10 +6,10 @@
 
 <script runat="server">
 
-    private Amazon.SessionProvider.DynamoDBSessionStateStore ds;
+    //private Amazon.SessionProvider.DynamoDBSessionStateStore ds;
     void Application_Start(object sender, EventArgs e) 
     {
-        ds = null;// make sure it's included
+         
         // let's register the session ID provider, which keeps the session ID
         // for a Concierge API connection in Session State
         ConciergeAPIProxyGenerator.RegisterSessionIDProvider(new ConciergeAPI());

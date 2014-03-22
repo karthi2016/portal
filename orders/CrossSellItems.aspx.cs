@@ -193,7 +193,12 @@ public partial class orders_CrossSellItems : PortalPage
         li.UnitPrice = decimal.Parse(hfPrice.Value);
         li.Total = qty * li.UnitPrice;
 
-       
+        // MS-4955
+        if (qty == 0)
+        {
+            QueueBannerMessage("The zero quantity item was not added to your order.");
+            return;
+        }
         if (MultiStepWizards.PlaceAnOrder.CrossSellItems == null)
             MultiStepWizards.PlaceAnOrder.CrossSellItems = new List<msOrderLineItem>();
         MultiStepWizards.PlaceAnOrder.CrossSellItems.Add(li);

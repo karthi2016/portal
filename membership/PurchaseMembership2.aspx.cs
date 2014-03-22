@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Globalization;
 using System.Linq;
 using System.Web;
 using System.Web.UI;
@@ -10,6 +11,7 @@ using MemberSuite.SDK.Results;
 using MemberSuite.SDK.Searching;
 using MemberSuite.SDK.Searching.Operations;
 using MemberSuite.SDK.Types;
+using Telerik.Web.UI;
 
 public partial class membership_PurchaseMembership2 : PortalPage
 {
@@ -62,6 +64,7 @@ public partial class membership_PurchaseMembership2 : PortalPage
             GoHome();
 
     }
+    
 
     protected override void InitializePage()
     {
@@ -72,11 +75,12 @@ public partial class membership_PurchaseMembership2 : PortalPage
 
         // we know the membership organization isn't null
         var mo = LoadObjectFromAPI<msMembershipOrganization>(targetMembership.MembershipOrganization);
+        var fee = LoadObjectFromAPI<msMembershipDuesProduct>(targetMembership.Product );
 
         if (mo == null) GoHome(); // maybe if it got deleted in the middle of this process
 
-        setupChapters(mo);
-        setupSections(mo);
+        setupChapters(mo, fee);
+        setupSections(mo, fee);
         setupOtherInformation(mo);
 
         // ok, let's add the additional products
@@ -98,19 +102,6 @@ public partial class membership_PurchaseMembership2 : PortalPage
 
     }
 
-    private void setupFundraisingProducts(msMembershipOrganization mo, List<ProductInfo> dtAllProducts)
-    {
-        var donationProducts = dtAllProducts.FindAll(x => x.ProductType == msFundraisingProduct.CLASS_NAME);
-
-        if (donationProducts.Count == 0)
-        {
-            divDonations.Visible = false;
-            return;
-        }
-        rptDonations.DataSource = donationProducts;
-        rptDonations.DataBind();
-    }
-
     private void setupAdditionalItems(msMembershipOrganization mo, List<ProductInfo> dtAllProducts)
     {
         // we only want non-fundraising products
@@ -125,6 +116,57 @@ public partial class membership_PurchaseMembership2 : PortalPage
         rptAdditionalItems.DataSource = additionalItems;
         rptAdditionalItems.DataBind();
     }
+
+    protected void rptAdditionalItems_ItemDataBound(object sender, RepeaterItemEventArgs e)
+    {
+        ProductInfo pi = (ProductInfo)e.Item.DataItem;
+
+        if (Page.IsPostBack)
+            return;				// only do this if there's a postback - otherwise, preserve ViewState
+
+        switch (e.Item.ItemType)
+        {
+            case ListItemType.Header:
+                break;
+
+            case ListItemType.Footer:
+                break;
+
+            case ListItemType.AlternatingItem:
+                goto case ListItemType.Item;
+
+            case ListItemType.Item:
+                TextBox tbQuantity = (TextBox)e.Item.FindControl("tbQuantity");
+                CompareValidator cvQuantity = (CompareValidator)e.Item.FindControl("cvQuantity");
+                Label lblProductName = (Label)e.Item.FindControl("lblProductName");
+                Label lblProductPrice = (Label)e.Item.FindControl("lblProductPrice");
+                HiddenField hfProductID = (HiddenField)e.Item.FindControl("hfProductID");
+
+                hfProductID.Value = pi.ProductID;
+
+
+                cvQuantity.ErrorMessage = string.Format("You have entered an invalid donation amount for {0}", pi.ProductName);
+                lblProductName.Text = pi.ProductName;
+                lblProductPrice.Text = pi.DisplayPriceAs ?? pi.Price.ToString("C");
+
+                break;
+        }
+    }
+
+    private void setupFundraisingProducts(msMembershipOrganization mo, List<ProductInfo> dtAllProducts)
+    {
+        var donationProducts = dtAllProducts.FindAll(x => x.ProductType == msFundraisingProduct.CLASS_NAME);
+
+        if (donationProducts.Count == 0)
+        {
+            divDonations.Visible = false;
+            return;
+        }
+        rptDonations.DataSource = donationProducts;
+        rptDonations.DataBind();
+    }
+
+
 
     #region Setup Methods
 
@@ -160,9 +202,15 @@ public partial class membership_PurchaseMembership2 : PortalPage
     }
 
     private DataTable _sections;
-    private void setupSections(msMembershipOrganization mo)
+    private void setupSections(msMembershipOrganization mo, msMembershipDuesProduct product)
     {
-        switch (mo.SectionMode)
+        SectionMode cm = mo.SectionMode;
+        
+        // check to see if we need to override on product
+        if (product[msMembershipDuesProduct.FIELDS.SectionMode] != null)
+            cm = product.SafeGetValue<SectionMode>(msMembershipDuesProduct.FIELDS.SectionMode);
+
+        switch (cm)
         {
             case SectionMode.SectionsDisabled:
                 divSections.Visible = false;
@@ -200,9 +248,15 @@ public partial class membership_PurchaseMembership2 : PortalPage
 
     }
 
-    private void setupChapters(msMembershipOrganization mo )
+    private void setupChapters(msMembershipOrganization mo, msMembershipDuesProduct product)
     {
-        switch (mo.ChapterMode)
+        ChapterMode cm = mo.ChapterMode;
+
+        // check to see if we need to override on product
+        if (product[msMembershipDuesProduct.FIELDS.ChapterMode] != null)
+            cm = product.SafeGetValue<ChapterMode>( msMembershipDuesProduct.FIELDS.ChapterMode  );
+
+        switch (cm )
         {
             case ChapterMode.ChaptersDisabled:
                 divChapter.Visible = false; // don't show it
@@ -224,14 +278,14 @@ public partial class membership_PurchaseMembership2 : PortalPage
         List<NameValueStringPair> tblChapters;
         using (var api = GetServiceAPIProxy())
         {
-            tblChapters = api.GetApplicableChaptersForMembershipType(targetMembership.Type).ResultValue ;
+            tblChapters = api.GetApplicableChaptersForMembershipType(targetMembership.Type).ResultValue;
         }
         ddlSelectChapter.DataSource = tblChapters;
-            ddlSelectChapter.DataTextField = "Name";
-            ddlSelectChapter.DataValueField = "Value";
-            ddlSelectChapter.DataBind();
+        ddlSelectChapter.DataTextField = "Name";
+        ddlSelectChapter.DataValueField = "Value";
+        ddlSelectChapter.DataBind();
 
-        
+
         if (divAdditionalChapters.Visible)    // bind the list box, too
         {
             lbAdditionalChapters.DataSource = tblChapters;
@@ -243,7 +297,13 @@ public partial class membership_PurchaseMembership2 : PortalPage
         ddlSelectChapter.Items.Insert(0, new ListItem("---- Select a Chapter ----", ""));
 
         // ok - are we suggesting a chapter based on zip code?
-        if (mo.ChapterPostalCodeMappingMode != ChapterPostalCodeMappingMode.Disabled)
+        var cpm = mo.ChapterPostalCodeMappingMode;
+
+        // check to see if we need to override on product
+        if (product[msMembershipDuesProduct.FIELDS.ChapterPostalCodeMappingMode] != null)
+            cpm = product.SafeGetValue<ChapterPostalCodeMappingMode>(msMembershipDuesProduct.FIELDS.ChapterPostalCodeMappingMode);
+
+        if (cpm != ChapterPostalCodeMappingMode.Disabled)
         {
             MemberSuiteObject msoChapter = null;
             using (var api = GetServiceAPIProxy())
@@ -257,7 +317,7 @@ public partial class membership_PurchaseMembership2 : PortalPage
                 {
                     li.Selected = true;
 
-                    if (mo.ChapterPostalCodeMappingMode == ChapterPostalCodeMappingMode.Assign)
+                    if (cpm == ChapterPostalCodeMappingMode.Assign)
                     {
                         ddlSelectChapter.Enabled = false; // can't be changed
                         trChapterAssigned.Visible = true;
@@ -276,19 +336,19 @@ public partial class membership_PurchaseMembership2 : PortalPage
         {
             // find the primary
             var cPrimary = (targetMembership.Chapters.Find(x => x.IsPrimary));
-            if (cPrimary!= null)
+            if (cPrimary != null)
                 ddlSelectChapter.SafeSetSelectedValue(cPrimary.Chapter);
 
             // now, let's try to select the additional
-            if ( divAdditionalChapters.Visible )
+            if (divAdditionalChapters.Visible)
             {
                 foreach (var c in targetMembership.Chapters)
                     if ((c.ExpirationDate == null || c.ExpirationDate == targetMembership.ExpirationDate) &&
-                        (cPrimary == null || c.Chapter != cPrimary.Chapter) )
-                {
-                    ListItem li = lbAdditionalChapters.Items.FindByValue(c.Chapter);
-                    if (li != null) li.Selected = true;
-                }
+                        (cPrimary == null || c.Chapter != cPrimary.Chapter))
+                    {
+                        ListItem li = lbAdditionalChapters.Items.FindByValue(c.Chapter);
+                        if (li != null) li.Selected = true;
+                    }
             }
         }
 
@@ -329,7 +389,7 @@ public partial class membership_PurchaseMembership2 : PortalPage
                 {
                     if (fieldValuePair.Value is List<string>)
                     {
-                        var valueAsList = (List<string>) fieldValuePair.Value;
+                        var valueAsList = (List<string>)fieldValuePair.Value;
                         value = string.Join("|", valueAsList);
                     }
                     else
@@ -368,6 +428,7 @@ public partial class membership_PurchaseMembership2 : PortalPage
             li.Total = decimal.Parse(tbAmount.Text);
             li.PriceOverride = true;        // IMPORTANT - all donations are price overriden!
             li.UnitPrice = li.Total;
+            li.Quantity = 1;
 
             if (li.Total <= 0)
                 continue;   // don't add
@@ -387,8 +448,8 @@ public partial class membership_PurchaseMembership2 : PortalPage
 
         foreach (RepeaterItem ri in rptAdditionalItems.Items)
         {
-            TextBox tbQuantity = (TextBox) ri.FindControl("tbQuantity");
-            HiddenField hfProductID = (HiddenField) ri.FindControl("hfProductID");
+            TextBox tbQuantity = (TextBox)ri.FindControl("tbQuantity");
+            HiddenField hfProductID = (HiddenField)ri.FindControl("hfProductID");
 
             msOrderLineItem li = new msOrderLineItem();
             li.Quantity = decimal.Parse(tbQuantity.Text);
@@ -412,16 +473,16 @@ public partial class membership_PurchaseMembership2 : PortalPage
         {
             foreach (RepeaterItem ri in rptSections.Items)
             {
-                var cbSections = (CheckBoxList) ri.FindControl("cbSections");
+                var cbSections = (CheckBoxList)ri.FindControl("cbSections");
                 if (cbSections == null) continue;
 
 
                 foreach (ListItem item in cbSections.Items)
                     if (item.Selected) // they ased for it
                     {
-                        var productID = api.GetDefaultSectionProduct(targetMembership.Type, item.Value ).ResultValue.SafeGetValue<string>("ID");
+                        var productID = api.GetDefaultSectionProduct2( targetEntity.ID, targetMembership.Type, item.Value).ResultValue.SafeGetValue<string>("ID");
                         mso.LineItems.Add(new msOrderLineItem { Quantity = 1, Product = productID, LinkedOrderLineItemID = membershipItemGuid });
-      
+
                     }
             }
         }
@@ -447,13 +508,32 @@ public partial class membership_PurchaseMembership2 : PortalPage
                 if (secondaryChapter.Selected && !chapters.Contains(secondaryChapter.Value))    // don't duplicate
                     chapters.Add(secondaryChapter.Value);
 
-        // ok, now we need to get the products for these chapters
+        // ok, now we need to get the products for these chapters and any organizational layers they are under
         using (var api = GetConciegeAPIProxy())
         {
             foreach (var chapter in chapters)
             {
-                var productID = api.GetDefaultChapterProduct(targetMembership.Type, chapter).ResultValue.SafeGetValue<string>("ID");
+                var productID = api.GetDefaultChapterProduct2( targetEntity.ID, targetMembership.Type, chapter).ResultValue.SafeGetValue<string>("ID");
                 orderToUse.LineItems.Add(new msOrderLineItem { Quantity = 1, Product = productID, LinkedOrderLineItemID = membershipItemGuid });
+
+                Search s = new Search("ChapterOrganizationalLayers");
+                s.Context = chapter;
+                s.AddOutputColumn("ID");
+
+                SearchResult sr = ExecuteSearch(api, s, 0, null);
+
+                foreach (DataRow dataRow in sr.Table.Rows)
+                {
+                    string organizationalLayerId = dataRow["ID"].ToString();
+
+                    var productResult = api.GetDefaultOrganizationalLayerProduct(targetMembership.Type,
+                                                                                     organizationalLayerId).ResultValue;
+                    if (productResult == null)
+                        continue;
+
+                    productID = productResult.SafeGetValue<string>("ID");
+                    orderToUse.LineItems.Add(new msOrderLineItem { Quantity = 1, Product = productID, LinkedOrderLineItemID = membershipItemGuid });
+                }
             }
         }
 
@@ -471,7 +551,7 @@ public partial class membership_PurchaseMembership2 : PortalPage
             return;
 
         // set our transient shopping cart
-   
+
         MultiStepWizards.PlaceAnOrder.OrderCompleteUrl = string.Format("~/membership/PurchaseMembership2.aspx?contextID={0}&complete=true", ContextID);
 
         MultiStepWizards.PlaceAnOrder.InitiateOrderProcess(unbindObjectsFromPage());
@@ -510,7 +590,7 @@ public partial class membership_PurchaseMembership2 : PortalPage
                 CheckBoxList cbSections = (CheckBoxList)e.Item.FindControl("cbSections");
 
                 lblSectionType.Text = sectionTypeName;
-             
+
                 foreach (DataRow dr in _sections.Rows)
                 {
                     string typeName = "";
@@ -560,7 +640,7 @@ public partial class membership_PurchaseMembership2 : PortalPage
                 TextBox tbAmount = (TextBox)e.Item.FindControl("tbAmount");
                 CompareValidator cvAmount = (CompareValidator)e.Item.FindControl("cvAmount");
                 Label lblProductName = (Label)e.Item.FindControl("lblProductName");
-                 HiddenField hfProductID = (HiddenField)e.Item.FindControl("hfProductID");
+                HiddenField hfProductID = (HiddenField)e.Item.FindControl("hfProductID");
 
                 hfProductID.Value = pi.ProductID;
 
@@ -572,39 +652,12 @@ public partial class membership_PurchaseMembership2 : PortalPage
         }
 
     }
-    protected void rptAdditionalItems_ItemDataBound(object sender, RepeaterItemEventArgs e)
-    {
-        ProductInfo pi = (ProductInfo)e.Item.DataItem;
 
-        if (Page.IsPostBack)
-            return;				// only do this if there's a postback - otherwise, preserve ViewState
-
-        switch (e.Item.ItemType)
-        {
-            case ListItemType.Header:
-                break;
-
-            case ListItemType.Footer:
-                break;
-
-            case ListItemType.AlternatingItem:
-                goto case ListItemType.Item;
-
-            case ListItemType.Item:
-                TextBox tbQuantity = (TextBox)e.Item.FindControl("tbQuantity");
-                CompareValidator cvQuantity = (CompareValidator)e.Item.FindControl("cvQuantity");
-                Label lblProductName = (Label)e.Item.FindControl("lblProductName");
-                Label lblProductPrice = (Label)e.Item.FindControl("lblProductPrice");
-                HiddenField hfProductID = (HiddenField)e.Item.FindControl("hfProductID");
-
-                hfProductID.Value = pi.ProductID;
+   
 
 
-                cvQuantity.ErrorMessage = string.Format("You have entered an invalid donation amount for {0}", pi.ProductName);
-                lblProductName.Text = pi.ProductName;
-                lblProductPrice.Text = pi.DisplayPriceAs ?? pi.Price.ToString("C");
+   
+ 
 
-                break;
-        }
-    }
+     
 }

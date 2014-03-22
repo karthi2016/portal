@@ -8,6 +8,7 @@ using System.Drawing;
 using System.Linq;
 using System.ServiceModel;
 using System.ServiceModel.Security;
+using System.Threading;
 using System.Web;
 using System.Web.UI;
 using System.Web.UI.HtmlControls;
@@ -26,6 +27,7 @@ using MemberSuite.SDK.WCF;
 using MemberSuite.SDK.Web;
 using MemberSuite.SDK.Web.ControlManagers;
 using MemberSuite.SDK.Web.Controls;
+using Image = System.Web.UI.WebControls.Image;
 
 /// <summary>
 /// This is the base class for all pages in the portal and houses common functionality
@@ -33,6 +35,13 @@ using MemberSuite.SDK.Web.Controls;
 /// </summary>
 public abstract class PortalPage : Page, IControlHost
 {
+    public PortalPage()
+    {
+        PreInit += new EventHandler(PortalPage_PreInit);
+    }
+
+   
+
     protected virtual int PAGE_SIZE
     {
         get { return 25; }
@@ -74,8 +83,8 @@ public abstract class PortalPage : Page, IControlHost
         //MS-1956
         if (PortalConfiguration.Current != null)
         {
-            LabelControlManager.CurrentAssociationID = PortalConfiguration.Current.AssociationID;
-            LabelControlManager.CurrentAssociationKey = PortalConfiguration.Current.PartitionKey;
+            ControlContext.CurrentAssociationID = PortalConfiguration.Current.AssociationID;
+            ControlContext.CurrentAssociationKey = PortalConfiguration.Current.PartitionKey;
 
          
         }
@@ -102,18 +111,25 @@ public abstract class PortalPage : Page, IControlHost
             setupControlPropertyOverrides();
     }
 
-    protected override void OnInit(EventArgs e)
+ 
+     
+
+    void PortalPage_PreInit(object sender, EventArgs e)
+    {
+        SetupAddressControl();
+        Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo( ConciergeAPI.CurrentLocale );
+    }
+
+    public static void SetupAddressControl()
     {
         // make sure addresses render properly
-        if ( PortalConfiguration.Current != null && // check to see if we've already got it first
+        if (PortalConfiguration.Current != null && // check to see if we've already got it first
             PortalConfiguration.CurrentConfig != null)
         {
             HttpContext.Current.Items[AddressControl.ADDRESSCONTROL_COMBOBOX] =
                 PortalConfiguration.CurrentConfig.UseDropDownsForStatesAndCountries == ConsolePortalOptions.Portal ||
                 PortalConfiguration.CurrentConfig.UseDropDownsForStatesAndCountries == ConsolePortalOptions.Both;
-
         }
-        base.OnInit(e);
     }
 
     protected virtual void checkThrowManualException()
@@ -253,7 +269,7 @@ public abstract class PortalPage : Page, IControlHost
 
     private Control _recursiveFind(Control refControl, string controlName)
     {
-        if (refControl == null || string.IsNullOrWhiteSpace(controlName)) return null;
+        if (refControl == null || String.IsNullOrWhiteSpace(controlName)) return null;
 
         Control c = refControl.FindControl(controlName);
         if (c != null) // found it
@@ -406,7 +422,7 @@ public abstract class PortalPage : Page, IControlHost
         { 
             int i;
 
-            return !int.TryParse(Request.QueryString["page"], out i) || i < 1 ? 1 : i;
+            return !Int32.TryParse(Request.QueryString["page"], out i) || i < 1 ? 1 : i;
         }
     }
 
@@ -574,7 +590,7 @@ public abstract class PortalPage : Page, IControlHost
     protected List<T> GetAllObjects<T>(IConciergeAPIService proxy, string objectType) where T : msAggregate
     {
         List<MemberSuiteObject> result = new List<MemberSuiteObject>();
-        int totalCount = int.MaxValue;
+        int totalCount = Int32.MaxValue;
 
         //Add an emergency break
         Search s = new Search(objectType);
@@ -747,12 +763,12 @@ public abstract class PortalPage : Page, IControlHost
             if (fieldValue is string)
             {
                 string fieldValueAsString = (string)fieldValue;
-                if (string.IsNullOrWhiteSpace(fieldValueAsString)) continue;
+                if (String.IsNullOrWhiteSpace(fieldValueAsString)) continue;
 
                 if (fieldMetadata.DataType == FieldDataType.Boolean)
                 {
                     bool b = false;
-                    if (bool.TryParse(fieldValueAsString, out b))
+                    if (Boolean.TryParse(fieldValueAsString, out b))
                         so.ValuesToOperateOn = new List<object>() { b };
                 }
                 else
@@ -787,7 +803,7 @@ public abstract class PortalPage : Page, IControlHost
             return false;
 
         string s = valueoCheck as string;
-        if (s != null && string.IsNullOrWhiteSpace(s))
+        if (s != null && String.IsNullOrWhiteSpace(s))
             return false;
 
         return true;
@@ -828,7 +844,7 @@ public abstract class PortalPage : Page, IControlHost
 
         if (formatString == null) return Convert.ToString(obj);
 
-        return string.Format("{0:" + formatString + "}", obj);
+        return String.Format("{0:" + formatString + "}", obj);
     }
 
     #endregion
@@ -858,7 +874,7 @@ public abstract class PortalPage : Page, IControlHost
             if (localResourceObject != null)
             {
                 string result = localResourceObject.ToString();
-                if (!string.IsNullOrWhiteSpace(result))
+                if (!String.IsNullOrWhiteSpace(result))
                     return result;
             }
         }
@@ -993,7 +1009,7 @@ public abstract class PortalPage : Page, IControlHost
         string typeId = mso.SafeGetValue<string>("Type");
         string objectType = mso.ClassType;
 
-        if (string.IsNullOrWhiteSpace(typeId))
+        if (String.IsNullOrWhiteSpace(typeId))
             return GetDefaultPageLayout(objectType);
 
         // let's get the type
@@ -1002,7 +1018,7 @@ public abstract class PortalPage : Page, IControlHost
             MemberSuiteObject msoType = api.Get(typeId).ResultValue;
             string layoutId = msoType.SafeGetValue<string>("PortalPageLayout");
 
-            if (string.IsNullOrWhiteSpace(layoutId))
+            if (String.IsNullOrWhiteSpace(layoutId))
                 return GetDefaultPageLayout(objectType);
 
             return api.Get(layoutId).ResultValue.ConvertTo<msPortalPageLayoutContainer>();
@@ -1024,13 +1040,13 @@ public abstract class PortalPage : Page, IControlHost
 
     public static string GetImageUrl(string imageID)
     {
-        return string.Format("{0}/{1}/{2}/{3}", ConfigurationManager.AppSettings["ImageServerUri"],
+        return String.Format("{0}/{1}/{2}/{3}", ConfigurationManager.AppSettings["ImageServerUri"],
                                        PortalConfiguration.Current.AssociationID,
                                        PortalConfiguration.Current.PartitionKey,
                                        imageID);
     }
 
-    public static bool setProfileImage(System.Web.UI.WebControls.Image image, DataRow dataRow)
+    public static bool setProfileImage(Image image, DataRow dataRow)
     {
         if (!dataRow.Table.Columns.Contains("Image") || dataRow["Image"] == DBNull.Value)
         {
@@ -1041,7 +1057,7 @@ public abstract class PortalPage : Page, IControlHost
         return setProfileImage(image, dataRow["Image"].ToString());
     }
 
-    public static bool setProfileImage(System.Web.UI.WebControls.Image image, DataRowView dataRowView)
+    public static bool setProfileImage(Image image, DataRowView dataRowView)
     {
         if (!dataRowView.Row.Table.Columns.Contains("Image") || dataRowView["Image"] == DBNull.Value)
         {
@@ -1052,14 +1068,14 @@ public abstract class PortalPage : Page, IControlHost
         return setProfileImage(image, dataRowView["Image"].ToString());
     }
 
-    public static bool setProfileImage(System.Web.UI.WebControls.Image image, msEntity entity)
+    public static bool setProfileImage(Image image, msEntity entity)
     {
         return setProfileImage(image, entity.Image);
     }
 
-    public static bool setProfileImage(System.Web.UI.WebControls.Image image, string imageId)
+    public static bool setProfileImage(Image image, string imageId)
     {
-        if (string.IsNullOrWhiteSpace(imageId))
+        if (String.IsNullOrWhiteSpace(imageId))
         {
             image.Visible = false;
             return false;
@@ -1173,7 +1189,7 @@ public abstract class PortalPage : Page, IControlHost
         return result;
     }
 
-    protected void checkForDemographicsAndRedirectIfNecessary( msOrderLineItem lineItem, string redirectUrl)
+    protected void CheckForDemographicsAndRedirectIfNecessary( msOrderLineItem lineItem, string redirectUrl)
     {
         using (var api = GetConciegeAPIProxy())
         {
@@ -1247,18 +1263,18 @@ public abstract class PortalPage : Page, IControlHost
 
         if (firstPageLink != null)
         {
-            firstPageLink.NavigateUrl = string.Format("{0}page=1", currentUrl);
+            firstPageLink.NavigateUrl = String.Format("{0}page=1", currentUrl);
             firstPageLink.Visible = previousPageLink.Visible = PageStart != 0;
         }
 
         if (previousPageLink != null)
         {
-            previousPageLink.NavigateUrl = string.Format("{0}page={1}", currentUrl, (SelectedPage - 1));
+            previousPageLink.NavigateUrl = String.Format("{0}page={1}", currentUrl, (SelectedPage - 1));
         }
 
         if (nextPageLink != null)
         {
-            nextPageLink.NavigateUrl = string.Format("{0}page={1}", currentUrl, (SelectedPage + 1));
+            nextPageLink.NavigateUrl = String.Format("{0}page={1}", currentUrl, (SelectedPage + 1));
             nextPageLink.Visible = endRec < searchResult.TotalRowCount;
         }
     }

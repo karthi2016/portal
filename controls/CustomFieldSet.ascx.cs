@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Web;
 using System.Web.UI;
 using System.Web.UI.HtmlControls;
@@ -24,6 +25,17 @@ public partial class controls_CustomFieldSet : System.Web.UI.UserControl, IContr
             return true;
         }
         set { ViewState["EditMode"] = value; }
+    }
+
+    public bool SuppressNullLabelReplacement
+    {
+        get
+        {
+            var obj = ViewState["SuppressNullLabelReplacement"];
+            if (obj != null) return (bool)obj;
+            return true;
+        }
+        set { ViewState["SuppressNullLabelReplacement"] = value; }
     }
 
     public bool SuppressValidation { get; set; }
@@ -112,6 +124,10 @@ public partial class controls_CustomFieldSet : System.Web.UI.UserControl, IContr
         var leftControls = new List<ControlMetadata>(section.LeftControls);
         var rightControls = new List<ControlMetadata>(section.RightControls);
 
+        // now, let's remove all disabled controls, b/c they probably have a portal accessibility restriction
+        // MS-4675
+        leftControls.RemoveAll(x => !x.Enabled);
+        rightControls.RemoveAll(x => !x.Enabled);
 
         int maxRows = leftControls.Count > rightControls.Count ? leftControls.Count : rightControls.Count;
 
@@ -143,8 +159,25 @@ public partial class controls_CustomFieldSet : System.Web.UI.UserControl, IContr
     private void renderControl(HtmlTableRow tableRow, ControlMetadata control)
     {
         ControlManager manager;
-        
-        var fieldMeta = Metadata.Fields.Find(x => x.Name == control.DataSourceExpression);
+
+        if (control == null) return;
+
+        var nameOfField = control.DataSourceExpression;
+
+        FieldMetadata fieldMeta = null;
+
+        if (Metadata != null && Metadata.Fields != null)
+            fieldMeta = Metadata.Fields.Find(x => x.Name == nameOfField);
+
+        // MS-4803. Make sure that DataSourceExpression is not empty.
+        if (fieldMeta == null && !string.IsNullOrWhiteSpace(nameOfField)) // check to see if we're splitting
+        {
+            var splits = nameOfField.Split('|');
+            nameOfField = splits[splits.Length - 1];
+
+            if (Metadata != null && Metadata.Fields != null)
+                fieldMeta = Metadata.Fields.Find(x => x.Name == nameOfField);
+        }
         if (fieldMeta == null && control.DisplayType == null) return;
 
         if (fieldMeta != null)
@@ -160,7 +193,7 @@ public partial class controls_CustomFieldSet : System.Web.UI.UserControl, IContr
         if (fieldMeta == null)
             manager = ControlManagerResolver.Resolve(control.DisplayType.Value);
         else
-            manager = EditMode ? ControlManagerResolver.Resolve(fieldMeta.DisplayType) : new LabelControlManager();
+            manager = EditMode ? ControlManagerResolver.Resolve(fieldMeta.DisplayType) : new LabelControlManager(SuppressNullLabelReplacement);
 
         manager.IsInPortal = true;
         manager.Initialize(this, control);
@@ -171,8 +204,8 @@ public partial class controls_CustomFieldSet : System.Web.UI.UserControl, IContr
         // add the form group
         var tdLabel = new HtmlTableCell();
         var tdControl = new HtmlTableCell("td");
-        
-        if(control.UseEntireRow)
+
+        if (control.UseEntireRow)
             tdControl.Attributes["class"] = "columnHeader customFieldCell";
         else tdLabel.Attributes["class"] = "columnHeader customFieldCell";
 
@@ -181,7 +214,7 @@ public partial class controls_CustomFieldSet : System.Web.UI.UserControl, IContr
         //    tdLabel.Attributes["RowSpan"] = tdControl.Attributes["RowSpan"] = manager.RowSpan.ToString();
 
         // add the label (no labels for Seperators)
-        if (!manager.CustomLabel )// MS-2675&& !control.UseEntireRow)
+        if (!manager.CustomLabel)// MS-2675&& !control.UseEntireRow)
         {
             var label = new HtmlGenericControl("label");
             var controlLabel = manager.GetLabel();
@@ -227,7 +260,22 @@ public partial class controls_CustomFieldSet : System.Web.UI.UserControl, IContr
 
         tableRow.Controls.Add(tdControl);
 
-        var controls = manager.Instantiate();
+        var controls = manager.InstantiateWithPostprocessing(
+            ctls =>
+            {
+                if (manager.CustomLabel)
+                {
+                    var labelBuilder = new StringBuilder();
+                    labelBuilder.Append(manager.GetLabel());
+                    if (manager.IsRequired())
+                    {
+                        labelBuilder.Append("<font color=\"red\">*</font>");
+                    }
+                    labelBuilder.Append("<p/>");
+                    ctls.Insert(0, new LiteralControl(labelBuilder.ToString()));
+                }
+            }
+            );
 
         if (manager.CustomLabel && controls.Count > 0 && controls[0] is LiteralControl)
         {

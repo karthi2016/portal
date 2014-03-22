@@ -20,26 +20,27 @@
                 <table style="width: 100%">
                     <tr>
                         <th colspan="2">
-                            Enter your login information
+                            <asp:Literal ID="lEnterLoginInfo" runat="server" Text="Enter your login information"/>
                         </th>
                     </tr>
-                    <tr>
+                <tr>
+                        
                         <td>
-                            Login ID:
-                        </td>
-                        <td>
-                            <asp:TextBox ID="tbLoginID" Style="width: 160px" runat="server" /><font color="red">*</font>
+                            <asp:Literal ID="lLoginId" runat="server" Text="Login ID: "/>
+                            <span class="requiredField">*</span>
+                       <br />
+                            <asp:TextBox ID="tbLoginID" Style="width: 160px" runat="server" />
                             <asp:RequiredFieldValidator ID="rfvLogin" runat="server" ErrorMessage="Please enter a login ID"
                                 ControlToValidate="tbLoginID" Display="None" />
                         </td>
                     </tr>
                     <tr>
                         <td>
-                            Password:
-                        </td>
-                        <td>
-                            <asp:TextBox ID="tbPassword" Style="width: 160px" TextMode="Password" runat="server" /><font
-                                color="red">*</font>
+                            <asp:Literal ID="lPassword" runat="server" Text="Password: "/>
+                            <span class="requiredField">*</span>
+                            
+                        <br />
+                            <asp:TextBox ID="tbPassword" Style="width: 160px" TextMode="Password" runat="server" /> 
                             <asp:RequiredFieldValidator ID="rfvPassword" runat="server" ErrorMessage="Please enter a password"
                                 ControlToValidate="tbPassword" Display="None" />
                         </td>
@@ -56,7 +57,7 @@
                 <table style="width: 100%; margin-top: 20px">
                     <tr>
                         <th>
-                            New Users
+                            <asp:Literal ID="lNewUsers" runat="server" Text="New Users"/>
                         </th>
                     </tr>
                     <tr>

@@ -75,6 +75,15 @@ public partial class discussions_ViewPostsPendingApproval : DiscussionsPage
         rptPosts.DataBind();
     }
 
+
+    protected override bool CheckSecurity()
+    {
+        if (!base.CheckSecurity())
+            return false;
+
+        return isModerator();
+    }
+
     #endregion
 
     #region Methods

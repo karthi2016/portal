@@ -211,7 +211,7 @@ public partial class sections_ViewSectionMembers_Results : PortalPage
         if (Download)
         {
             string nextUrl = executeDownloadableSearch();
-            Response.Redirect(nextUrl);
+            Response.Redirect(nextUrl ?? "~/SearchQueued.aspx");
         }
 
         loadDataFromConcierge();

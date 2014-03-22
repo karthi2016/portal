@@ -9,6 +9,7 @@ using MemberSuite.SDK.Results;
 using MemberSuite.SDK.Searching;
 using MemberSuite.SDK.Searching.Operations;
 using MemberSuite.SDK.Types;
+using Telerik.Web.UI;
 
 public partial class events_BrowseDonations : PortalPage
 {
@@ -30,22 +31,39 @@ public partial class events_BrowseDonations : PortalPage
     {
         base.InitializePage();
 
-        //Execute a search for events in the future and databind
-        loadDataFromConcierge();
-
-        gvDonations.DataSource = dvGifts;
-        gvDonations.DataBind();
+       
     }
 
     #endregion
 
     #region Methods
 
-    /// <summary>
-    /// Executes a search against the Concierge API for events with a future start date that are set to be visible in the portal.
-    /// </summary>
-    /// <returns></returns>
-    private void loadDataFromConcierge()
+   
+
+    #endregion
+
+    protected void rgOpenRecurringGifts_OnNeedDataSource(object sender, GridNeedDataSourceEventArgs e)
+    {
+        string msql = string.Format(
+            "select LocalID, Amount, Type, NextTransactionDue, NextTransactionAmount from Gift where Donor='{0}'",
+            ConciergeAPI.CurrentEntity.ID);
+
+        using (var api = GetServiceAPIProxy())
+        {
+            var result = api.ExecuteMSQL(msql, 0, null).ResultValue.SearchResult;
+
+            if (result.Table != null)
+                rgOpenRecurringGifts.DataSource = result.Table;
+
+
+            rgOpenRecurringGifts.VirtualItemCount = result.TotalRowCount;
+
+            lNoOpenPledges.Visible = result.TotalRowCount == 0;
+            rgOpenRecurringGifts.Visible = !lNoOpenPledges.Visible;
+        }
+    }
+
+    protected void rgAllGifts_OnNeedDataSource(object sender, GridNeedDataSourceEventArgs e)
     {
         Search s = new Search { Type = msGift.CLASS_NAME };
 
@@ -53,12 +71,21 @@ public partial class events_BrowseDonations : PortalPage
         s.AddOutputColumn("Date");
         s.AddOutputColumn("Fund.Name");
         s.AddOutputColumn("Type");
+        s.AddOutputColumn("LocalID");
         s.AddOutputColumn("Amount");
         s.AddCriteria(Expr.Equals("Donor.ID", ConciergeAPI.CurrentEntity.ID));
 
-        var searchResult = ExecuteSearch(s, 0, null);
-        dvGifts = new DataView(searchResult.Table);
-    }
+        var result = ExecuteSearch(s, 0, null);
 
-    #endregion
+
+        if (result.Table != null)
+            rgAllGifts.DataSource = result.Table;
+
+
+        rgAllGifts.VirtualItemCount = result.TotalRowCount;
+
+        lNoGifts.Visible = result.TotalRowCount == 0;
+        rgAllGifts.Visible = !lNoGifts.Visible;
+
+    }
 }

@@ -96,6 +96,14 @@ a new individual. If you do not see the person for whom you want to create a reg
             </tr>
         </table>
     </div>
+  <%--  <h2>
+            Discount Codes</h2>
+        <asp:Literal ID="Literal1" runat="server">
+    You can apply discount codes to the registration by entering them in the box below. Be sure to enter a separate code on each line.
+        </asp:Literal>
+        
+    <asp:TextBox ID="tbDiscountCodes" TextMode="MultiLine" Rows=5 Columns=80 runat="server"/>--%>
+        
     <hr width="100%" />
     <div class="sectionContent">
         <div align="center" style="padding-top: 20px">

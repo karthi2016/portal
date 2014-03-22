@@ -4,6 +4,7 @@ using System.Collections.Specialized;
 using System.Configuration;
 using System.Linq;
 using System.ServiceModel.Channels;
+using System.Threading;
 using System.Web;
 using MemberSuite.SDK.Concierge;
 using MemberSuite.SDK.Manifests.Console;
@@ -116,6 +117,12 @@ public class ConciergeAPI : IConciergeAPISessionIdProvider, IConciergeAPIBrowser
         set { SessionManager.Set("LogoutUrl",value); }
     }
 
+    public static string CurrentLocale
+    {
+        get { return SessionManager.Get<string>("Locale") ?? "en-US"; }
+        set { SessionManager.Set("Locale", value); }
+    }
+
     public static string ConsoleUrl
     {
         get
@@ -168,7 +175,9 @@ public class ConciergeAPI : IConciergeAPISessionIdProvider, IConciergeAPIBrowser
         else
             CurrentTabs = null;
 
-        
+        CurrentLocale = result.Locale;
+        Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo(result.Locale);
+
         AccessibleEntities = result.AccessibleEntities;
         
     }

@@ -73,9 +73,15 @@ public partial class events_RegisterForEvent : PortalPage
             //return false;
 
         if ( ! targetEvent.VisibleInPortal && ! ConciergeAPI.HasBackgroundConsoleUser)
-
             return false;
-            
+
+        if ( (targetEvent.RegistrationCloseDate ?? targetEvent.EndDate)  < DateTime.Today)
+            return false;
+
+        // MS-4745
+        if (EventLogic.IsRegistrationClosed(targetEvent))
+            return false;
+        
         return true;
     }
     #endregion

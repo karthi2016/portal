@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Data;
 using System.Linq;
 using System.Web;
@@ -30,7 +31,7 @@ public partial class events_ViewEventRegistration : PortalPage
     protected msOrganizationalLayer targetOrganizationalLayer;
 
     protected DataRow drOrder;
-    
+
     protected DataView dvPayments;
     protected DataView dvHistoricalTransactions;
     protected DataView dvOrderLineItems;
@@ -62,7 +63,7 @@ public partial class events_ViewEventRegistration : PortalPage
         targetEvent = LoadObjectFromAPI<msEvent>(targetRegistration.Event);
         targetEntity = LoadObjectFromAPI<msEntity>(targetRegistration.Owner);
 
-        if (targetEvent == null || targetEntity == null) 
+        if (targetEvent == null || targetEntity == null)
         {
             GoToMissingRecordPage();
             return;
@@ -97,6 +98,10 @@ public partial class events_ViewEventRegistration : PortalPage
             divPayments.Visible = string.IsNullOrWhiteSpace(targetEvent.MerchantAccount) || dvPayments.Count > 0;
             divHistoricalTransactions.Visible = !string.IsNullOrWhiteSpace(targetEvent.MerchantAccount) || dvHistoricalTransactions.Count > 0;
             divAddHistoricalTransaction.Visible = divHistoricalTransactions.Visible && !string.IsNullOrWhiteSpace(targetRegistration.Order);
+            hlPrintAgenda.NavigateUrl = string.Format("{0}/events/registrations/agenda/print?a={1}&r={2}",
+                                                      ConfigurationManager.AppSettings["ImageServerUri"],
+                                                      ConciergeAPI.CurrentAssociation.PartitionKey,
+                                                      targetRegistration.ID);
         }
 
 
@@ -201,7 +206,7 @@ public partial class events_ViewEventRegistration : PortalPage
     {
         liEditRegistration.Visible = isLeader();
         liCancelRegistration.Visible = !targetRegistration.CancellationDate.HasValue && isLeader();
-        liDeleteRegistration.Visible = targetRegistration.CancellationDate.HasValue && isLeader(); 
+        liDeleteRegistration.Visible = targetRegistration.CancellationDate.HasValue && isLeader();
     }
 
     protected void setOwnerBackLinks(string ownerId, string ownerName, string viewUrl, string manageEventsUrl)
@@ -319,7 +324,10 @@ public partial class events_ViewEventRegistration : PortalPage
         if (targetRegistration.OnWaitList)
             return "On Wait List";
 
-        if (!targetRegistration.Approved || drOrder == null || (decimal)drOrder["BalanceDue"] > 0)
+        if (!targetRegistration.Approved)
+            return "Pending";
+
+        if (drOrder != null && (decimal)drOrder["BalanceDue"] > 0)
             return "Pending";
 
         return "Active";
@@ -337,7 +345,7 @@ public partial class events_ViewEventRegistration : PortalPage
 
     protected void lbDeleteRegistration_Click(object sender, EventArgs e)
     {
-        using(IConciergeAPIService proxy = GetConciegeAPIProxy())
+        using (IConciergeAPIService proxy = GetConciegeAPIProxy())
         {
             proxy.Delete(targetRegistration.ID);
             GoHome(string.Format("Registration {0} was deleted successfully.", targetRegistration.LocalID));

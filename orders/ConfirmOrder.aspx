@@ -4,34 +4,6 @@
 <%@ Register Assembly="MemberSuite.SDK.Web" Namespace="MemberSuite.SDK.Web.Controls"
     TagPrefix="cc1" %>
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="Server">
-    <script type="text/javascript">
-        function updatePayment() {
-
-            var rbCreditCard = document.getElementById('<%=rbPaymentCreditCard.ClientID %>');
-            var rbPayLater = document.getElementById('<%=rbPaymentPayLater.ClientID %>');
-
-            var divPayLater = document.getElementById('divPayLater');
-            var divCreditCard = document.getElementById('divCreditCard');
-
-            if (rbCreditCard == null) return;   // it's hidden
-
-            // activate/deactivator client validators
-            ValidatorEnable(document.getElementById('<%=rfvCCNameOnCard.ClientID %>'), rbCreditCard.checked);
-            ValidatorEnable(document.getElementById('<%=rfvCreditCardNumber.ClientID %>'), rbCreditCard.checked);
-            ValidatorEnable(document.getElementById('<%=rfvCardSecurity.ClientID %>'), rbCreditCard.checked);
-
-            // hide them all
-            divPayLater.style.display = 'none';
-            divCreditCard.style.display = 'none';
-
-            if (rbCreditCard.checked)
-                divCreditCard.style.display = '';
-
-            if (rbPayLater.checked)
-                divPayLater.style.display = '';
-
-        }
-    </script>
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="TopMenu" runat="Server">
 </asp:Content>
@@ -101,18 +73,9 @@
             </Columns>
         </asp:GridView>
         <hr style="width: 100%" />
-        <div id="divDiscountPromo" runat="server" style="float: left">
-            <asp:Literal ID="lApplyDiscountPromoCode" runat="server">Apply discount/promo code:</asp:Literal>
-            <asp:TextBox ID="tbPromoCode" runat="server"></asp:TextBox>
-            <asp:RequiredFieldValidator ID="rfvPromoCode" runat="server" ControlToValidate="tbPromoCode"
-                ValidationGroup="DiscountCode" ErrorMessage="Please enter a discount code." Display="None" />
-            <asp:Button ID="btnApplyCoupon" ValidationGroup="DiscountCode" OnClick="btnApplyDiscountCode_Click"
-                CommandName="ApplyDiscount" runat="server" Text="Apply Code" />
-        </div>
-        
         <div style="float: right; padding-right: 60px; margin-bottom: 50px">
             <table style="width: 200px;">
-                <tr>
+                <tr id="trDiscounts" runat="server">
                     <td class="columnHeader">
                         <asp:Literal ID="lDiscounts" runat="server">Discounts:</asp:Literal>
                     </td>
@@ -120,7 +83,7 @@
                         <asp:Label ID="lblDiscounts" runat="server" CssClass="price" Text="$0.00" />
                     </td>
                 </tr>
-                <tr>
+                <tr id="trShipping" runat="server">
                     <td class="columnHeader">
                         <asp:Literal ID="lShipping" runat="server">Shipping:</asp:Literal>
                     </td>
@@ -128,7 +91,7 @@
                         <asp:Label ID="lblShipping" runat="server" CssClass="price" Text="$0.00" />
                     </td>
                 </tr>
-                <tr>
+                <tr id="trTaxes" runat="server">
                     <td class="columnHeader">
                         <asp:Literal ID="lTasks" runat="server">Taxes:</asp:Literal>
                     </td>
@@ -136,7 +99,7 @@
                         <asp:Label ID="lblTaxes" runat="server" CssClass="price" Text="$0.00" />
                     </td>
                 </tr>
-                <tr>
+                <tr id="trTotal" runat="server">
                     <td class="columnHeader">
                         <asp:Literal ID="lTotal" runat="server">Total:</asp:Literal>
                     </td>
@@ -153,31 +116,78 @@
                     </td>
                 </tr>
             </table>
-            <ASP:HyperLink ID="hlChangeRemoveAdditionalItems" NavigateUrl="/orders/CrossSellItems.aspx" runat="server" Text="Change/Remove Items You've Added"  Visible="false" />
+            <asp:HyperLink ID="hlChangeRemoveAdditionalItems" NavigateUrl="/orders/CrossSellItems.aspx"
+                runat="server" Text="Change/Remove Items You've Added" Visible="false" />
         </div>
         <div style="min-height: 50px; padding-top: 20px">
-            <div id="divShipping" runat="server" visible="false">
-                <h3>
-                    <asp:Literal ID="lShippingInfo" runat="server">Shipping Information</asp:Literal></h3>
-                <table style="width: 300px">
-                    <tr>
-                        <td>
-                            <asp:Literal ID="lShippingMethodHeader" runat="server">Shipping Method:</asp:Literal>
-                        </td>
-                        <td>
-                            <asp:Literal ID="lShippingMethod" runat="server">n/a</asp:Literal>
-                            <asp:HyperLink ID="hlChangeShippingMethod" runat="server" NavigateUrl="~/orders/EnterShippingInformation.aspx">(change)</asp:HyperLink>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td colspan="2" style="padding-top: 10px">
-                            <asp:Literal ID="lShipToHeader" runat="server"><strong><u>Ship To</u></strong></asp:Literal>
-                            <br />
-                            <asp:Literal ID="lShipTo" runat="server">n/a</asp:Literal>
-                        </td>
-                    </tr>
-                </table>
-            </div>
+            <table>
+                <tr style="vertical-align: top">
+                    <td style="width: 50%">
+                        <div id="divBilling" runat="Server">
+                            <h3>
+                                <asp:Literal ID="lBillingInfo" runat="server">Billing Information</asp:Literal></h3>
+                            <hr />
+                            <table>
+                                <tr>
+                                    <td class="columnHeader" style="width: 150px">
+                                        <asp:Literal ID="lPaymentMethod" runat="server">Payment Method:</asp:Literal>
+                                    </td>
+                                    <td>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2">
+                                        <asp:Label ID="lblPaymentMethod" runat="server">AMEX ending in x43433</asp:Label>
+                                        <asp:HyperLink ID="hlChangeBilling" runat="server" NavigateUrl="~/orders/EnterBillingInfo.aspx">(change)</asp:HyperLink>
+                                        <br />
+                                        <span style="font-size: 10px" id="spanSaving" runat="server" ><i>
+                                        <asp:Literal ID="lSavingInfo" runat="server" Visible="false">
+                                            <span style="color:green">We will be securely saving this payment information so you can use it in the future.</span>
+                                        </asp:Literal>
+                                        
+                                        </i>
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2" style="padding-top: 10px">
+                                        <asp:Literal ID="lBillingAddress" runat="server"><strong><u>Billing Address</u></strong></asp:Literal>
+                                        <br />
+                                        <asp:Label ID="lblBillingAddress" runat="server">n/a</asp:Label>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </td>
+                    <td style="width: 20px">
+                    </td>
+                    <td>
+                        <div id="divShipping" runat="server" visible="false">
+                            <h3>
+                                <asp:Literal ID="lShippingInfo" runat="server">Shipping Information</asp:Literal></h3>
+                            <hr />
+                            <table style="width: 300px">
+                                <tr>
+                                    <td class="columnHeader">
+                                        <asp:Literal ID="lShippingMethodHeader" runat="server">Shipping Method:</asp:Literal>
+                                    </td>
+                                    <td>
+                                        <asp:Literal ID="lShippingMethod" runat="server">n/a</asp:Literal>
+                                        <asp:HyperLink ID="hlChangeShippingMethod" runat="server" NavigateUrl="~/orders/EnterShippingInformation.aspx">(change)</asp:HyperLink>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2" style="padding-top: 10px">
+                                        <asp:Literal ID="lShipToHeader" runat="server"><strong><u>Ship To</u></strong></asp:Literal>
+                                        <br />
+                                        <asp:Literal ID="lShipTo" runat="server">n/a</asp:Literal>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </td>
+                </tr>
+            </table>
         </div>
         <div id="divFutureBillings" runat="server" visible="false">
             <h2>
@@ -206,113 +216,32 @@
         </div>
         <div id="divExhibitorConfirmation_BoothPreferences" runat="server" visible="false">
             <b>Booth Preferences:</b> &nbsp;&nbsp;&nbsp;
-                
             <asp:Label ID="lblExhbitor_BoothPreferences" runat="server" />
-            <br />&nbsp;
+            <br />
+            &nbsp;
         </div>
         <h3>
             Special Requests</h3>
         <asp:Label ID="lblExhibitorSpecialRequests" runat="server">None.</asp:Label>
-    </div>
-    <div class="section" id="divPayment" runat="server" visible="false">
-        <div class="sectHeaderTitle">
-            <h2>
-                <asp:Literal ID="lPaymentInfo" runat="server">Payment Information</asp:Literal></h2>
-        </div>
-        <p>
-            <asp:Literal ID="lHowWouldYouLikeToPay" runat="Server">How would you like to pay for this order?</asp:Literal>
-        </p>
-        <table style="width: 100%">
-            <tr>
-                <td colspan="2">
-                    <asp:RadioButton ID="rbPaymentCreditCard" Checked="true" onclick="updatePayment();"
-                        GroupName="Payment" runat="server" Text="Pay with Credit Card" />
-                    <asp:RadioButton ID="rbPaymentPayLater" GroupName="Payment" onclick="updatePayment();"
-                        runat="server" Text="Bill Me/Pay Later" />
-                    <hr style="width: 100%" />
-                </td>
-            </tr>
-            <tr valign="top">
-                <td>
-                    <div id="divPayLater">
-                        <table style="width: 500px">
-                            <tr>
-                                <td class="columnHeader">
-                                    <asp:Literal ID="lPurchaseOrder" runat="Server">Purchase Order #:</asp:Literal>
-                                </td>
-                                <td>
-                                    <asp:TextBox ID="tbPurchaseOrder" runat="server" />
-                                </td>
-                            </tr>
-                        </table>
-                    </div>
-                    <div id="divCreditCard">
-                        <h3>
-                            <asp:Literal ID="lCreditCardInfo" runat="Server">Credit Card Information</asp:Literal></h3>
-                        <table style="width: 500px">
-                            <tr>
-                                <td class="columnHeader">
-                                    <asp:Literal ID="lNameOnCard" runat="Server">Name on Card: </asp:Literal><span class="requiredField">*</span>
-                                </td>
-                                <td>
-                                    <asp:TextBox ID="tbName" runat="server" />
-                                    <asp:RequiredFieldValidator ID="rfvCCNameOnCard" runat="server" ControlToValidate="tbName"
-                                        Display="None" ErrorMessage="You have not entered the name on your credit card." />
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="columnHeader">
-                                    <asp:Literal ID="lCreditCardNum" runat="Server">Credit Card Number:</asp:Literal>
-                                    <span class="requiredField">*</span>
-                                </td>
-                                <td>
-                                    <asp:TextBox ID="tbCreditCardNumber" runat="server" />
-                                    <asp:RequiredFieldValidator ID="rfvCreditCardNumber" runat="server" ControlToValidate="tbCreditCardNumber"
-                                        Display="None" ErrorMessage="You have not entered your credit card number." />
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="columnHeader">
-                                    <asp:Literal ID="lCVV" runat="Server">Credit Card Security Code (CVV):</asp:Literal>
-                                    <span class="requiredField">*</span>
-                                </td>
-                                <td>
-                                    <asp:TextBox ID="tbCVV" runat="server" />
-                                    <asp:RequiredFieldValidator ID="rfvCardSecurity" runat="server" ControlToValidate="tbCVV"
-                                        Display="None" ErrorMessage="You have not entered the security code on the back of your card." />
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="columnHeader">
-                                    <asp:Literal ID="lCreditCardExp" runat="Server">Credit Card Expiration:</asp:Literal>
-                                    <span class="requiredField">*</span>
-                                </td>
-                                <td>
-                                    <cc1:MonthYearPicker ID="myExpiration" runat="server" />
-                                </td>
-                            </tr>
-                        </table>
-                    </div>
-                </td>
-                <td>
-                    <h3>
-                        <asp:Literal ID="lBillingAddress" runat="Server">Billing Address</asp:Literal></h3>
-                    <cc1:AddressControl ID="acBillingAddress" IsRequired="true" EnableValidation="False"
-                        runat="server" />
-                </td>
-            </tr>
-        </table>
     </div>
     <asp:Label ID="lblContinueShoppingInstructions" runat="server">
     You can go ahead and complete your order now, or leave these items and your cart
     and continue shopping.
     </asp:Label>
     <p />
+      <div class="sectHeaderTitle">
+            <h2>
+               Notes/Comments</h2>
+        </div>
+        Add any notes or special instructions to this order.
+    <asp:TextBox ID="tbNotesComments" runat="server" TextMode="MultiLine" Rows=5 Width=600px/>
     <hr style="width: 100%" />
     <div style="text-align: center">
-        <asp:Button ID="btnContinue" CausesValidation="false" OnClick="btnContinueShopping_Click"
-            runat="server" Text="Continue Shopping" />
+         
         <asp:Button ID="btnPlaceOrder" runat="server" Text="Place Order" OnClick="btnPlaceOrder_Click" />
+           or
+        <asp:LinkButton ID="lbCancel" runat="server" Text="Cancel Your Order" CausesValidation="false"
+            OnClick="btnContinueShopping_Click" />
     </div>
 </asp:Content>
 <asp:Content ID="Content7" ContentPlaceHolderID="FooterContent" runat="Server">

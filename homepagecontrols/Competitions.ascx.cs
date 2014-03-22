@@ -44,6 +44,7 @@ public partial class homepagecontrols_Competitions : HomePageUserControl
         s.AddOutputColumn("Team.ID");
         s.AddOutputColumn("Team.Competition.Name");
         s.AddCriteria(Expr.Equals("Member.ID", ConciergeAPI.CurrentEntity.ID));
+        s.AddCriteria(Expr.Equals("Team.Competition.IsJudgingOpen", true));
         searchesToRun.Add(s);
     }
 

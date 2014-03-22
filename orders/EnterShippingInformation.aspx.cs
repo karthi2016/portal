@@ -54,6 +54,8 @@ public partial class orders_EnterShippingInformation : PortalPage
 
         if (targetOrder.ShipTo == null)
             targetOrder.ShipTo = targetOrder.BillTo;
+
+        RegisterJavascriptConfirmationBox(lbCancel, "Are you sure you want to cancel this order?");
     }
 
     /// <summary>
@@ -67,14 +69,21 @@ public partial class orders_EnterShippingInformation : PortalPage
         base.InitializePage();
 
         // let's preprocess and figure out whether we need shipping information
+        // MS-4855 - don't forget about cross-sell
+        var completeOrder = targetOrder.Clone().ConvertTo<msOrder>();
+        var csi = MultiStepWizards.PlaceAnOrder.CrossSellItems;
+        if (csi != null && csi.Count > 0)
+            completeOrder.LineItems.AddRange(csi.FindAll(x => x.Quantity != 0)); // add any cross sell items
+            
+
         using (var api = GetConciegeAPIProxy())
         {
-            preProcessedOrderPacket = api.PreProcessOrder(targetOrder).ResultValue;
+            preProcessedOrderPacket = api.PreProcessOrder(completeOrder).ResultValue;
         }
 
 
         if (!preProcessedOrderPacket.ShippingMethodRequired)    // no shipping method needed
-            GoTo("ConfirmOrder.aspx?useTransient=" + isTransient);
+            GoTo("EnterBillingInfo.aspx?useTransient=" + isTransient);
 
      
        setupShipping();
@@ -104,7 +113,19 @@ public partial class orders_EnterShippingInformation : PortalPage
         if (targetOrder.ShippingAddress == null)
             targetOrder.ShippingAddress = CurrentEntityPreferredAddress;
 
-        acShipping.Address = targetOrder.ShippingAddress;
+        // setup billing addresses
+        var addresses = ConciergeAPI.CurrentEntity.Addresses;
+
+        rptBillingAddress.DataSource = addresses;
+        rptBillingAddress.DataBind();
+
+        if (targetOrder.ShippingAddress != null)
+        {
+            rbNewBillingAddress.Checked = true;
+            acBillingAddress.Address = targetOrder.ShippingAddress;
+        }
+
+        
 
         // we need to get all of the available shipping methods from the API
         Search sShippingMethods = new Search { Type = msShippingMethod.CLASS_NAME };
@@ -154,13 +175,93 @@ public partial class orders_EnterShippingInformation : PortalPage
         if (!IsValid)
             return ;
 
-        targetOrder.ShippingAddress = acShipping.Address;
+        targetOrder.ShippingAddress = GetBillingAddress();
         targetOrder.ShippingMethod = rblShipping.SelectedValue;
-       
 
-        GoTo("ConfirmOrder.aspx?useTransient=" + isTransient );
+        
+
+
+        GoTo("EnterBillingInfo.aspx?useTransient=" + isTransient);
+
+    }
+
+
+    public Address GetBillingAddress()
+    {
+        if (rbNewBillingAddress.Checked)
+            return acBillingAddress.Address;
+
+        string addressIndex = Request[rbNewBillingAddress.NamingContainer.UniqueID + "$BillingAddress"];
+
+        if (addressIndex == null)
+            return null;
+
+        int index;
+
+        if (!int.TryParse(addressIndex, out index))
+            return null;
+
+        List<msEntityAddress> addresses = ConciergeAPI.CurrentEntity.Addresses;
+        if (addresses == null || addresses.Count <= index)
+            return null;
+
+        // we also need to reset the radio button, again working around the ASP.NET bug regarding radiobuttons and repeaters
+        RadioButton rb = (RadioButton)rptBillingAddress.Items[index].FindControl("rbAddress");
+        rb.Checked = true;
+
+        return addresses[index].Address;
+
 
     }
 
     #endregion
+
+    protected void rptBillingAddress_OnItemDataBound(object sender, RepeaterItemEventArgs e)
+    {
+        msEntityAddress address = (msEntityAddress)e.Item.DataItem;
+
+        if (Page.IsPostBack)
+            return;				// only do this if there's a postback - otherwise, preserve ViewState
+
+        switch (e.Item.ItemType)
+        {
+            case ListItemType.Header:
+                break;
+
+            case ListItemType.Footer:
+                break;
+
+            case ListItemType.AlternatingItem:
+                goto case ListItemType.Item;
+
+            case ListItemType.Item:
+                RadioButton rbAddress = (RadioButton)e.Item.FindControl("rbAddress");
+
+                Literal lAddress = (Literal)e.Item.FindControl("lAddress");
+
+                if (address == null || address.Address == null)
+                {
+                    rbAddress.Visible = false;
+                    return;
+                }
+                lAddress.Text = address.Address.ToHtmlString();
+
+                rbAddress.Attributes["value"] = e.Item.ItemIndex.ToString();
+
+
+                break;
+        }
+    }
+
+    protected void cvInvalidAddress_OnServerValidate(object source, ServerValidateEventArgs args)
+    {
+        var a = GetBillingAddress();
+
+        args.IsValid =
+            a != null &&
+            ! string.IsNullOrWhiteSpace(a.Line1) &&
+            ! string.IsNullOrWhiteSpace(a.City) &&
+            ! string.IsNullOrWhiteSpace(a.State) &&
+            ! string.IsNullOrWhiteSpace(a.PostalCode);
+    }
 }

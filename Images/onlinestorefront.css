@@ -5,7 +5,16 @@
 | Info: Site is Left Aligned, Max Width: 100%;
 | Template: Unique Template 7
 +---------------------------------------------------------*/
-
+.disabledAddToCart
+        {
+            color: gray;
+            font-weight: bolder;
+            padding: 2px 10px 2px 10px;
+            text-align: center;
+            border: 2pt solid silver;
+            cursor: default;
+            background: #f1f1f1;
+        }
 h2
 {
 	font: bold 15px Verdana, Geneva, Arial, Helvetica, sans-serif;

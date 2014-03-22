@@ -98,10 +98,7 @@
         </div>
     </div>
     <div class="section" style="margin-top: 10px">
-        <div class="sectionHeaderTitle">
-            <h2>
-                <asp:Literal ID="lRegistrationQuestions" runat="server">Registration Questions</asp:Literal></h2>
-        </div>
+         
         <div class="sectionContent">
             <uc1:CustomFieldSet ID="cfsRegistrationFields" runat="server" EditMode="false" />
         </div>
@@ -174,6 +171,8 @@
         </div>
         <div class="sectionContent">
             <ul>
+                <li> <asp:HyperLink ID="hlPrintAgenda" runat="server">Print Agenda</asp:HyperLink></li>
+              
                 <li runat="server" id="liEditRegistration">
                     <a href="/events/EditEventRegistration.aspx?contextID=<%=targetRegistration.ID %>">Edit Registration</a></li>
                 <li runat="server" id="liCancelRegistration">

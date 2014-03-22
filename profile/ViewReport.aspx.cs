@@ -91,7 +91,7 @@ public partial class profile_ViewReport : PortalPage
         using (var api = GetServiceAPIProxy())
         {
             var loc = api.ExecuteSearchWithFileOutput(targetSearch.Search, BuiltInSearchOutputTypes.ExcelFormatted, false).ResultValue;
-            Response.Redirect(loc);
+            Response.Redirect(loc ?? "~/SearchQueued.aspx");
 
 
         }

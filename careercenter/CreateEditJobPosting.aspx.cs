@@ -35,8 +35,15 @@ public partial class careercenter_CreateEditJobPosting : PortalPage
     {
         base.InitializeTargetObject();
 
-        targetJobPosting = MultiStepWizards.PostAJob.JobPosting ??
-                           new msJobPosting { Owner = ConciergeAPI.CurrentEntity.ID, AllowOnlineResumeSubmission = true, IsApproved = false };
+        targetJobPosting = MultiStepWizards.PostAJob.JobPosting;
+
+        if (targetJobPosting == null)
+        {
+            // MS-4172 - respect settings
+            targetJobPosting = CreateNewObject<msJobPosting>();
+            targetJobPosting.Owner = ConciergeAPI.CurrentEntity.ID;
+            // do NOT set this, let the default values to precedencetargetJobPosting.AllowOnlineResumeSubmission = , AllowOnlineResumeSubmission = true, IsApproved = false };
+        }
 
         if (!string.IsNullOrWhiteSpace(ContextID))
         {
@@ -166,7 +173,7 @@ public partial class careercenter_CreateEditJobPosting : PortalPage
 
         foreach (DataRowView drvCategory in dvCategories)
         {
-            if (targetJobPosting.Categories.Contains(drvCategory["Name"].ToString()))
+            if ( targetJobPosting.Categories != null && targetJobPosting.Categories.Contains(drvCategory["Name"].ToString()))
                 dlbCategories.Destination.Items.Add(new RadListBoxItem(drvCategory["Name"].ToString(), drvCategory["Name"].ToString())); // add it
             else dlbCategories.Source.Items.Add(new RadListBoxItem(drvCategory["Name"].ToString(), drvCategory["Name"].ToString())); // add it
 

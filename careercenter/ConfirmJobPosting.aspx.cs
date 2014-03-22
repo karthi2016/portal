@@ -57,7 +57,7 @@ public partial class careercenter_ConfirmJobPosting : PortalPage
         }
 
         if(Post)
-            PostJobAndRedirect();
+            Redirect();
 
         if (!string.IsNullOrWhiteSpace(targetJobPosting.Location))
             targetJobPostingLocation = LoadObjectFromAPI<msJobPostingLocation>(targetJobPosting.Location);
@@ -114,11 +114,18 @@ public partial class careercenter_ConfirmJobPosting : PortalPage
     {
         using (IConciergeAPIService proxy = GetConciegeAPIProxy())
         {
-            //Save the job posting and decrement the amount available
-            targetJobPosting = proxy.Save(targetJobPosting).ResultValue.ConvertTo<msJobPosting>();
 
-            proxy.AdjustEntitlementAvailableQuantity( ConciergeAPI.CurrentEntity.ID,  msJobPostingEntitlement.CLASS_NAME, null, -1);
-            
+            proxy.Save(targetJobPosting);
+            Redirect();
+        }
+    }
+
+
+    protected void Redirect()
+    {
+        using (IConciergeAPIService proxy = GetConciegeAPIProxy())
+        {
+                
             //Send the confirmation e-mail
             proxy.SendEmail("BuiltIn:JobPosted", new List<string> { targetJobPosting.ID },
                             ConciergeAPI.CurrentUser.EmailAddress);

@@ -69,7 +69,7 @@ public partial class careercenter_SearchResume_Results : PortalPage
                 downloadLocation = api.ExecuteSearchWithFileOutput(targetSearch, targetSearch.OutputFormat, false).ResultValue;
             }
             if (string.IsNullOrWhiteSpace(downloadLocation))
-                GoTo("~/careercenter/SearchResume_Criteria.aspx");
+                GoTo("~/SearchQueued.aspx");
             Response.Redirect(downloadLocation);
         }
 

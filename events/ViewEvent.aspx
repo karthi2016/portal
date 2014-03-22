@@ -41,6 +41,7 @@
                     <asp:HyperLinkField DataNavigateUrlFormatString="~\events\ViewEventRegistration.aspx?contextID={0}"
                         HeaderStyle-HorizontalAlign="Left" HeaderText="Name" DataNavigateUrlFields="ID"
                         DataTextField="Name" />
+                        <asp:BoundField DataField="Fee.Name" HeaderStyle-HorizontalAlign="Left" HeaderText="Registration Type" />
                     <asp:BoundField DataField="CreatedDate" HeaderStyle-HorizontalAlign="Left" HeaderText="Registration Date" />
                 </Columns>
             </asp:GridView>
@@ -54,6 +55,11 @@
         <div class="sectionContent" style="width: 400px">
             <ul>
                 <asp:HyperLink runat="server" ID="hlRegistration"><LI>Register for this Event</LI></asp:HyperLink>
+                  <li runat="server" id="liRegisterAGuest" visible="false">
+                    <a href="/events/Register_SelectFee.aspx?contextID=<%=targetEvent.ID %>&guestOnly=true">Register a Guest</a></li>
+                <asp:HyperLink runat="server" ID="hlDownloadIcal"><LI>Download iCalendar File </LI></asp:HyperLink>
+                <asp:HyperLink runat="server" ID="hlPurchaseSeats" Visible="false"><LI>Purchase Seats/Tables for this Event</LI></asp:HyperLink>
+                <asp:HyperLink runat="server" ID="hlViewMySeats" Visible="false"><LI>View My Seats/Tables for this Event</LI></asp:HyperLink>
                 <asp:Repeater ID="rptGroupRegistration" runat="server">
                     <ItemTemplate>
                         <a href='ManageGroupRegistration.aspx?contextID=<%=targetEvent.ID %>&organizationID=<%#DataBinder.Eval( Container.DataItem, "Value") %>'>
@@ -79,7 +85,7 @@
                 <li runat="server" id="liSearchEventRegistrations" visible="false"><a href="/events/SearchEventRegistrations_Criteria.aspx?contextID=<%=targetEvent.ID %>">
                     <asp:Literal ID="lSearchRegistrations" runat="server">Search Event Registrations</asp:Literal></a></li>
                 <asp:HyperLink ID="hlDiscussionBoard" runat="server" NavigateUrl="/discussions/ViewDiscussionBoard.aspx?contextID="><li>View Discussion Board</li></asp:HyperLink>
-                <li><a href="/BrowseEvents.aspx">
+                <li><a href="BrowseEvents.aspx">
                     <asp:Literal ID="lViewUpcomingEvents" runat="server">View All Upcoming Events</asp:Literal></a></li>
                 <li><a href="/">
                     <asp:Literal ID="lGoHome" runat="server">Go Home</asp:Literal></a></li>

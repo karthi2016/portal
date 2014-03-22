@@ -82,15 +82,37 @@ public class DiscussionsPage : PortalPage
 
     #region Initialization
 
+    protected override void InitializeTargetObject()
+    {
+        base.InitializeTargetObject();
+
+        List<Search> searches = new List<Search>();
+
+        Search sMembership = new Search(msEntity.CLASS_NAME) { ID = msMembership.CLASS_NAME };
+        sMembership.AddOutputColumn("ID");
+        sMembership.AddOutputColumn("Membership");
+        sMembership.AddOutputColumn("Membership.ReceivesMemberBenefits");
+        sMembership.AddOutputColumn("Membership.TerminationDate");
+        sMembership.AddCriteria(Expr.Equals("ID", ConciergeAPI.CurrentEntity.ID));
+        sMembership.AddSortColumn("ID");
+
+        searches.Add(sMembership);
+
+        List<SearchResult> searchResults = ExecuteSearches(searches, 0, 1);
+
+        SearchResult srMembership = searchResults.Single(x => x.ID == msMembership.CLASS_NAME);
+        drMembership = srMembership != null && srMembership.Table != null &&
+                       srMembership.Table.Rows.Count > 0
+                           ? srMembership.Table.Rows[0]
+                           : null;
+    }
+
     protected override bool CheckSecurity()
     {
         if(!base.CheckSecurity())
             return false;
 
         if(targetForum != null && (!targetForum.IsActive || (targetForum.MembersOnly && !isActiveMember())))
-            return false;
-
-        if (editMode && targetDiscussionPost != null && targetDiscussionTopic.PostedBy != ConciergeAPI.CurrentEntity.ID)
             return false;
 
         return true;
@@ -102,25 +124,7 @@ public class DiscussionsPage : PortalPage
 
     protected virtual void loadDataFromConcierge(IConciergeAPIService proxy)
     {
-        List<Search> searches = new List<Search>();
-
-        Search sMembership = new Search(msEntity.CLASS_NAME){ID=msMembership.CLASS_NAME};
-        sMembership.AddOutputColumn("ID");
-        sMembership.AddOutputColumn("Membership");
-        sMembership.AddOutputColumn("Membership.ReceivesMemberBenefits");
-        sMembership.AddOutputColumn("Membership.TerminationDate");
-        sMembership.AddCriteria(Expr.Equals("ID", ConciergeAPI.CurrentEntity.ID));
-        sMembership.AddSortColumn("ID");
-
-        searches.Add(sMembership);
-
-        List<SearchResult> searchResults = ExecuteSearches(proxy, searches, 0, 1);
-
-        SearchResult srMembership = searchResults.Single(x => x.ID == msMembership.CLASS_NAME);
-        drMembership = srMembership != null && srMembership.Table != null &&
-                       srMembership.Table.Rows.Count > 0
-                           ? srMembership.Table.Rows[0]
-                           : null;
+        
     }
 
     protected bool isActiveMember()

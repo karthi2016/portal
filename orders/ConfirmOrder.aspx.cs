@@ -6,6 +6,7 @@ using System.Text;
 using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
+using MemberSuite.SDK.Manifests;
 using MemberSuite.SDK.Searching;
 using MemberSuite.SDK.Searching.Operations;
 using MemberSuite.SDK.Types;
@@ -20,7 +21,7 @@ public partial class orders_ConfirmOrder : PortalPage
     private bool isTransient;
     private PreProcessedOrderPacket preProcessedOrderPacket;
     private object threadLock = new object();
-    
+
     protected override void InitializeTargetObject()
     {
         base.InitializeTargetObject();
@@ -33,6 +34,11 @@ public partial class orders_ConfirmOrder : PortalPage
         else
             originalOrder = MultiStepWizards.PlaceAnOrder.ShoppingCart;
 
+        if (originalOrder == null)
+        {
+            QueueBannerError("No order was found.");
+            GoHome();
+        }
         //MS-2823
         if (originalOrder.BillTo == null)
             originalOrder.BillTo = ConciergeAPI.CurrentEntity.ID;
@@ -51,6 +57,7 @@ public partial class orders_ConfirmOrder : PortalPage
         base.OnLoad(e);
         ClientScript.RegisterStartupScript(GetType(), "UpdatePayment", "updatePayment();", true);
     }
+
     protected override void InitializePage()
     {
         base.InitializePage();
@@ -59,27 +66,42 @@ public partial class orders_ConfirmOrder : PortalPage
         if (!populateOrder())
             return;
 
-        acBillingAddress.Address = targetOrder.BillingAddress;
-        acBillingAddress.DataBind();
 
         // now - are there future billings?
         setupFutureBillings();
 
-        // ok, if this order has a total, we need to show the payment
-        setupPaymentOptions();
 
         setupShipping();
-
+        setupBilling();
         setupConfirmationSections();
 
-        btnPlaceOrder.Attributes.Add("onclick", "this.disabled=true;" + Page.ClientScript.GetPostBackEventReference(btnPlaceOrder, "").ToString());
+        btnPlaceOrder.Attributes.Add("onclick",
+                                     "this.disabled=true;" +
+                                     Page.ClientScript.GetPostBackEventReference(btnPlaceOrder, "").ToString());
+
+    }
+
+    private void setupBilling()
+    {
+        if (targetOrder.SafeGetValue<string>("BillingMethodFriendlyName") == null) // no billing
+        {
+            divBilling.Visible = false;
+            return;
+        }
+        lblPaymentMethod.Text = targetOrder.SafeGetValue<string>("BillingMethodFriendlyName");
+
+        if (targetOrder.BillingAddress != null)
+            lblBillingAddress.Text = targetOrder.BillingAddress.ToHtmlString();
+
+        lSavingInfo.Visible = targetOrder.SavePaymentMethod;
+        hlChangeBilling.NavigateUrl += "?useTransient=" + Request.QueryString["useTransient"];
     }
 
     private void setupConfirmationSections()
     {
         // we have special setions for different kinds of confirmations
         OrderConfirmationPacket confirmationPacket = MultiStepWizards.PlaceAnOrder.OrderConfirmaionPacket;
-        if (confirmationPacket == null || ! confirmationPacket.ShouldShow()) return;
+        if (confirmationPacket == null || !confirmationPacket.ShouldShow()) return;
 
         // now, let's got through and try and cast the packet, and see which kind it is
         ExhibitorConfirmationPacket ep = confirmationPacket as ExhibitorConfirmationPacket;
@@ -91,17 +113,17 @@ public partial class orders_ConfirmOrder : PortalPage
     {
         divExhibitorConfirmation.Visible = true;
 
-        using( var api = GetServiceAPIProxy() )
-        if (ep.BoothPreferences != null && ep.BoothPreferences.Count > 0)
-        {
-            divExhibitorConfirmation_BoothPreferences.Visible = true;
+        using (var api = GetServiceAPIProxy())
+            if (ep.BoothPreferences != null && ep.BoothPreferences.Count > 0)
+            {
+                divExhibitorConfirmation_BoothPreferences.Visible = true;
 
-            StringBuilder sb = new StringBuilder();
-            foreach (var b in ep.BoothPreferences)
-                sb.AppendFormat("{0}, ", api.GetName(b).ResultValue );
+                StringBuilder sb = new StringBuilder();
+                foreach (var b in ep.BoothPreferences)
+                    sb.AppendFormat("{0}, ", api.GetName(b).ResultValue);
 
-            lblExhbitor_BoothPreferences.Text = sb.ToString().Trim().TrimEnd(',');
-        }
+                lblExhbitor_BoothPreferences.Text = sb.ToString().Trim().TrimEnd(',');
+            }
 
         if (!string.IsNullOrWhiteSpace(ep.SpecialRequests))
             lblExhibitorSpecialRequests.Text = ep.SpecialRequests;
@@ -121,7 +143,7 @@ public partial class orders_ConfirmOrder : PortalPage
 
         if (isTransient)
         {
-            btnContinue.Visible = false; // you can't do this for a transient order - you have to proceed
+            lbCancel.Enabled = false; // you can't do this for a transient order - you have to proceed
             lblContinueShoppingInstructions.Visible = false;
             hlChangeShippingMethod.NavigateUrl += "?useTransient=true";
         }
@@ -139,7 +161,7 @@ public partial class orders_ConfirmOrder : PortalPage
             if (targetOrder.BillTo != null && targetOrder.BillingAddress == null)
             {
                 msEntity billTo = api.Get(targetOrder.BillTo).ResultValue.ConvertTo<msEntity>();
-                if(billTo.Addresses != null && billTo.Addresses.Count > 0)
+                if (billTo.Addresses != null && billTo.Addresses.Count > 0)
                 {
                     var address = billTo.Addresses.FirstOrDefault(x => x.Type == billTo.PreferredAddressType) ??
                                   billTo.Addresses[0];
@@ -148,7 +170,7 @@ public partial class orders_ConfirmOrder : PortalPage
                 }
             }
 
-            if(targetOrder.ShippingAddress == null && targetOrder.ShipTo != null)
+            if (targetOrder.ShippingAddress == null && targetOrder.ShipTo != null)
             {
                 msEntity shipTo = api.Get(targetOrder.ShipTo).ResultValue.ConvertTo<msEntity>();
                 if (shipTo.Addresses != null && shipTo.Addresses.Count > 0)
@@ -167,11 +189,11 @@ public partial class orders_ConfirmOrder : PortalPage
             var csi = MultiStepWizards.PlaceAnOrder.CrossSellItems;
             if (csi != null && csi.Count > 0)
             {
-                targetOrder.LineItems.AddRange(csi); // add any cross sell items
+                targetOrder.LineItems.AddRange(csi.FindAll(x=>x.Quantity != 0)); // add any cross sell items
                 hlChangeRemoveAdditionalItems.Visible = true;
                 hlChangeRemoveAdditionalItems.NavigateUrl += "?useTransient" + isTransient;
             }
-        
+
 
             preProcessedOrderPacket = api.PreProcessOrder(targetOrder).ResultValue;
         }
@@ -222,16 +244,7 @@ public partial class orders_ConfirmOrder : PortalPage
         dlFutureBillings.DataBind();
     }
 
-    private void setupPaymentOptions()
-    {
-        divPayment.Visible = preProcessedOrderPacket.Total > 0;
 
-        if (!preProcessedOrderPacket.CustomerCanPayLater)    // disable that option
-        {
-            rbPaymentPayLater.Text += " (not available)";
-            rbPaymentPayLater.Enabled = false;
-        }
-    }
 
     protected void btnContinueShopping_Click(object sender, EventArgs e)
     {
@@ -246,22 +259,8 @@ public partial class orders_ConfirmOrder : PortalPage
 
     protected void btnPlaceOrder_Click(object sender, EventArgs e)
     {
-        // we have to disable the validators so the "Validate" command doesn't fire improporly
-        if (!rbPaymentCreditCard.Checked)
-        {
-            rfvCCNameOnCard.Enabled = false;
-            rfvCreditCardNumber.Enabled = false;
-            rfvCardSecurity.Enabled = false;
-            rfvPromoCode.Enabled = false;
-            Validate();
-
-            // now re-enable
-            rfvCCNameOnCard.Enabled = true;
-            rfvCreditCardNumber.Enabled = true;
-            rfvCardSecurity.Enabled = true;
-            rfvPromoCode.Enabled = true;
-        }
-
+        const string ContentSuffix = "_Contents";
+   
         if (!IsValid)
             return;
 
@@ -273,36 +272,81 @@ public partial class orders_ConfirmOrder : PortalPage
                 return;
             }
 
+            targetOrder.Notes = tbNotesComments.Text;
 
             // add cross sell
             var csi = MultiStepWizards.PlaceAnOrder.CrossSellItems;
             if (csi != null && csi.Count > 0)
-                targetOrder.LineItems.AddRange(csi); // add any cross sell items
-                
+                targetOrder.LineItems.AddRange( csi.FindAll(x => x.Quantity != 0)); // add any cross sell items
+
             using (var api = GetServiceAPIProxy())
             {
+                var msPayload = new List<MemberSuiteObject>();
+                // Go over line items and generate payoads for all attachments realted fields.
+                foreach (var lineItem in targetOrder.LineItems)
+                {
+                    // We're looking for _Content only. _Content has to be of MemberSuiteFile type.
+                    var attachments = lineItem.Fields.Where(f => f.Key.EndsWith(ContentSuffix) && IsNonEmptyMemberSuiteFile(f.Value))
+                        .Select(c =>
+                        {
+                            var msf = (MemberSuiteFile)c.Value;
+                            // Generate ID
+                            var fileId = api.GenerateIdentifer("File").ResultValue;
+                            // Create ms object...
+                            var mso = new MemberSuiteObject();
+                            mso.ClassType = "File";
+                            mso.Fields["ID"] = fileId;
+                            mso.Fields["FileContents"] = msf.FileContents;
+                            mso.Fields["Name"] = msf.FileName;
+                            mso.Fields["ContentLength"] = msf.FileContents.Length;
+
+                            return new { Key = c.Key.Replace(ContentSuffix, string.Empty), FileId = fileId, File = mso };
+                        });
+
+                    if (attachments.Count() > 0)
+                    {
+                        foreach (var a in attachments)
+                        {
+                            // Add to current lineItem's Options field's name and according file Id.
+                            lineItem.Options.Add(new NameValueStringPair { Name = a.Key, Value = a.FileId });
+                            // Add according ms file to payload.
+                            msPayload.Add(a.File);
+                        }
+                    }
+                }
+
+                OrderPayload payload = MultiStepWizards.PlaceAnOrder.Payload;
+
+                if (msPayload.Count() > 0)
+                {
+                    if (payload == null)
+                    {
+                        payload = new OrderPayload();
+                    }
+
+                    if (payload.ObjectsToSave == null)
+                    {
+                        payload.ObjectsToSave = new List<MemberSuiteObject>();
+                    }
+
+                    payload.ObjectsToSave.AddRange(msPayload);
+                }
+
                 var processedOrderPacket = api.PreProcessOrder(targetOrder).ResultValue;
                 cleanOrder = processedOrderPacket.FinalizedOrder.ConvertTo<msOrder>();
                 cleanOrder.Total = processedOrderPacket.Total;
-                if (rbPaymentCreditCard.Visible && rbPaymentCreditCard.Checked)
-                {
-                    cleanOrder.CreditCardNumber = tbCreditCardNumber.Text;
-                    cleanOrder.PaymentMethod = OrderPaymentMethod.CreditCard;
-                    cleanOrder.CreditCardExpirationDate = myExpiration.Date;
-                }
-
-                if (rbPaymentPayLater.Visible && rbPaymentPayLater.Checked)
-                    cleanOrder.PurchaseOrderNumber = tbPurchaseOrder.Text;
-
-                if (acBillingAddress.Visible)
-                    cleanOrder.BillingAddress = acBillingAddress.Address;
 
                 if (string.IsNullOrWhiteSpace(cleanOrder.BillingEmailAddress))
                     cleanOrder.BillingEmailAddress = CurrentUser.EmailAddress;
 
                 string antiDupeKey = (string)ViewState["AntiDupeKey"];
-                
-                var trackingKey = api.ProcessOrder(cleanOrder, antiDupeKey).ResultValue;
+
+
+                string trackingKey;
+                if (payload == null)
+                    trackingKey = api.ProcessOrder(cleanOrder, antiDupeKey).ResultValue;
+                else
+                    trackingKey = api.ProcessOrderWithPayload(cleanOrder, payload, antiDupeKey).ResultValue;
 
                 // let's wait for the order
                 var log = OrderUtilities.WaitForOrderToComplete(api, trackingKey);
@@ -310,6 +354,13 @@ public partial class orders_ConfirmOrder : PortalPage
                 if (log != null && log.Type == AuditLogType.OrderFailure)
                     throw new ConciergeClientException(MemberSuite.SDK.Concierge.ConciergeErrorCode.IllegalOperation,
                         log.Description);
+
+                string url = MultiStepWizards.PlaceAnOrder.OrderCompleteUrl ?? "OrderComplete.aspx";
+                if (url.Contains("?"))
+                    url += "&";
+                else
+                    url += "?";
+
 
                 targetOrder = null;
 
@@ -330,15 +381,8 @@ public partial class orders_ConfirmOrder : PortalPage
 
                 MultiStepWizards.PlaceAnOrder.CrossSellItems = null;
 
-            
-                // now try to save the objects
-                if (MultiStepWizards.PlaceAnOrder.ObjectsToSave != null)
-                {
-                    foreach (var mso in MultiStepWizards.PlaceAnOrder.ObjectsToSave)
-                        SaveObject(mso);
 
-                    MultiStepWizards.PlaceAnOrder.ObjectsToSave = null;
-                }
+
 
                 MultiStepWizards.PlaceAnOrder.EditOrderLineItem = null; // clear this out
                 MultiStepWizards.PlaceAnOrder.EditOrderLineItemProductName = null; // clear this out
@@ -346,15 +390,27 @@ public partial class orders_ConfirmOrder : PortalPage
                 MultiStepWizards.PlaceAnOrder.OrderConfirmaionPacket = null;
 
                 if (log == null)
+                {
+                    // hack - let's save the job posting
+                    if (MultiStepWizards.PostAJob.JobPosting != null)
+                        SaveObject(MultiStepWizards.PostAJob.JobPosting);
+
+                    MultiStepWizards.PostAJob.JobPosting = null;
+
                     GoTo("OrderQueued.aspx");
+                }
 
                 var order = LoadObjectFromAPI<msOrder>(log.AffectedRecord_ID);
                 QueueBannerMessage(string.Format("Order #{0} was processed successfully.",
                                                  order.SafeGetValue<long>(
                                                      msLocallyIdentifiableAssociationDomainObject.FIELDS.LocalID)));
 
+                url += "orderID=" + order.ID;
 
-                GoTo("OrderComplete.aspx?contextID=" + order.ID );
+                if (!url.Contains("contextID="))
+                    url += "&contextID=" + order.ID;
+
+                GoTo(url);
             }
         }
 
@@ -390,6 +446,8 @@ public partial class orders_ConfirmOrder : PortalPage
                 cvQuantity.ErrorMessage = string.Format("The quantity you have specified for '{0}' is invalid.",
                     productName);
                 lblProductName.Text = productName;
+                if (!string.IsNullOrWhiteSpace(li.Description))
+                    lblProductName.Text += " (" + li.Description + ")";
 
                 lblProductPrice.Text = li.Total.ToString("C");
                 lblProductType.Text = preProcessedOrderPacket.ProductTypes[e.Row.RowIndex];
@@ -403,6 +461,22 @@ public partial class orders_ConfirmOrder : PortalPage
 
                 break;
         }
+    }
+
+    private static bool IsNonEmptyMemberSuiteFile(object o)
+    {
+        var msf = o as MemberSuiteFile;
+        if (msf == null)
+        {
+            return false;
+        }
+
+        if (msf.FileContents.Length == 0)
+        {
+            return false;
+        }
+
+        return true;
     }
 
     private void checkForMissingRequiredDemographics(msOrderLineItem item, Image imgWarning, int j)
@@ -432,69 +506,7 @@ public partial class orders_ConfirmOrder : PortalPage
                 preProcessedOrderPacket.ProductDemographics[rowIndex].Count > 0);
     }
 
-    protected void btnApplyDiscountCode_Click(object sender, EventArgs e)
-    {
 
-
-        msOrder order = targetOrder;
-        if (order == null) return;
-
-
-        string discountCode = tbPromoCode.Text.ToUpper().Trim();
-        tbPromoCode.Text = "";
-
-
-        if (string.IsNullOrWhiteSpace(discountCode)) return;
-
-        string discountCodeID = retrieveIDForDiscountCode(discountCode);
-
-        if (discountCodeID == null)
-        {
-            DisplayBannerMessage(string.Format("Discount code '{0}' was not found.",
-                                                                            discountCode), true);
-            return;
-        }
-        
-        
-        // put it both in the original order, and the cloned order
-        if (originalOrder.DiscountCodes == null)
-            originalOrder.DiscountCodes = new List<msOrderDiscountCode>();
-
-        if (order.DiscountCodes == null)
-            order.DiscountCodes = new List<msOrderDiscountCode>();
-
-        order.DiscountCodes.Add(new msOrderDiscountCode { DiscountCode = discountCodeID } );
-        originalOrder.DiscountCodes.Add(new msOrderDiscountCode { DiscountCode = discountCodeID });
-
-        populateOrder();
-
-        setupPaymentOptions();
-
-        // if the discount code was removed, it means it was invalid
-
-
-        if (cleanOrder.DiscountCodes == null || !cleanOrder.DiscountCodes.Exists( x=> x.DiscountCode == discountCodeID))
-            DisplayBannerMessage(string.Format("Discount code '{0}' is not applicable.", discountCode), true);
-        else
-            DisplayBannerMessage(string.Format("Discount code '{0}' was applied successfully.", discountCode), false);
-
-
-
-    }
-
-    private string retrieveIDForDiscountCode(string discountCode)
-    {
-        Search s = new Search(msDiscountCode.CLASS_NAME);
-        s.AddCriteria(Expr.Equals("Code", discountCode));
-        using (var api = GetServiceAPIProxy())
-        {
-            var result = api.ExecuteSearch(s, 0, 1).ResultValue;
-            if (result.TotalRowCount > 0)
-                return Convert.ToString(result.Table.Rows[0]["ID"]);
-        }
-
-        return null;
-    }
 
     protected void gvShoppingCart_OnRowCommand(object sender, GridViewCommandEventArgs e)
     {

@@ -56,6 +56,10 @@ public partial class membership_ViewMembership : PortalPage
 
         _runSearch();
 
+        string info = GetMembershipField("SavedPaymentMethod.Name");
+        if (info != null)
+            lblPaymentInfo.Text = info;
+
         // only show termination if terminated
         trTermination.Visible = drMembership["TerminationDate"] != DBNull.Value;
 
@@ -89,6 +93,8 @@ public partial class membership_ViewMembership : PortalPage
                                                : string.Format("~/financial/AccountHistory.aspx?contextID={0}",
                                                                targetMembership.Owner);
         liViewAccountHistory.Visible = canViewAccountHistory();
+
+        hlUpdateBillingInfo2.NavigateUrl = hlUpdateBillingInfo.NavigateUrl = string.Format("/orders/UpdateBillingInformation.aspx?contextID={0}", ContextID);
     }
 
     private void _runSearch()
@@ -108,6 +114,8 @@ public partial class membership_ViewMembership : PortalPage
         sMembership.AddOutputColumn("Type.Name");
         sMembership.AddOutputColumn("Product.Name");
         sMembership.AddOutputColumn("TerminationDate");
+        sMembership.AddOutputColumn("SavedPaymentMethod.Name");
+        
         sMembership.AddOutputColumn("TerminationReason.Name");
         sMembership.AddOutputColumn("ReceivesMemberBenefits");
         sMembership.AddOutputColumn("MembershipDirectoryOptOut");
@@ -131,6 +139,7 @@ public partial class membership_ViewMembership : PortalPage
 
         Search sAuditLogs = new Search { Type = msAuditLog.CLASS_NAME, ID=msAuditLog.CLASS_NAME };
         sAuditLogs.AddCriteria(Expr.Equals(msAuditLog.FIELDS.AffectedRecord_ID, ContextID));
+        sAuditLogs.AddCriteria(Expr.IsOneOfTheFollowing(msAuditLog.FIELDS.Type, new List<string> {"Renewal", "Drop"} ));
         sAuditLogs.AddOutputColumn("Type_Name");
         sAuditLogs.AddOutputColumn("Actor.Name");
         sAuditLogs.AddOutputColumn("CreatedDate");

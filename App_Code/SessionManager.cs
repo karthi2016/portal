@@ -34,18 +34,18 @@ public static class SessionManager
         if (sessionValue == null)
             return default(T);
 
-        if (typeof(MemberSuiteObject).IsAssignableFrom(typeof(T))
-             && sessionValue is string && RegularExpressions.GuidRegex.IsMatch((string)sessionValue))    // we stored a guid
-        {
-            var api = ConciergeAPIProxyGenerator.GenerateProxy();
-            string id = (string) sessionValue;
-            var mso = api.Get(id).ResultValue;
-            if (mso == null) return default(T);
-            if (typeof (T) != mso.GetType()) // need to convert
-                return (T) (object) mso.ConvertTo( typeof(T) );
+        //if (typeof(MemberSuiteObject).IsAssignableFrom(typeof(T))
+        //     && sessionValue is string && RegularExpressions.GuidRegex.IsMatch((string)sessionValue))    // we stored a guid
+        //{
+        //    var api = ConciergeAPIProxyGenerator.GenerateProxy();
+        //    string id = (string) sessionValue;
+        //    var mso = api.Get(id).ResultValue;
+        //    if (mso == null) return default(T);
+        //    if (typeof (T) != mso.GetType()) // need to convert
+        //        return (T) (object) mso.ConvertTo( typeof(T) );
 
-            return (T) (object) mso;
-        }
+        //    return (T) (object) mso;
+        //}
 
         return (T)sessionValue ;
 	}
@@ -59,11 +59,11 @@ public static class SessionManager
 
         object valueToActuallyStoreInSession = valueToSet;
 
-        // is this a membersuite object?
-        MemberSuiteObject mso = valueToSet as MemberSuiteObject;
+        //// is this a membersuite object?
+        //MemberSuiteObject mso = valueToSet as MemberSuiteObject;
 
-        if (mso != null && mso.SafeGetValue("SystemTimestamp") != null)   // it's in the DB
-            valueToActuallyStoreInSession = mso.SafeGetValue<string>("ID");
+        //if (mso != null && mso.SafeGetValue("SystemTimestamp") != null)   // it's in the DB
+        //    valueToActuallyStoreInSession = mso.SafeGetValue<string>("ID");
 
         HttpContext.Current.Session[key] = valueToActuallyStoreInSession;
     }

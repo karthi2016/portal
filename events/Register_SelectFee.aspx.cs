@@ -23,7 +23,7 @@ public partial class events_Register_SelectFee : PortalPage
     protected msChapter targetChapter;
     protected msSection targetSection;
     protected msOrganizationalLayer targetOrganizationalLayer;
-
+    protected bool onlyShowGuestSpouseRegistrations = false;
     #endregion
 
     #region Properties
@@ -57,6 +57,8 @@ public partial class events_Register_SelectFee : PortalPage
             GoToMissingRecordPage();
             return;
         }
+
+        onlyShowGuestSpouseRegistrations = Request.QueryString["guestOnly"] == "true";
 
         targetOrder = new msOrder();
 
@@ -129,6 +131,8 @@ public partial class events_Register_SelectFee : PortalPage
         var entity = LoadObjectFromAPI<msEntity>( MultiStepWizards.GroupRegistration.RegistrantID);
         lblRegistrant.Text = entity.Name ;
         targetEntity = entity;
+
+        targetOrder.BillTo = targetOrder.ShipTo = targetEntity.ID;
     }
 
     protected void setFeesAndContinueIfApplicable()
@@ -137,12 +141,19 @@ public partial class events_Register_SelectFee : PortalPage
         using (IConciergeAPIService proxy = GetConciegeAPIProxy())
         {
             fees = proxy.GetApplicableRegistrationFees(targetEvent.ID, targetEntity.ID).ResultValue;
-            fees.RemoveAll(x => !x.SellOnline || x.IsGuestRegistration);
+            fees.RemoveAll(x => !x.SellOnline);
+
+            if (onlyShowGuestSpouseRegistrations)
+                fees.RemoveAll(x => !x.IsGuestRegistration);
+            else
+                fees.RemoveAll(x => x.IsGuestRegistration);
 
             describedFees =
                 proxy.DescribeProducts(targetEntity.ID, fees.Select(x => x.ProductID).ToList()).ResultValue;
         }
         fees = fees.OrderBy(x => x.DisplayOrder).ThenBy(x => x.ProductName).ToList();
+
+       
 
         foreach (var fee in fees)
         {

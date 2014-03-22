@@ -1,5 +1,6 @@
 ﻿<%@ Page Title="" Language="C#" MasterPageFile="~/App_Master/GeneralPage.master"
     AutoEventWireup="true" CodeFile="ViewOrder.aspx.cs" Inherits="financial_ViewOrder" %>
+<%@ Register TagPrefix="telerik" Namespace="Telerik.Web.UI" Assembly="Telerik.Web.UI, Version=2011.1.519.40, Culture=neutral, PublicKeyToken=121fae78165ba3d4" %>
 
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="Server">
     <title>View Order #
@@ -132,7 +133,7 @@
         <Columns>
             <asp:BoundField DataField="Product.Name" HeaderText="Product" HeaderStyle-HorizontalAlign="Left" />
             <asp:BoundField DataField="Description" HeaderText="Desc" HeaderStyle-HorizontalAlign="Left" />
-            <asp:BoundField DataField="Quantity" HeaderText="Quantity" DataFormatString="{0:C}"
+            <asp:BoundField DataField="Quantity" HeaderText="Quantity" DataFormatString="{0:N0}"
                 HeaderStyle-HorizontalAlign="Left" />
             <asp:BoundField DataField="UnitPrice" HeaderText="Unit Price" DataFormatString="{0:C}"
                 HeaderStyle-HorizontalAlign="Left" />
@@ -174,36 +175,33 @@
             </Columns>
         </asp:GridView>
     </div>
-    <asp:Panel ID="pnlInstallments" runat="server" Visible="false">
+    
         <h2>
             <asp:Literal ID="lInstallments" runat="server">Installments</asp:Literal></h2>
-        <table style="width: 200px">
-            <tr>
-                <td class="columnHeader">
-                    <asp:Literal ID="lInstallmentStatus" runat="server">Installment Status:</asp:Literal>
-                </td>
-                <td>
-                    <%= GetSearchResult( targetOrder, "BillingSchedule.Status", null ) %>
-                </td>
-            </tr>
-        </table>
-        <asp:Literal ID="lBrokenOutIntoInstallments" runat="server">This order is broken out into installments. The billing schedule is listed below:</asp:Literal>
-        <p />
-        <asp:GridView ID="gvInstallments" AutoGenerateColumns="false" EmptyDataText="No billing schedule entries are tied to this order."
-            GridLines="None" runat="server">
+        
+      
+    <telerik:RadGrid BorderWidth="0px" EnableAjax="true"   Width="100%"
+        ID="rgInstallments" runat="server" GridLines="None" OnNeedDataSource="rgInstallments_NeedDataSource"
+        AutoGenerateColumns="false" SelectedItemStyle-CssClass="rgSelectedRow" 
+        
+        >
+        
+        <MasterTableView DataKeyNames="ID">
             <Columns>
-                <asp:BoundField DataField="Date" HeaderText="Date" HeaderStyle-HorizontalAlign="Left"
-                    DataFormatString="{0:d}" />
-                <asp:BoundField DataField="Amount" HeaderText="Total" HeaderStyle-HorizontalAlign="Left"
-                    DataFormatString="{0:C}" />
-                <asp:BoundField DataField="Status" HeaderText="Name" HeaderStyle-HorizontalAlign="Left" />
+                
+                <telerik:GridBoundColumn DataField="Product.Name" HeaderText="Item"   />
+                <telerik:GridBoundColumn DataField="PastBillingAmount" HeaderText="Amount Already Billed" DataFormatString="{0:C}"   />
+                <telerik:GridBoundColumn DataField="FutureBillingAmount" HeaderText="Amount to be Billed" DataFormatString="{0:C}"   />
+                <telerik:GridHyperLinkColumn Text="(view)" DataNavigateUrlFields="ID" DataNavigateUrlFormatString="ViewInstallmentPlan.aspx?contextID={0}" ItemStyle-Width="90px"/>
+                <telerik:GridHyperLinkColumn Text="(update billing)" DataNavigateUrlFields="ID" DataNavigateUrlFormatString="RectifySuspendedBillingSchedule.aspx?contextID={0}" ItemStyle-Width="90px"/>
             </Columns>
-        </asp:GridView>
-        <div style="text-align: right">
-            <asp:Button ID="btnUpdateCreditCardInfo" runat="server" OnClick="btnUpdateCreditCard_Click"
-                Text="Update Credit Card Info for this Order" />
-        </div>
-    </asp:Panel>
+        </MasterTableView>
+    </telerik:RadGrid>
+    <asp:Literal ID="lNoIntallmentPlans" runat="server">
+       <i>There are no installment plans linked to this order.</i> 
+    </asp:Literal>
+
+  
     <hr />
     <div style="text-align: center">
         <asp:Button ID="Button1" runat="server" CausesValidation="false" Text="Account History"

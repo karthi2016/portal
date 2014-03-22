@@ -34,4 +34,32 @@ public static class EventLogic
             return api.ExecuteSearch(s, 0, 1).ResultValue.TotalRowCount > 0;
          
     }
+
+    public static bool IsRegistrationClosed(msEvent targetEvent)
+    {
+        if ( targetEvent.IsClosed ) return true;
+
+        if ( targetEvent.RegistrationCloseDate == null ) return false;
+
+        TimeZoneInfo tzi;
+
+        try
+        {
+            tzi = TimeZoneInfo.FindSystemTimeZoneById(targetEvent.TimeZone);
+        }
+        catch 
+        {
+            tzi = TimeZoneInfo.Local;
+        }
+
+        // MS-4745 - let's take the current time and convert it to the time of the event
+        DateTime eventCurrentDate = TimeZoneInfo.ConvertTime(DateTime.UtcNow, tzi);
+
+        // now, compare it
+        if ( eventCurrentDate > targetEvent.RegistrationCloseDate )
+             return true;
+
+        return false;
+        
+    }
 }

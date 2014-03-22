@@ -83,11 +83,21 @@ public partial class committees_BrowseCompetitions : PortalPage
         DataColumn dcTimeRemaining = new DataColumn("TimeRemaining",typeof(string));
         dtCompetitions.Columns.Add(dcTimeRemaining);
 
+        // we need to know what "now" is in the current timezone
+
+        DateTime dtTimeInCurrentUsersTimeZone = DateTime.UtcNow + ConciergeAPI.CurrentTimeZone.GetUtcOffset( DateTime.Now);
+        
         foreach (DataRow row in dtCompetitions.Rows)
         {
-            TimeSpan tsTimeRemaining = (DateTime) row["CloseDate"] - DateTime.UtcNow;
-            row[dcTimeRemaining] = string.Format("{0} days, {1} hours, {2} minutes", tsTimeRemaining.Days,
-                                                 tsTimeRemaining.Hours, tsTimeRemaining.Minutes);
+            var dtCloseDate = (DateTime) row["CloseDate"];
+            
+            TimeSpan tsTimeRemaining = dtCloseDate - dtTimeInCurrentUsersTimeZone;
+
+            if (tsTimeRemaining.TotalMilliseconds > 0)
+                row[dcTimeRemaining] = string.Format("{0} days, {1} hours, {2} minutes", tsTimeRemaining.Days,
+                                                     tsTimeRemaining.Hours, tsTimeRemaining.Minutes);
+            else
+                row[dcTimeRemaining] = "CLOSED";
         }
 
         dvCompetitions = new DataView(dtCompetitions);

@@ -97,25 +97,42 @@
         </tr>
     </table>
     <h2>
+        <asp:Literal ID="lBillingInfo" runat="server">Billing Information</asp:Literal></h2>
+    You can have this membership renewal automatically charged to your credit card.
+    The current information is below.
+    <asp:HyperLink ID="hlUpdateBillingInfo2" runat="server" Text="Click here to update."></asp:HyperLink>
+    <table style="width: 100%; margin-top: 10px">
+        <tr id="tr3" runat="server">
+            <td class="columnHeader">
+                <asp:Literal ID="lPaymentMethod" runat="server">Payment Method:</asp:Literal>
+            </td>
+            <td>
+                <asp:Label ID="lblPaymentInfo" runat="server">You currently have no payment information associated with this subscription.</asp:Label>
+            </td>
+            <td class="columnHeader">
+            </td>
+            <td>
+            </td>
+        </tr>
+    </table>
+    <h2>
         Shipping &amp; Fulfillment</h2>
     <table>
-        <tr id="tr1" runat="server"  >
+        <tr id="tr1" runat="server">
             <td class="columnHeader" style="width: 150px">
                 <asp:Literal ID="lShipTo" runat="server">Ship To:</asp:Literal>
             </td>
             <td>
                 <asp:Label ID="lblShipTo" runat="server" />
             </td>
-             
         </tr>
-         <tr id="tr2" runat="server" valign=top >
+        <tr id="tr2" runat="server" valign="top">
             <td class="columnHeader" style="width: 150px">
                 <asp:Literal ID="lShippingAddress" runat="server">Shipping Address:</asp:Literal>
             </td>
             <td>
-                <asp:Label ID="lblShippingAddress" runat="server" >No address on file. Please update your profile address.</asp:Label>
+                <asp:Label ID="lblShippingAddress" runat="server">No address on file. Please update your profile address.</asp:Label>
             </td>
-             
         </tr>
     </table>
     <hr />
@@ -125,8 +142,10 @@
                 <asp:Literal ID="lTasks" runat="server">Tasks</asp:Literal></h2>
         </div>
         <ul>
-            <asp:LinkButton ID="lblRenewSubscription" runat="server" 
-                onclick="lblRenewSubscription_Click"><li>Renew this Subscription</li></asp:LinkButton>
+            <asp:LinkButton ID="lblRenewSubscription" runat="server" OnClick="lblRenewSubscription_Click"><li>Renew this Subscription</li></asp:LinkButton>
+              <li runat="server" id="li1">
+                    <asp:HyperLink ID="hlUpdateBillingInfo" runat="server" Text="Update Billing Information"></asp:HyperLink>
+                </li>
             <asp:HyperLink ID="hlModify" runat="server" NavigateUrl="/subscriptions/EditSubscription.aspx?contextID="><LI>Modify this Subscription</LI></asp:HyperLink>
             <li>
                 <asp:HyperLink ID="hlGoHome" runat="server" NavigateUrl="/">Go Home</asp:HyperLink>

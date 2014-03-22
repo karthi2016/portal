@@ -66,6 +66,8 @@
         <div style="text-align: center">
             <asp:Button ID="btnContinue" CausesValidation="false" OnClick="btnContinueShopping_Click"
                 runat="server" Text="Continue Shopping" />
+                            <asp:Button ID="btnClear" CausesValidation="false" OnClick="btnClear_Click"
+                runat="server" Text="Clear Cart" />
             <asp:Button ID="btnCheckout" runat="server" Text="Checkout" OnClick="btnCheckout_Click" />
         </div>
     </div>

@@ -16,12 +16,12 @@ public partial class careercenter_SearchResume_Criteria : PortalPage
     protected override bool CheckSecurity()
     {
         if (!base.CheckSecurity())
-            return false ;
+            return false;
 
         using (var api = ConciergeAPIProxyGenerator.GenerateProxy())
             return api.CheckEntitlement(msResumeAccessEntitlement.CLASS_NAME, ConciergeAPI.CurrentEntity.ID, null).ResultValue.IsEntitled;
     }
-      #region Constants
+    #region Constants
 
 
     #endregion
@@ -46,7 +46,7 @@ public partial class careercenter_SearchResume_Criteria : PortalPage
     {
         base.InitializeTargetObject();
 
-        if(PortalConfiguration.Current.ResumeSearchFields == null || PortalConfiguration.Current.ResumeTabularResultsFields == null || PortalConfiguration.Current.ResumeDetailsFields == null)
+        if (PortalConfiguration.Current.ResumeSearchFields == null || PortalConfiguration.Current.ResumeTabularResultsFields == null || PortalConfiguration.Current.ResumeDetailsFields == null)
         {
             QueueBannerError("The resume search fields must first be configured in the Console.  Please set the fields in the Career Center Setup.");
             GoHome();
@@ -71,7 +71,7 @@ public partial class careercenter_SearchResume_Criteria : PortalPage
     private SearchManifest buildSearchManifest()
     {
         SearchManifest result;
-        
+
         using (IConciergeAPIService proxy = GetServiceAPIProxy())
         {
             result = proxy.DescribeSearch(msResume.CLASS_NAME, null).ResultValue;
@@ -86,7 +86,7 @@ public partial class careercenter_SearchResume_Criteria : PortalPage
 
         result.DefaultSelectedFields.AddRange(
             from field in result.Fields
-            select new SearchOutputColumn { Name = field.Name, DisplayName = field.Label});
+            select new SearchOutputColumn { Name = field.Name, DisplayName = field.Label });
 
         return result;
     }
@@ -159,13 +159,21 @@ public partial class careercenter_SearchResume_Criteria : PortalPage
 
     protected void btnSearch_Click(object sender, EventArgs e)
     {
+        var searchBuilder = new SearchBuilder(Search.FromManifest(MultiStepWizards.SearchResumeBank.SearchManifest));
         MultiStepWizards.SearchResumeBank.SearchBuilder =
-            new SearchBuilder(Search.FromManifest(MultiStepWizards.SearchResumeBank.SearchManifest));
+            searchBuilder;
 
         cfsSearchCriteria.Harvest();
         MemberSuiteObject mso = cfsSearchCriteria.MemberSuiteObject;
 
-        ParseSearchCriteria(targetCriteriaFields, mso, MultiStepWizards.SearchResumeBank.SearchBuilder);
+        string keywords = tbKeywords.Text;
+        if (!string.IsNullOrWhiteSpace(keywords))
+            searchBuilder.AddOperation(
+                new Keyword { FieldName = "File", ValuesToOperateOn = new List<object> { keywords } },
+                SearchOperationGroupType.And);
+
+
+        ParseSearchCriteria(targetCriteriaFields, mso, searchBuilder);
 
         string nextUrl = "~/careercenter/SearchResume_Results.aspx";
         if (rblOutputFormat.SelectedValue == "zip")

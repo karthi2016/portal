@@ -7,6 +7,7 @@ using System.Text.RegularExpressions;
 using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
+using System.Xml;
 using MemberSuite.SDK.Concierge;
 using MemberSuite.SDK.Types;
 using MemberSuite.SDK.Searching;
@@ -44,9 +45,29 @@ public partial class App_Master_GeneralPage : System.Web.UI.MasterPage
     
     public string GetVersion()
     {
+        string coreVersion;
+        try
+        {
+            using (var reader = XmlReader.Create(Server.MapPath(@"/version.xml")))
+            {
+                var version = new List<string>();
+                reader.MoveToContent();
+                while (reader.Read())
+                {
+                    if (reader.NodeType == XmlNodeType.Text)
+                    {
+                        version.Add(reader.Value);
+                    }
+                }
+                coreVersion = string.Join(".", version.ToArray());
+            }
+        }
+        catch(Exception)
+        {
+            coreVersion = "Not available";
+        }
 
-        return Assembly.GetExecutingAssembly().GetName().Version.ToString();
-        
+        return coreVersion;
     }
 
     #endregion

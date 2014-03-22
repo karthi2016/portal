@@ -90,6 +90,7 @@ public partial class profile_ManageContacts : PortalPage
         sRelationships.AddOutputColumn("RightSide_Individual.EmailAddress");
         sRelationships.AddOutputColumn("RelationshipTypeName");
         //sRelationships.AddCriteria(Expr.DoesNotEqual("Target_ID", CurrentUser.Owner));
+        sRelationships.AddCriteria(Expr.IsNotBlank("RightSide_Individual.Name"));    // bring individuals over only MS-4426
         sRelationships.AddSortColumn("Target_Name");
         searches.Add(sRelationships);
 

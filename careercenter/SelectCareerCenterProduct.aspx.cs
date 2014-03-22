@@ -6,6 +6,7 @@ using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 using MemberSuite.SDK.Concierge;
+using MemberSuite.SDK.Manifests;
 using MemberSuite.SDK.Results;
 using MemberSuite.SDK.Searching;
 using MemberSuite.SDK.Searching.Operations;
@@ -25,7 +26,7 @@ public partial class careercenter_SelectCareerCenterProduct : PortalPage
 
     protected override bool IsPublic
     {
-        get { return PortalConfiguration.Current.JobPostingAccessMode == JobPostingAccess.PublicAccess;  }
+        get { return PortalConfiguration.Current.JobPostingAccessMode == JobPostingAccess.PublicAccess; }
     }
 
     /// <summary>
@@ -59,7 +60,7 @@ public partial class careercenter_SelectCareerCenterProduct : PortalPage
     /// each page that needs it.</remarks>
     protected override void InitializeTargetObject()
     {
-        if(ConciergeAPI.CurrentEntity == null)
+        if (ConciergeAPI.CurrentEntity == null)
             GoTo("~/profile/CreateAccount_BasicInfo.aspx?t=JobPosting");
 
         base.InitializeTargetObject();
@@ -82,7 +83,7 @@ public partial class careercenter_SelectCareerCenterProduct : PortalPage
         setFeesAndContinueIfApplicable();
 
         using (var api = GetServiceAPIProxy())
-            numberOfPostingsAvailable = Convert.ToInt32( api.CheckEntitlement(msJobPostingEntitlement.CLASS_NAME, ConciergeAPI.CurrentEntity.ID, null).ResultValue.Quantity );
+            numberOfPostingsAvailable = Convert.ToInt32(api.CheckEntitlement(msJobPostingEntitlement.CLASS_NAME, ConciergeAPI.CurrentEntity.ID, null).ResultValue.Quantity);
     }
 
     #endregion
@@ -97,12 +98,12 @@ public partial class careercenter_SelectCareerCenterProduct : PortalPage
         sCareerCenterProducts.AddOutputColumn("ID");
         sCareerCenterProducts.AddOutputColumn("Name");
         sCareerCenterProducts.AddCriteria(Expr.Equals("SellOnline", true));
-        
+
         //If the job posting details have already been specified in the create job posting page then
         //this is part of a larger workflow and we can only process career center products that specify one job posting
-        if(TransientJobPosting)
-            sCareerCenterProducts.AddCriteria(Expr.Equals("NumberOfJobPostings",1));
-        
+        if (TransientJobPosting)
+            sCareerCenterProducts.AddCriteria(Expr.Equals("NumberOfJobPostings", 1));
+
         //Create sell from group
         SearchOperationGroup sellFromGroup = new SearchOperationGroup
                                                  {
@@ -122,7 +123,7 @@ public partial class careercenter_SelectCareerCenterProduct : PortalPage
         sellUntilGroup.Criteria.Add(Expr.Equals("SellUntil", null));
         sellUntilGroup.Criteria.Add(Expr.IsGreaterThanOrEqualTo("SellUntil", DateTime.Now));
         sCareerCenterProducts.AddCriteria(sellUntilGroup);
-        
+
         sCareerCenterProducts.AddSortColumn("Name");
 
         SearchResult srCareerCenterProducts = ExecuteSearch(sCareerCenterProducts, 0, null);
@@ -169,9 +170,9 @@ public partial class careercenter_SelectCareerCenterProduct : PortalPage
 
     protected void MoveToOrderProcessing()
     {
-        
+
         MultiStepWizards.PlaceAnOrder.ContinueShoppingUrl = "~/careercenter/SelectCareerCenterProduct.aspx";
-        
+
         //If the job posting details have already been specified then this is part of a larger workflow
         //and just complete the order as normal (the job posting will be saved since it's in the PlaceAnOrder.ObjectsToBeSaved collection)
         //Otherwise this is the start of the workflow and after the order direct the user to the page to enter job posting details.
@@ -181,13 +182,32 @@ public partial class careercenter_SelectCareerCenterProduct : PortalPage
 
         MultiStepWizards.PlaceAnOrder.ReloadEntityOnOrderComplete = true;
 
-        MultiStepWizards.PlaceAnOrder.InitiateOrderProcess(targetOrder);
+        OrderPayload pl = new OrderPayload();
+
+                var targetJobPosting = MultiStepWizards.PostAJob.JobPosting;
+
+
+        pl.EntitlementAdjustments = new List<OrderPayloadEntitlementAdjustments>();
+        pl.EntitlementAdjustments.Add(new OrderPayloadEntitlementAdjustments
+            {
+                EntityID = targetOrder.BillTo,
+                AmountToAdjust = -1,
+                EntitlementType = msJobPostingEntitlement.CLASS_NAME,
+                Memo = "Job posting '" + targetJobPosting.Name + "'" 
+
+            });
+
+        targetJobPosting.Order = "{OrderID}";
+        pl.ObjectsToSave = new List<MemberSuiteObject> { new MemberSuiteObject( targetJobPosting )} ;
+
         
+        MultiStepWizards.PlaceAnOrder.InitiateOrderProcess(targetOrder, pl );
+
     }
 
     protected void SetCareerCenterProduct(string careerCenterProductID)
     {
-        targetOrder.LineItems = new List<msOrderLineItem> {new msOrderLineItem {Quantity = 1, Product = careerCenterProductID}};
+        targetOrder.LineItems = new List<msOrderLineItem> { new msOrderLineItem { Quantity = 1, Product = careerCenterProductID } };
     }
 
     #endregion

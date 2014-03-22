@@ -114,19 +114,22 @@ public partial class onlinestorefront_ViewMerchandiseDetails : PortalPage
                                             preProcessedOrderPacket.FinalizedOrder.ConvertTo<msOrder>().LineItems.Sum(
                                                 x => x.UnitPrice*x.Quantity));
 
-
         litPrice.Text = targetMerchandise["DisplayPriceAs"] != DBNull.Value &&
                         string.IsNullOrWhiteSpace(targetMerchandise["DisplayPriceAs"].ToString())
                             ? targetMerchandise["DisplayPriceAs"].ToString()
                             : string.Format("{0:C}", (decimal)targetMerchandise["Price"]);
 
+        // MS-4786
+        if (describedProduct == null)
+        {
+            return;
+        }
 
+        var describedPrice = string.IsNullOrWhiteSpace(describedProduct.DisplayPriceAs)
+                                 ? string.Format("{0:C}", describedProduct.Price) : describedProduct.DisplayPriceAs;
 
-        if (describedProduct != null && describedProduct.Price != (decimal)targetMerchandise["Price"])
-            litPrice.Text = string.Format("<strike>{0}</strike> {1}", litPrice.Text,
-                                          !string.IsNullOrWhiteSpace(describedProduct.DisplayPriceAs)
-                                              ? describedProduct.DisplayPriceAs
-                                              : string.Format("{0:C}", describedProduct.Price));
+        litPrice.Text = describedProduct.Price < (decimal)targetMerchandise["Price"] 
+                            ? string.Format("<strike>{0}</strike> {1}", litPrice.Text, describedPrice) : describedPrice;
     }
 
     #endregion
@@ -155,6 +158,7 @@ public partial class onlinestorefront_ViewMerchandiseDetails : PortalPage
         sCategories.AddOutputColumn("ID");
         sCategories.AddOutputColumn("Name");
         sCategories.AddCriteria(Expr.Equals("ProductType", "Merchandise"));
+        sCategories.AddCriteria(Expr.Equals("IsActive", true));
         sCategories.AddSortColumn("Name");
 
         searches.Add(sCategories);
@@ -185,9 +189,11 @@ public partial class onlinestorefront_ViewMerchandiseDetails : PortalPage
         preProcessOrder(proxy);
 
         //Describe the products for this entity to see if they're different
-        if (CurrentEntity == null || srMerchandise.Table.Rows.Count == 0) return;
+        //if (CurrentEntity == null || srMerchandise.Table.Rows.Count == 0) return;
+        // MS-4786. We still need to describer products even the entity is null.
+        if (srMerchandise.Table.Rows.Count == 0) return;
 
-        describedProduct = proxy.DescribeProducts(CurrentEntity.ID, new List<string>() { targetMerchandise["ID"].ToString() }).ResultValue[0];
+        describedProduct = proxy.DescribeProducts(CurrentEntity == null ? string.Empty : CurrentEntity.ID, new List<string>() { targetMerchandise["ID"].ToString() }).ResultValue[0];
     }
 
     protected void preProcessOrder(IConciergeAPIService proxy)
@@ -228,7 +234,7 @@ public partial class onlinestorefront_ViewMerchandiseDetails : PortalPage
             redirectUrl += "?contextID=" + targetCategory["ID"];
 
         // are there demographics?
-        checkForDemographicsAndRedirectIfNecessary(lineItem, redirectUrl);
+        CheckForDemographicsAndRedirectIfNecessary(lineItem, redirectUrl);
         GoTo(redirectUrl, "Item successfully added to cart.");
 
     }

@@ -58,10 +58,10 @@ public partial class events_Register_CreateRegistration : PortalPage
             return;
         }
 
-        using(var proxy = GetServiceAPIProxy())
+        using (var proxy = GetServiceAPIProxy())
         {
             describedRegistrationFee =
-                proxy.DescribeProducts(ConciergeAPI.CurrentEntity.ID, new List<string>() {targetRegistrationFee.ID}).
+                proxy.DescribeProducts(ConciergeAPI.CurrentEntity.ID, new List<string>() { targetRegistrationFee.ID }).
                     ResultValue[0];
         }
 
@@ -165,7 +165,7 @@ public partial class events_Register_CreateRegistration : PortalPage
 
         using (var api = GetServiceAPIProxy())
         {
-            Search sTimeSlots = new Search {Type = msSessionTimeSlot.CLASS_NAME};
+            Search sTimeSlots = new Search { Type = msSessionTimeSlot.CLASS_NAME };
             sTimeSlots.AddOutputColumn("ID");
             sTimeSlots.AddOutputColumn("Name");
             sTimeSlots.AddOutputColumn("StartTime");
@@ -184,16 +184,25 @@ public partial class events_Register_CreateRegistration : PortalPage
         pnlSessions.Visible = false;
 
         // add the NULL timeslot, for sessions that have not been placed into time slots
-        timeslots.Insert(0, new msSessionTimeSlot {Name = "Events Happening During this Event", ID = null});
+        timeslots.Insert(0, new msSessionTimeSlot { Name = "Events Happening During this Event", ID = null });
 
         // if there's one session, one session at all, then the panel is shown
         rptSessions.DataSource = timeslots;
         rptSessions.DataBind();
 
+        if (targetRegistrationFee.MaximumNumberOfSessions != null)
+            cvMaxSession.ErrorMessage =
+                  string.Format(
+                      "You have selected too many sessions. When registering using the '{0}' fee, you are allowed a maximum of {1} sessions.",
+                      targetRegistrationFee.Name, targetRegistrationFee.MaximumNumberOfSessions.Value);
+
     }
 
     protected void setGuestRegistrationFees()
     {
+        if (targetRegistrationFee.IsGuestRegistration)    // already registering a guest
+            return;
+
         if (manifest.GuestRegistrationFees.Count > 0)
         {
             pnlGuests.Visible = true;
@@ -204,10 +213,12 @@ public partial class events_Register_CreateRegistration : PortalPage
 
     protected void setMerchandise()
     {
-        if (manifest.Merchandise.Count > 0)
+        // MS-4854. Show only the merchandise which is visible online.
+        var visibleMerchandize = manifest.Merchandise.Where(m => m.SellOnline);
+        if (visibleMerchandize.Any())
         {
             pnlMerchandise.Visible = true;
-            gvMerchandise.DataSource = manifest.Merchandise;
+            gvMerchandise.DataSource = visibleMerchandize;
             gvMerchandise.DataBind();
         }
     }
@@ -228,7 +239,7 @@ public partial class events_Register_CreateRegistration : PortalPage
                 fee.ProductName = fee.ProductName.Replace(targetEvent.Name + " - ", "");
 
             foreach (var fee in manifest.Merchandise)
-                fee.ProductName = fee.ProductName.Replace(targetEvent.Name + " - ", ""); 
+                fee.ProductName = fee.ProductName.Replace(targetEvent.Name + " - ", "");
         }
     }
 
@@ -254,10 +265,11 @@ public partial class events_Register_CreateRegistration : PortalPage
     #endregion
 
     #region Data Binding
-
+    int numberOfSessions = 0;
     protected void unbindControls()
     {
         List<msOrderLineItem> lineItemsToAdd = new List<msOrderLineItem>();
+
 
         // add the sessions
         foreach (RepeaterItem riSession in rptSessions.Items)
@@ -289,6 +301,8 @@ public partial class events_Register_CreateRegistration : PortalPage
                     Quantity = quantity,
                     Product = ddlFee.SelectedValue
                 };
+
+                numberOfSessions++;
                 lineItemsToAdd.Add(li); // add it
 
             }
@@ -306,12 +320,16 @@ public partial class events_Register_CreateRegistration : PortalPage
             decimal qty = decimal.Parse(tbQuantity.Text);
             if (qty <= 0) continue;
 
-            msOrderLineItem li = new msOrderLineItem
+            // we need to add each item on it's own line, so it can have it's own demographics
+            for( int i=0;i< qty;i++ )
             {
-                Quantity = qty,
-                Product = product
-            };
-            lineItemsToAdd.Add(li); // add it
+                msOrderLineItem li = new msOrderLineItem
+                    {
+                        Quantity = 1,
+                        Product = product
+                    };
+                lineItemsToAdd.Add(li); // add it
+            }
         }
 
         // finally, the merchandise
@@ -341,7 +359,7 @@ public partial class events_Register_CreateRegistration : PortalPage
 
     #region Event Handlers
 
-    protected void btnCancel_Click(object sender, EventArgs  e)
+    protected void btnCancel_Click(object sender, EventArgs e)
     {
         MultiStepWizards.RegisterForEvent.Order = null;
         MultiStepWizards.RegisterForEvent.RegistrationFee = null;
@@ -366,6 +384,16 @@ public partial class events_Register_CreateRegistration : PortalPage
             return;
 
         unbindControls();
+
+        // wait - have we exceeded the maximum number of sessions we're suppsoed to have?
+        if (targetRegistrationFee.MaximumNumberOfSessions != null &&
+            numberOfSessions > targetRegistrationFee.MaximumNumberOfSessions.Value)
+        {
+
+            cvMaxSession.IsValid = false;
+            
+            return;
+        }
         var mode = Request.QueryString["mode"];
         GoTo(mode == "group"
                  ? string.Format("~/events/Register_RegistrationForm.aspx?contextID={0}&mode=group&individualID={1}", targetEvent.ID, Request.QueryString["individualID"])
@@ -385,7 +413,7 @@ public partial class events_Register_CreateRegistration : PortalPage
 
         pnlGroupRegistration.Visible = true;
         lblGroup.Text = group.Name;
-         
+
 
     }
     protected void gvSessions_RowDataBound(object sender, GridViewRowEventArgs e)
@@ -430,12 +458,12 @@ public partial class events_Register_CreateRegistration : PortalPage
                         cbRegister.Visible = true;
                         rbRegister.Visible = false;
 
-                        
+
                     }
                     else
                     {
 
-                        
+
                         rbRegister.Visible = true;
                         rbRegister.Checked = session.SessionID == null; // select the "do not register" option by default
                         string groupName = RegularExpressions.GetSafeFieldName(session.TimeSlotID);
@@ -456,9 +484,9 @@ public partial class events_Register_CreateRegistration : PortalPage
                     foreach (var fee in session.Fees.Where(x => x.IsEligible))
                     {
                         // let's show the fee w/o the session name
-                        string name = string.Format("{0} - {1}", fee.ProductName.Replace( session.SessionName + " - ","")
+                        string name = string.Format("{0} - {1}", fee.ProductName.Replace(session.SessionName + " - ", "")
                             ,
-                            !string.IsNullOrWhiteSpace(  fee.DisplayPriceAs ) ? fee.DisplayPriceAs : fee.Price.ToString("C"));
+                            !string.IsNullOrWhiteSpace(fee.DisplayPriceAs) ? fee.DisplayPriceAs : fee.Price.ToString("C"));
                         ddlFee.Items.Add(new ListItem(name, fee.ProductID));
                     }
 
@@ -488,7 +516,7 @@ public partial class events_Register_CreateRegistration : PortalPage
                     rbRegister.Enabled = cbRegister.Enabled = tbQuantity.Enabled
                                                               = ddlFee.Enabled = false;
                     ddlFee.Visible = false;
-                    lblPrice.Visible = true ;
+                    lblPrice.Visible = true;
                     lblPrice.Text = "INELIGIBLE";
                 }
                 break;
@@ -567,7 +595,7 @@ public partial class events_Register_CreateRegistration : PortalPage
                 CompareValidator CompareValidator1 = (CompareValidator)e.Row.FindControl("CompareValidator1");
                 Label lblPrice = (Label)e.Row.FindControl("lblPrice");
 
-                lblPrice.Text = !string.IsNullOrWhiteSpace(  pi.DisplayPriceAs ) ? pi.DisplayPriceAs : pi.Price.ToString("C");
+                lblPrice.Text = !string.IsNullOrWhiteSpace(pi.DisplayPriceAs) ? pi.DisplayPriceAs : pi.Price.ToString("C");
 
 
                 break;

@@ -33,7 +33,7 @@
                      <asp:CustomValidator ID="cvAtLeastOneBoothType" runat="server" ForeColor="Red" ErrorMessage="Error: You must select a booth type."
                     Display="Dynamic" />
                 <asp:RadioButtonList ID="rblBoothTypes" runat="server" />
-                <div id="divOtherProducts" runat="server" style="padding-top: 20px">
+                <div id="divOtherProducts" runat="server" style="padding-top: 20px" visible="false">
                     <h2>
                         <asp:Literal ID="lAdditionalItems" runat="server">Additional Items</asp:Literal></h2>
                     <asp:Literal ID="lIfYouWouldLikeToAddAnyItems" runat="server">

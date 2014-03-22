@@ -5,6 +5,7 @@ using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 using MemberSuite.SDK.Concierge;
+using MemberSuite.SDK.Constants;
 using MemberSuite.SDK.Manifests.Command;
 using MemberSuite.SDK.Manifests.Command.Views;
 using MemberSuite.SDK.Searching;
@@ -171,16 +172,22 @@ public partial class competitions_Enter_EntryForm : PortalPage
 
     protected void SaveAndGoToNextStep()
     {
-      
-        using(IConciergeAPIService proxy = GetConciegeAPIProxy())
+
+        using (IConciergeAPIService proxy = GetConciegeAPIProxy())
         {
             targetCompetitionEntry = proxy.Save(targetCompetitionEntry).ResultValue.ConvertTo<msCompetitionEntry>();
-        }
 
-        if (MultiStepWizards.EnterCompetition.EntryFee != null)
-        {
-            GoToOrderForm();
-            return;
+
+            if (MultiStepWizards.EnterCompetition.EntryFee != null)
+            {
+                GoToOrderForm();
+                return;
+            }
+
+            // send out the confirmation
+            proxy.SendEmail(
+                targetCompetition.ConfirmationEmail ?? EmailTemplates.Awards.CompetitionEntrySubmissionConfirmation,
+                new List<string> {targetCompetitionEntry.ID}, null);
         }
 
         QueueBannerMessage(string.Format("Competition Entry #{0} was created successfully.",

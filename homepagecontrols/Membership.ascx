@@ -128,7 +128,7 @@
                     Section</a></li>
             </ItemTemplate>
         </asp:Repeater>
-          <li id="ViewMemberships" runat="server">My Current Memberships
+          <li id="ViewMemberships" runat="server">My Memberships
             <ol>
                 <asp:Repeater ID="rptMemOrgsView" runat="server">
                     <ItemTemplate>

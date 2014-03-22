@@ -55,11 +55,11 @@
                     <td class="columnHeader">  <asp:Literal ID="lSubmittedOn" runat="server">Submitted On:</asp:Literal></td>
                     <td><%=GetSearchResult(drCompetitionEntry, "DateSubmitted") %></td>
                 </tr>
-                <tr>
+                <tr id="trTotalScore" runat="server">
                     <td class="columnHeader">Score:</td>
                     <td><%=totalScore%></td>
                 </tr>
-                <tr>
+                <tr  id="trAvgScore" runat="server">
                     <td class="columnHeader">Average Score:</td>
                     <td><%=averageScore%></td>
                 </tr>
@@ -73,7 +73,7 @@
                 </h2>
         </div>
         <div class="sectionContent">
-            <uc1:CustomFieldSet ID="cfsEntryFields" EditMode="false" runat="server" />
+            <uc1:CustomFieldSet ID="cfsEntryFields" EditMode="false" runat="server" SuppressNullLabelReplacement="True" />
         </div>
     </div>
     <div class="section" style="margin-top: 10px">
@@ -84,6 +84,7 @@
         </div>
         <div class="sectionContent">
             <ul>
+                  <li><asp:HyperLink ID="hlBackToJudging" runat="server">Back to Judging Entries</asp:HyperLink></li>
                 <li><a href="/competitions/ViewMyCompetitionEntries.aspx"><asp:Literal ID="lBackToMyEntries" runat="server">Back to My Competition Entries</asp:Literal></a></li>
                 <li><asp:HyperLink ID="hlGoHome" runat="server" NavigateUrl="/">Go Home</asp:HyperLink>
             </li>

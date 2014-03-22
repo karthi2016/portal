@@ -119,7 +119,8 @@ public partial class discussions_CreateEditDiscussionPost : DiscussionsPage
         targetDiscussionPost.Name = tbName.Text;
         targetDiscussionPost.Post = tbMessage.Text;
 
-        targetDiscussionPost.Status = targetForum.Moderated && !isModerator()
+        if(Action != "remove")
+            targetDiscussionPost.Status = targetForum.Moderated && !isModerator()
                                             ? DiscussionPostStatus.Pending
                                             : DiscussionPostStatus.Approved;
 

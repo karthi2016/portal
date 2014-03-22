@@ -201,6 +201,26 @@ public partial class profile_AddContact : PortalPage
                 MultiStepWizards.AddContact.RelationshipType = targetRelationshipType;
 
                 targetIndividual = unbindAndSearch(targetEmailAddress);
+
+                // check restriction
+                using (var api = GetServiceAPIProxy())
+                {
+                    var restriction =
+                        api.GetApplicableOrganizationContactRestriction(targetOrganization.ID, targetRelationshipType.ID)
+                           .ResultValue;
+
+                    if (restriction != null && restrictionHasBeenViolated(restriction.ConvertTo<msOrganizationContactRestriction>()))
+                    {
+
+                        cvContactRestriction.ErrorMessage = restriction.SafeGetValue<string>("ErrorMessage") ??
+                                                            "Unable to add contact - a restriction is in place: " +
+                                                            restriction["Name"];
+                        
+                        cvContactRestriction.IsValid = false;
+                        e.Cancel = true;
+                        return;
+                    }
+                }
                 if(targetIndividual != null)
                 {
                     if(activeRelationshipExists(targetOrganization, targetIndividual, targetRelationshipType))
@@ -212,6 +232,9 @@ public partial class profile_AddContact : PortalPage
                         e.Cancel = true;
                         return;
                     }
+
+                  
+
 
                     MultiStepWizards.AddContact.Individual = targetIndividual;
                     wizAddContact.ActiveStepIndex = 2;
@@ -231,6 +254,7 @@ public partial class profile_AddContact : PortalPage
         if (!IsValid)
             return;
 
+        
         targetIndividual = SaveObject(targetIndividual).ConvertTo<msIndividual>();
         
         msRelationship newRelationship = new msRelationship {Type = targetRelationshipType.ID};
@@ -260,6 +284,15 @@ public partial class profile_AddContact : PortalPage
             string.Format("{0}?contextID{1}", nextUrl, ContextID);
 
         GoTo(nextUrl, string.Format("{0} has been successfully linked to {1}.", targetIndividual.Name, targetOrganization.Name));
+    }
+
+    private bool restrictionHasBeenViolated(msOrganizationContactRestriction restrictionToCheck)
+    {
+        return CRMLogic.HasOrganizationContactRetrictionBeenViolated(restrictionToCheck, targetOrganization,
+                                                                     targetIndividual);
+
+
+
     }
 
     #endregion

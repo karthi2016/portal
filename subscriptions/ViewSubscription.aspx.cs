@@ -36,6 +36,13 @@ public partial class subscriptions_ViewSubscription : PortalPage
         hlModify.NavigateUrl += ContextID;
     }
 
+    protected override void setupHyperLinks()
+    {
+        base.setupHyperLinks();
+        hlUpdateBillingInfo2.NavigateUrl = hlUpdateBillingInfo.NavigateUrl = string.Format("/orders/UpdateBillingInformation.aspx?contextID={0}", ContextID);
+    
+    }
+
     private void bindFields()
     {
         using (var api = GetServiceAPIProxy())
@@ -45,6 +52,12 @@ public partial class subscriptions_ViewSubscription : PortalPage
             lblOwner.Text = api.GetName(targetSubscription.Owner).ResultValue;
             lblProduct.Text = api.GetName(targetSubscription.Fee).ResultValue;
 
+            if (targetSubscription.SavedPaymentMethod != null)
+            {
+                string paymentInfo = api.GetName(targetSubscription.SavedPaymentMethod).ResultValue;
+                if (paymentInfo != null)
+                    lblPaymentInfo.Text = paymentInfo;
+            }
 
             if (targetSubscription.StartDate != null)
                 lblStartDate.Text = targetSubscription.StartDate.Value.ToShortDateString();

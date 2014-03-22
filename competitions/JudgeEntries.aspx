@@ -59,7 +59,7 @@
                                         <asp:HyperLink runat="server" ID="hlViewScores" Text="(view scores)" NavigateUrl='<%# string.Format(@"~\competitions\ViewScores.aspx?contextID={0}&judgingRoundId={1}&judgingTeamId={2}", DataBinder.Eval(Container.DataItem, "ID"), ddlJudgingRounds.SelectedValue, targetJudgingTeam.ID) %>' />
                                         </ItemTemplate>
                                     </asp:TemplateField>
-                                    <asp:HyperLinkField DataNavigateUrlFormatString="~/competitions/ViewCompetitionEntry.aspx?contextID={0}" DataNavigateUrlFields="ID" Text="(view entry)" />
+                                    <asp:HyperLinkField DataNavigateUrlFormatString="~/competitions/ViewCompetitionEntry.aspx?contextID={0}&teamID={1}" DataNavigateUrlFields="ID,TeamID" Text="(view entry)" />
                                 </Columns>
                             </asp:GridView>
                         </div>

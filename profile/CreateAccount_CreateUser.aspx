@@ -447,6 +447,28 @@
                     <uc1:CustomFieldSet ID="cfsOrganizationCustomFields" runat="server" />
                 </asp:PlaceHolder>
             </asp:WizardStep>
+            <asp:WizardStep ID="wizDuplicateOrganizationStep" runat="server">
+            
+
+                <div class="sectionContent" style="margin-top: 10px">
+                    <div class="sectHeaderTitle">
+                        <h2>
+                            <asp:Literal ID="lPotentialMatches" runat="server">Potential Matches</asp:Literal>
+                        </h2>
+                    </div>
+                    <p>
+                        <asp:Literal ID="Literal1" runat="server">We have located some existing records in our system that may be you.</asp:Literal>
+                    </p>
+                    <asp:GridView ID="gvDuplicates" runat="server" GridLines="None" AutoGenerateColumns="false">
+                        <Columns>
+                            <asp:BoundField DataField="Name" HeaderStyle-HorizontalAlign="Left" HeaderText="FirstName" />
+                            <asp:BoundField DataField="_Preferred_Address_City" HeaderStyle-HorizontalAlign="Left" HeaderText="City" />
+                            <asp:BoundField DataField="_Preferred_Address_State" HeaderStyle-HorizontalAlign="Left" HeaderText="State" />
+                        </Columns>
+                    </asp:GridView>
+                    <br />
+                </div>
+            </asp:WizardStep>
             <asp:WizardStep ID="wizConfirmationStep">
                 <div class="sectionContent">
                     <p>

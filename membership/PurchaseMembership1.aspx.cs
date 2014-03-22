@@ -270,6 +270,11 @@ public partial class membership_PurchaseMembership1 : PortalPage
             mem["Type_Name"] = selectedMembershipTypeName;
             mem["Product_Name"] = selectedMembershipFeeName;
             mem.MembershipOrganization = drMembershipOrganization["ID"].ToString();
+             
+            // now, force this object to be stored in memory
+            // by default, we'll store the ID, and not the entire object
+            mem.SystemTimestamp = null;
+            MultiStepWizards.RenewMembership.Membership = mem;
 
             MultiStepWizards.RenewMembership.Entity = targetEntity;
 

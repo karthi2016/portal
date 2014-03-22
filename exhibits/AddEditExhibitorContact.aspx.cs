@@ -69,6 +69,7 @@ public partial class exhibits_AddEditExhibitorContact : PortalPage
             tbEmail.Text = targetContact.EmailAddress;
             tbWorkPhone.Text = targetContact.WorkPhone;
             tbMobilePhone.Text = targetContact.MobilePhone;
+            tbTitle.Text = targetContact.SafeGetValue<string>("Title");
         }
     }
 
@@ -109,7 +110,7 @@ public partial class exhibits_AddEditExhibitorContact : PortalPage
         targetContact.EmailAddress = tbEmail.Text;
         targetContact.WorkPhone = tbWorkPhone.Text;
         targetContact.MobilePhone = tbMobilePhone.Text;
-
+        targetContact["Title"] = tbTitle.Text;
      
 
         SaveObject(targetExhibitor);

@@ -161,6 +161,9 @@ public partial class events_BrowseEvents : PortalPage
         if (!ConciergeAPI.HasBackgroundConsoleUser) // there's no background user
             s.AddCriteria(Expr.Equals("VisibleInPortal", 1));
 
+        s.AddCriteria(Expr.DoesNotEqual("IsClosed", true));
+
+           
         // it's not over
         s.AddCriteria(Expr.IsGreaterThan("EndDate", DateTime.Now));
 
@@ -186,8 +189,7 @@ public partial class events_BrowseEvents : PortalPage
             if (!ConciergeAPI.HasBackgroundConsoleUser) // there's no background user
                 se.AddCriteria(Expr.Equals("VisibleInPortal", 1));
 
-
-            // it's not over
+           // it's not over
             se.AddCriteria(Expr.IsGreaterThan("EndDate", DateTime.Now));
             se.AddCriteria(Expr.IsBlank(msExhibitShow.FIELDS.Event)); // only shows with no events tied to them!
 

@@ -34,6 +34,7 @@ public partial class subscriptions_Subscribe : PortalPage
         Search s = new Search(msSubscriptionFee.CLASS_NAME);
         s.AddCriteria(Expr.Equals("IsActive", true));
         s.AddCriteria(Expr.Equals("SellOnline", true));
+        s.AddCriteria(Expr.DoesNotEqual("Type", "Renew Subscription"));
 
         var dtProducts = ExecuteSearch(s, 0, null).Table;
 
@@ -79,7 +80,7 @@ public partial class subscriptions_Subscribe : PortalPage
 
         // add the primary booth
 
-        var oli = new msOrderLineItem { Product = selectedValue , Quantity = 1 };
+        var oli = new msOrderLineItem { Product = selectedValue , Quantity = int.Parse( tbQuantity.Text ) };
         o.LineItems.Add(oli);
 
         MultiStepWizards.PlaceAnOrder.InitiateOrderProcess(o);

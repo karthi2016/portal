@@ -22,7 +22,7 @@ public partial class competitions_JudgeEntries : PortalPage
     protected DataTable dtScoreCards;
     protected msJudgingRound selectedRound;
     protected DataView dvCompetitionEntriesInRound;
-
+    protected msJudgingRound targetRound;
     #endregion
 
     #region Initialization
@@ -47,6 +47,9 @@ public partial class competitions_JudgeEntries : PortalPage
         }
 
         targetCompetition = LoadObjectFromAPI(targetJudgingTeam.Competition).ConvertTo<msCompetition>();
+
+        if (Request.QueryString["roundID"] != null)
+            targetRound = LoadObjectFromAPI<msJudgingRound>(Request.QueryString["roundID"]);
 
         if (targetCompetition == null)
         {
@@ -75,6 +78,7 @@ public partial class competitions_JudgeEntries : PortalPage
         //This has to happen after the data is loaded so cannot be moved to InitializePage
         if (!this.IsPostBack)
         {
+           
             ddlJudgingRounds.DataSource = dtJudgingRounds;
             ddlJudgingRounds.DataBind();
 
@@ -86,6 +90,12 @@ public partial class competitions_JudgeEntries : PortalPage
                     break;
                 }
 
+
+            if (targetRound != null)
+                ddlJudgingRounds.SelectedValue = targetRound.ID;
+
+            setJudgingRoundWarning(); // do this first - MS-4424
+
             bindJudgingBuckets();
         }
 
@@ -95,7 +105,7 @@ public partial class competitions_JudgeEntries : PortalPage
                                        "{0}, you have {1} entries that you need to score for the selected round.",
                                        ConciergeAPI.CurrentEntity.Name, dvCompetitionEntriesInRound.Count)
                                    : "There are no entries assigned to you for the selected round.";
-        setJudgingRoundWarning();
+
     }
 
     #endregion
@@ -168,6 +178,11 @@ public partial class competitions_JudgeEntries : PortalPage
 
         //Handle the competition entry results
         dtCompetitionEntries = searchResults.Single(x => x.ID == msCompetitionEntry.CLASS_NAME).Table;
+
+        dtCompetitionEntries.Columns.Add("TeamID");
+        foreach (DataRow dr in dtCompetitionEntries.Rows)
+            dr["TeamID"] = targetJudgingTeam.ID;    // set this up
+
         DataColumn dcScore = dtCompetitionEntries.Columns.Add("Score", typeof(decimal));
         DataColumn dcHasScore = dtCompetitionEntries.Columns.Add("HasScore", typeof(bool));
 
@@ -222,7 +237,8 @@ public partial class competitions_JudgeEntries : PortalPage
 
     protected void ddlJudgingRounds_OnSelectedIndexChanged(object sender, EventArgs e)
     {
-        bindJudgingBuckets();
+        GoTo(string.Format("JudgeEntries.aspx?contextID={0}&roundID={1}",
+                           targetJudgingTeam.ID, ddlJudgingRounds.SelectedValue));
     }
 
     protected void rptJudgingBuckets_ItemDataBound(object sender, RepeaterItemEventArgs e)
@@ -230,6 +246,7 @@ public partial class competitions_JudgeEntries : PortalPage
         DataRowView drBucket = (DataRowView)e.Item.DataItem;
 
         //Create a new Dataview to filter the competitionentires to just this bucket
+        
         DataView dvEntriesInBucket = new DataView(dtCompetitionEntries)
                                          {
                                              RowFilter =
@@ -264,6 +281,17 @@ public partial class competitions_JudgeEntries : PortalPage
                 HyperLink hlViewScores = (HyperLink) e.Row.FindControl("hlViewScores");
                 hlViewScores.Visible = targetCompetition.OtherJudgeScoreVisibilityMode !=
                                        JudgeScoreVisibilityMode.Never || (bool) drv["HasScore"];
+
+                // get that last control
+                HyperLink hlViewEntry = (HyperLink)e.Row.Cells[e.Row.Cells.Count - 1].Controls[0] as HyperLink;
+
+                if (lblJudgingRoundWarning.Visible)
+                {
+                    hlSubmitScores.Visible = false;
+                    hlViewScores.Visible = false;
+                    hlViewEntry.Visible = false;
+                    
+                }
 
                 break;
         }

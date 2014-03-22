@@ -16,7 +16,7 @@ public partial class onlinestorefront_EditCart : PortalPage
 
     private msOrder targetOrder;
     private PreProcessedOrderPacket preProcessedOrder;
-    private List<ProductInfo> targetProductInfo;
+    
 
     #endregion
 
@@ -80,10 +80,7 @@ public partial class onlinestorefront_EditCart : PortalPage
 
     protected void loadDataFromConcierge(IConciergeAPIService proxy)
     {
-        targetProductInfo =
-            proxy.DescribeProducts(ConciergeAPI.CurrentEntity == null ? null : ConciergeAPI.CurrentEntity.ID,
-                                   (from li in targetOrder.LineItems select li.Product).ToList()).ResultValue;
-
+      
         preProcessedOrder = proxy.PreProcessOrder(targetOrder).ResultValue;
 
         if (targetOrder == null || targetOrder.LineItems == null ||
@@ -121,9 +118,9 @@ public partial class onlinestorefront_EditCart : PortalPage
     {
         MultiStepWizards.PlaceAnOrder.ContinueShoppingUrl = "~/onlinestorefront/BrowseMerchandise.aspx";
 
-        
+
         //If there's nobody currently logged in go through the account creation process before the checkout
-        if(ConciergeAPI.CurrentEntity == null)
+        if (ConciergeAPI.CurrentEntity == null)
             GoTo("~/profile/CreateAccount_BasicInfo.aspx?t=Storefront");
 
         MultiStepWizards.PlaceAnOrder.InitiateOrderProcess(null);
@@ -140,7 +137,7 @@ public partial class onlinestorefront_EditCart : PortalPage
                 break;
 
             case DataControlRowType.Footer:
-               //Add the cart total to the footer
+                //Add the cart total to the footer
                 if (e.Row.Cells.Count >= 4)
                 {
                     e.Row.Cells[3].CssClass = "columnHeader";
@@ -148,7 +145,7 @@ public partial class onlinestorefront_EditCart : PortalPage
                     e.Row.Cells[3].Text = string.Format("Cart Total: {0}",
                                                         preProcessedOrder.FinalizedOrder.ConvertTo<msOrder>().LineItems.
                                                             Sum(
-                                                                x => x.UnitPrice*x.Quantity).ToString("C"));
+                                                                x => x.UnitPrice * x.Quantity).ToString("C"));
                 }
                 break;
 
@@ -161,9 +158,11 @@ public partial class onlinestorefront_EditCart : PortalPage
                 tbQuantity.Text = li.Quantity.ToString("F0");
 
                 string productName = "Product";
-                
-                if ( targetProductInfo.Count >= e.Row.RowIndex +1 )
-                    productName =  targetProductInfo[e.Row.RowIndex].ProductName;
+
+                if (li.Product != null)
+                    using (var api = GetServiceAPIProxy())
+                        productName = api.GetName(li.Product).ResultValue;
+
 
                 cvQuantity.ErrorMessage = string.Format("The quantity you have specified for '{0}' is invalid.",
                     productName);
@@ -224,6 +223,7 @@ public partial class onlinestorefront_EditCart : PortalPage
         switch (e.CommandName.ToLower())
         {
             case "delete":
+                MultiStepWizards.PlaceAnOrder.ShoppingCart.DiscountCodes = null;    // remove any discounts
                 MultiStepWizards.PlaceAnOrder.ShoppingCart.LineItems.RemoveAt(gvr.DataItemIndex);
                 break;
         }
@@ -238,4 +238,11 @@ public partial class onlinestorefront_EditCart : PortalPage
     }
 
     #endregion
+
+    protected void btnClear_Click(object sender, EventArgs e)
+    {
+        MultiStepWizards.PlaceAnOrder.Clear();
+        QueueBannerMessage("Your shopping cart has been cleared.");
+        Refresh();
+    }
 }

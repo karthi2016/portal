@@ -237,7 +237,7 @@ public partial class organizationalLayers_ViewOrganizationalLayerMembers_Results
         if (Download)
         {
             string nextUrl = executeDownloadableSearch();
-            Response.Redirect(nextUrl);
+            Response.Redirect(nextUrl ?? "~/SearchQueued.aspx");
         }
 
         loadDataFromConcierge();

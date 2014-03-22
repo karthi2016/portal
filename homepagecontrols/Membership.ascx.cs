@@ -13,7 +13,7 @@ using MemberSuite.SDK.Types;
 using System.Text;
 public partial class homepagecontrols_Membership : HomePageUserControl
 {
-    private Dictionary<string, string> _exitingMembeships = new Dictionary<string, string>();
+    private readonly Dictionary<string, string> _exitingMembeships = new Dictionary<string, string>();
     public override void GenerateSearchesToBeRun(List<Search> searchesToRun)
     {
         base.GenerateSearchesToBeRun(searchesToRun);
@@ -25,6 +25,7 @@ public partial class homepagecontrols_Membership : HomePageUserControl
         using (var proxy = ConciergeAPIProxyGenerator.GenerateProxy())
         {
             var s = new Search(msMembership.CLASS_NAME);
+            s.AddCriteria(Expr.Equals("MembershipOrganization.MembersCanRenewThroughThePortal", true));
             s.AddOutputColumn("MembershipOrganization");
             s.AddOutputColumn("Product.Name");
             s.AddOutputColumn("Type.Name");
@@ -191,14 +192,17 @@ public partial class homepagecontrols_Membership : HomePageUserControl
         dtSections.Merge(results.Single(x => x.ID == "SectionLeadership").Table);
 
 
-        var srMemOrg = results.Single(x => x.ID == "MembershipOrganization");
-        if (srMemOrg.TotalRowCount > 0)
+      //H.Z. Only those membership organizations that are eligibile for portal usage should be used for a join link.
+        var expression = string.Format("MembersCanJoinThroughThePortal=true");
+        var rows = results.Single(x => x.ID == "MembershipOrganization").Table.Select(expression);
+        if (rows.Any())
         {
-            drMembershipOrganization = srMemOrg.Table.Rows[0];
+            var t = rows.CopyToDataTable();
+            drMembershipOrganization = t.Rows[0];
             //PS-760
-            drMembershipOrganizations = srMemOrg.Table.Rows;
+            drMembershipOrganizations = t.Rows;
 
-            rptMemOrgs.DataSource = srMemOrg.Table;
+            rptMemOrgs.DataSource = t;
             rptMemOrgs.DataBind();
         }
 

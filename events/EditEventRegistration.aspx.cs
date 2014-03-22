@@ -195,7 +195,7 @@ public partial class events_EditEventRegistration : PortalPage
         tbBadgeCity.Text = targetEventRegistration.BadgeCity;
         tbBadgeState.Text = targetEventRegistration.BadgeState;
         tbBadgeCountry.Text = targetEventRegistration.BadgeCountry;
-        tbBadgeRegistrationType.Text = targetEventRegistration.BadgeRegistrationType;
+        
     }
 
     protected void unbindEventRegistration()
@@ -217,7 +217,7 @@ public partial class events_EditEventRegistration : PortalPage
         targetEventRegistration.BadgeCity = tbBadgeCity.Text;
         targetEventRegistration.BadgeState = tbBadgeState.Text;
         targetEventRegistration.BadgeCountry = tbBadgeCountry.Text;
-        targetEventRegistration.BadgeRegistrationType = tbBadgeRegistrationType.Text;
+      
     }
 
     #endregion

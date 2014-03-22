@@ -6,9 +6,9 @@
 <asp:Content ID="Content2" ContentPlaceHolderID="TopMenu" runat="Server">
 </asp:Content>
 <asp:Content ID="Content3" ContentPlaceHolderID="BreadcrumbBar" runat="Server">
-    <a href="<%=string.Format(@"\discussions\ViewDiscussionBoard.aspx?contextID={0}", TargetDiscussionBoard.ID) %>">
+    <a href="<%=string.Format(@"/discussions/ViewDiscussionBoard.aspx?contextID={0}", TargetDiscussionBoard.ID) %>">
         <%= TargetDiscussionBoard.Name %>
-        ></a> <a href="<%=string.Format(@"\discussions\ViewForum.aspx?contextID={0}", targetForum.ID) %>">
+        ></a> <a href="<%=string.Format(@"/discussions/ViewForum.aspx?contextID={0}", targetForum.ID) %>">
             <%= targetForum.Name %></a>
 </asp:Content>
 <asp:Content ID="Content4" ContentPlaceHolderID="PageTitle" runat="Server">
@@ -126,9 +126,9 @@
         <div class="sectionContent" style="width: 400px">
             <ul>
                 <li><a href="/discussions/CreateEditDiscussionPost.aspx?contextID=<%=targetDiscussionTopic.ID %>">
-                    <asp:Literal ID="Literal1" runat="server">Post Reply</asp:Literal></a></li>
+                    <asp:Literal ID="Literal1" runat="server">Post Reply</asp:Literal></a></li>                
                 <asp:HyperLink runat="server" ID="hlPostsPendingApproval"
-                            NavigateUrl="~\discussions\ViewPostsPendingApproval.aspx?contextID="><li>View Posts Pending Approval</li></asp:HyperLink>
+                            NavigateUrl="~\discussions\ViewPostsPendingApproval.aspx?contextID="><li>View Posts Pending Approval</li></asp:HyperLink>                 
                 <li><asp:LinkButton runat="server" ID="lbSubscribeUnsubscribe" OnClick="lbSubscribeUnsubscribe_Click" Text="Suscribe to this Topic"></asp:LinkButton></li>
                 <li><a href="/">
                     <asp:Literal ID="lGoHome" runat="server">Go Home</asp:Literal></a></li>

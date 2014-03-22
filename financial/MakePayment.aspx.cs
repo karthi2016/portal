@@ -60,59 +60,7 @@ public partial class financial_MakePayment : PortalPage
 
     #region Data Binding
 
-    protected void unbindPayment()
-    {
-        targetPayment.Total = decimal.Parse(tbAmount.Text);
-        targetPayment.LineItems = new List<msPaymentLineItem>();
-        
-        // let's pull all of the open invoices
-        foreach (GridViewRow row in gvInvoices.Rows)
-        {
-            if (row.RowType == DataControlRowType.DataRow)
-            {
-                CheckBox cbUse = (CheckBox) row.FindControl("cbUse");
-                TextBox tbAmountToPay = (TextBox) row.FindControl("tbAmountToPay");
-
-                if (!cbUse.Checked) continue;
-                decimal amt = decimal.Parse(tbAmountToPay.Text); // validator should ensure this is valid
-                string id = dvInvoices[row.DataItemIndex]["ID"].ToString();
-                msPaymentLineItem li = new msPaymentLineItem
-                                           {Amount = amt, Invoice = id, Type = PaymentLineItemType.Invoice};
-                targetPayment.LineItems.Add(li);
-            }
-        }
-
-        // now, let's pull any and all credits
-        foreach (GridViewRow row in gvCredits.Rows)
-        {
-            if (row.RowType == DataControlRowType.DataRow)
-            {
-                CheckBox cbUse = (CheckBox) row.FindControl("cbUse");
-                TextBox tbAmountToUse = (TextBox) row.FindControl("tbAmountToUse");
-
-                if (!cbUse.Checked) continue;
-                decimal amt = decimal.Parse(tbAmountToUse.Text); // validator should ensure this is valid
-                string id = dvCredits[row.DataItemIndex]["ID"].ToString();
-                msPaymentLineItem li = new msPaymentLineItem
-                                           {Amount = amt*-1, Credit = id, Type = PaymentLineItemType.Credit};
-                targetPayment.LineItems.Add(li);
-            }
-        }
-    }
-
-    protected CreditCard unbindCreditCard()
-    {
-        CreditCard result = new CreditCard
-        {
-            CardNumber = tbCreditCardNumber.Text,
-            CardExpirationDate = myExpiration.Date.Value,
-            CCVCode = tbCVV.Text,
-            NameOnCard = tbName.Text,
-            BillingAddress = acBillingAddress.Address
-        };
-
-        return result;
-    }
+    
 
     #endregion
 
@@ -146,49 +94,7 @@ public partial class financial_MakePayment : PortalPage
         dvCredits = new DataView(results[1].Table);
     }
 
-    protected void processPayment(CreditCard creditCard)
-    {
-        
-        decimal sumOfItems = targetPayment.LineItems.Sum(x => x.Amount);
-        decimal overpayment = targetPayment.Total - sumOfItems;
-
-        // add the overpayment
-        if (overpayment > 0)
-        {
-            // not allow
-            throw new ConciergeClientException(MemberSuite.SDK.Concierge.ConciergeErrorCode.IllegalOperation, "The sum of the invoice payments is less than the total payment amount. Please make sure all of the money in your payment is applied to invoices. ");
-            //targetPayment.LineItems.Add(new msPaymentLineItem
-              //                              {Amount = overpayment, Type = PaymentLineItemType.OverPayment});
-        }
-
-        string antiDupeKey = (string)ViewState["AntiDupeKey"];
-        using (var api = GetServiceAPIProxy())
-        {
-            if (targetPayment.Total > 0)
-            {
-                targetPayment.PaymentMethod = PaymentMethod.CreditCard;
-                PaymentProcessorResponse resp = api.ProcessCreditCardPayment(targetPayment, creditCard, antiDupeKey).ResultValue;
-
-                if(!resp.Success)
-                    // ok, we're throwing an exception 
-                    throw new ConciergeClientException(
-                        MemberSuite.SDK.Concierge.ConciergeErrorCode.CreditCardAuthorizationFailed,
-                        "Unable to process payment: [{0}] - {1}", resp.GatewayResponseReasonCode, resp.GatewayResponseReasonText);
-
-                targetPayment = LoadObjectFromAPI(resp.PaymentID).ConvertTo<msPayment>();
-            }
-            else
-            {
-                targetPayment.PaymentMethod = PaymentMethod.CustomerCredit;
-               targetPayment = api.RecordPayment(targetPayment).ResultValue.ConvertTo<msPayment>();
-            }
-
-
-            // now, send a confirmation email
-            api.SendEmail("BuiltIn:Payment", new List<string> { targetPayment.ID }, ConciergeAPI.CurrentUser.EmailAddress);
-        }
-    }
-
+ 
     #endregion
 
     #region Event Handlers
@@ -214,46 +120,66 @@ public partial class financial_MakePayment : PortalPage
             gvCredits.DataSource = dvCredits;
             gvCredits.DataBind();
         }
+
+   
     }
 
     protected void btnContinue_Click(object sender, EventArgs e)
     {
-        //if (!IsValid)
-        //    return;
-
-        decimal amount = decimal.Parse(tbAmount.Text);
-        // we have to disable the validators so the "Validate" command doesn't fire if there is no total to charge to the card
-        if (amount == 0)
-        {
-            rfvCCNameOnCard.Enabled = false;
-            rfvCreditCardNumber.Enabled = false;
-            rfvCardSecurity.Enabled = false;
-            Validate();
-
-            // now re-enable
-            rfvCCNameOnCard.Enabled = true;
-            rfvCreditCardNumber.Enabled = true;
-            rfvCardSecurity.Enabled = true;
-        }
-
+         
         if (!IsValid)
             return;
 
         unbindPayment();
-        CreditCard creditCard = amount > 0
-                                    ? unbindCreditCard()
-                                    : null;
-        processPayment(creditCard);
 
-        QueueBannerMessage(string.Format("Your payment for {0:C} has been processed.", targetPayment.Total));
-
-        GoHome();
+        MultiStepWizards.MakePayment.Payment = targetPayment;
+        GoTo("MakePayment2.aspx?antiDupeKey=" + ViewState["AntiDupeKey"]);
     }
 
     protected void btnCancel_Click(object sender, EventArgs e)
     {
+        MultiStepWizards.MakePayment.Clear();
        GoHome();
     }
+
+    protected void unbindPayment()
+    {
+        targetPayment.Total = decimal.Parse(tbAmount.Text);
+        targetPayment.LineItems = new List<msPaymentLineItem>();
+
+        // let's pull all of the open invoices
+        foreach (GridViewRow row in gvInvoices.Rows)
+        {
+            if (row.RowType == DataControlRowType.DataRow)
+            {
+                CheckBox cbUse = (CheckBox)row.FindControl("cbUse");
+                TextBox tbAmountToPay = (TextBox)row.FindControl("tbAmountToPay");
+
+                if (!cbUse.Checked) continue;
+                decimal amt = decimal.Parse(tbAmountToPay.Text); // validator should ensure this is valid
+                string id = dvInvoices[row.DataItemIndex]["ID"].ToString();
+                msPaymentLineItem li = new msPaymentLineItem { Amount = amt, Invoice = id, Type = PaymentLineItemType.Invoice };
+                targetPayment.LineItems.Add(li);
+            }
+        }
+
+        // now, let's pull any and all credits
+        foreach (GridViewRow row in gvCredits.Rows)
+        {
+            if (row.RowType == DataControlRowType.DataRow)
+            {
+                CheckBox cbUse = (CheckBox)row.FindControl("cbUse");
+                TextBox tbAmountToUse = (TextBox)row.FindControl("tbAmountToUse");
+
+                if (!cbUse.Checked) continue;
+                decimal amt = decimal.Parse(tbAmountToUse.Text); // validator should ensure this is valid
+                string id = dvCredits[row.DataItemIndex]["ID"].ToString();
+                msPaymentLineItem li = new msPaymentLineItem { Amount = amt * -1, Credit = id, Type = PaymentLineItemType.Credit };
+                targetPayment.LineItems.Add(li);
+            }
+        }
+    }
+
 
     protected void gvInvoices_OnRowDataBound(object sender, GridViewRowEventArgs e)
     {
