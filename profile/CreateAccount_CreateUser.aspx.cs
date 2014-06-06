@@ -62,9 +62,9 @@ public partial class profile_CreateAccount_Complete : PortalPage
     {
         base.InitializeTargetObject();
 
-        targetIndividual = MultiStepWizards.CreateAccount.TargetIndividual ?? new msIndividual();
-        targetPortalUser = MultiStepWizards.CreateAccount.TargetPortalUser ?? new msPortalUser();
-        targetOrganization = MultiStepWizards.CreateAccount.TargetOrganization ?? new msOrganization();
+        targetIndividual = MultiStepWizards.CreateAccount.TargetIndividual ?? CreateNewObject<msIndividual>();
+        targetPortalUser = MultiStepWizards.CreateAccount.TargetPortalUser ?? CreateNewObject<msPortalUser>();
+        targetOrganization = MultiStepWizards.CreateAccount.TargetOrganization ?? CreateNewObject<msOrganization>();
         targetOrganizationRelationship = MultiStepWizards.CreateAccount.TargetOrganizationRelationship;
 
         newUserRequest = MultiStepWizards.CreateAccount.Request;
@@ -275,6 +275,7 @@ public partial class profile_CreateAccount_Complete : PortalPage
         targetPortalUser.EmailAddress = tbIndividualEmail.Text;
         targetPortalUser.Name = tbLoginID.Text;
         targetPortalUser["Password"] = tbPassword.Text;
+        targetPortalUser.MustChangePassword = false;
 
         targetIndividual.Title = tbIndividualTitle.Text;
         targetIndividual.FirstName = tbIndividualFirstName.Text;

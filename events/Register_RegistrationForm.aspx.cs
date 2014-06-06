@@ -276,13 +276,12 @@ public partial class events_Register_RegistrationForm : PortalPage
                     var name = entry.Key.Split('|')[1];
 
                     // MS-4322 - need to account for demographics here
-                    if (!name.EndsWith("__q"))
-                        li[name] = value;
-                    else
+                    // MS-4970 - need to account for name on registration field (ie: guest registration)
+                    if (name.EndsWith("__q") || (name == MemberSuiteConstants.Events.NAME_ON_REGISTRATION_FIELD))
                         li.Options.Add(new NameValueStringPair(name, value.ToString()));
+                    else
+                        li[name] = value;
 
-                    if (name == MemberSuiteConstants.Events.NAME_ON_REGISTRATION_FIELD)
-                        li.Description = value.ToString(); // set the description of the line item
                 }
             }
         }

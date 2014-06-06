@@ -335,10 +335,15 @@ public partial class membership_PurchaseMembership2 : PortalPage
         if (targetMembership != null && targetMembership.Chapters != null)
         {
             // find the primary
-            var cPrimary = (targetMembership.Chapters.Find(x => x.IsPrimary));
-            if (cPrimary != null)
-                ddlSelectChapter.SafeSetSelectedValue(cPrimary.Chapter);
+            
 
+            var cPrimary = (targetMembership.Chapters.Find(x => x.IsPrimary));
+
+            // MS-4984 - only set the default chapter if it's set up in the mem org
+            if (cPrimary != null && mo.MembersShouldInheritPreviousChapterUponRenewal)
+                    ddlSelectChapter.SafeSetSelectedValue(cPrimary.Chapter);
+
+            
             // now, let's try to select the additional
             if (divAdditionalChapters.Visible)
             {

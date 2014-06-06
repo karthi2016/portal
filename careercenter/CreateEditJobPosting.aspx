@@ -42,7 +42,7 @@
                             Display="None" ErrorMessage="Please specify an email to use when sending resumes." />
                         <asp:RegularExpressionValidator runat="server" ID="revResumeEmail" Display="None"
                             ErrorMessage="Please specify a valid email to use when sending resumes." ControlToValidate="tbResumeEmail"
-                            ValidationExpression="\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*" />
+                            ValidationExpression="\w+(['-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*" />
                     </td>
                 </tr>
                 <tr>

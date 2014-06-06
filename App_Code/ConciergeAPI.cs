@@ -19,6 +19,23 @@ using MemberSuite.SDK.Utilities;
 public class ConciergeAPI : IConciergeAPISessionIdProvider, IConciergeAPIBrowserIdProvider
 {
     private const string BrowserCacheKey = "ConciergeAPIBrowserID";
+    private const string COOKIE_USERNAME = "UserName"; //For APM (DynaTrace) user identification - not to be used for any security function
+
+    private static void setUserIdentificationCookie()
+    {
+        //For APM (DynaTrace) user identification - not to be used for any security function
+        HttpCookie userNameCookie = new HttpCookie(COOKIE_USERNAME);
+        if (CurrentUser != null)
+        {
+            userNameCookie.Value = CurrentUser.Name;
+        }
+        else
+        {
+            userNameCookie.Expires = DateTime.Now.AddDays(-1);
+        }
+
+        HttpContext.Current.Response.SetCookie(userNameCookie);
+    }
 
     public static msPortalUser CurrentUser
     {
@@ -179,7 +196,8 @@ public class ConciergeAPI : IConciergeAPISessionIdProvider, IConciergeAPIBrowser
         Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo(result.Locale);
 
         AccessibleEntities = result.AccessibleEntities;
-        
+
+        setUserIdentificationCookie();
     }
 
     public static bool SetSessionId(string sessionId)
@@ -202,6 +220,8 @@ public class ConciergeAPI : IConciergeAPISessionIdProvider, IConciergeAPIBrowser
         AccessibleEntities = null;
 
         MultiStepWizards.ClearAll();
+
+        setUserIdentificationCookie();
     }
 
     public bool TryGetSessionId(out string sessionId)

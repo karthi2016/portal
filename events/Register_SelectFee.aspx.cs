@@ -96,6 +96,10 @@ public partial class events_Register_SelectFee : PortalPage
     {
         base.InitializePage();
 
+        if (EventLogic.IsRegistrationClosed(targetEvent))
+        {
+            GoTo(string.Format("ViewEvent.aspx?contextID={0}", ContextID));
+        }
 
         if (targetChapter != null)
             setOwnerBackLinks(targetChapter.ID, targetChapter.Name, "~/chapters/ViewChapter.aspx", "~/chapters/ManageChapterEvents.aspx");

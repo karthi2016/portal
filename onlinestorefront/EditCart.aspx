@@ -30,6 +30,7 @@
                     <asp:TemplateField HeaderText="Product" HeaderStyle-Width="500px" HeaderStyle-HorizontalAlign="Left"
                         ItemStyle-HorizontalAlign="Left">
                         <ItemTemplate>
+                            <asp:HiddenField ID="lblLineItemID" runat="server"/>
                             <asp:Label ID="lblProductName" runat="server" />
                         </ItemTemplate>
                     </asp:TemplateField>

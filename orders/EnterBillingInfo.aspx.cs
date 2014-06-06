@@ -202,7 +202,7 @@ public partial class orders_EnterBillingInfo : PortalPage
         targetOrder.SavePaymentMethod = ePayment.SavePaymentMethod;
 
         targetOrder.BillingAddress = BillingInfoWidget.GetBillingAddress();
-        targetOrder.PaymentReferenceNumber = BillingInfoWidget.GetReferenceNumber();
+        targetOrder.PurchaseOrderNumber = BillingInfoWidget.GetReferenceNumber();
 
         GoTo("ConfirmOrder.aspx?useTransient=" + isTransient);
 

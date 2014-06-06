@@ -68,28 +68,32 @@ public partial class orders_EnterShippingInformation : PortalPage
     {
         base.InitializePage();
 
-        // let's preprocess and figure out whether we need shipping information
-        // MS-4855 - don't forget about cross-sell
-        var completeOrder = targetOrder.Clone().ConvertTo<msOrder>();
-        var csi = MultiStepWizards.PlaceAnOrder.CrossSellItems;
-        if (csi != null && csi.Count > 0)
-            completeOrder.LineItems.AddRange(csi.FindAll(x => x.Quantity != 0)); // add any cross sell items
-            
-
-        using (var api = GetConciegeAPIProxy())
-        {
-            preProcessedOrderPacket = api.PreProcessOrder(completeOrder).ResultValue;
-        }
-
+        preProcessedOrderPacket = PreprocessOrder();
 
         if (!preProcessedOrderPacket.ShippingMethodRequired)    // no shipping method needed
             GoTo("EnterBillingInfo.aspx?useTransient=" + isTransient);
 
      
        setupShipping();
-
     }
 
+    private PreProcessedOrderPacket PreprocessOrder()
+    {
+        // let's preprocess and figure out whether we need shipping information
+        // MS-4855 - don't forget about cross-sell
+        var completeOrder = targetOrder.Clone().ConvertTo<msOrder>();
+        var csi = MultiStepWizards.PlaceAnOrder.CrossSellItems;
+        if (csi != null && csi.Count > 0)
+            completeOrder.LineItems.AddRange(csi.FindAll(x => x.Quantity != 0)); // add any cross sell items
+
+
+        using (var api = GetConciegeAPIProxy())
+        {
+            var packet = api.PreProcessOrder(completeOrder).ResultValue;
+
+            return packet;
+        }
+    }
 
     #endregion
 
@@ -261,7 +265,13 @@ public partial class orders_EnterShippingInformation : PortalPage
             a != null &&
             ! string.IsNullOrWhiteSpace(a.Line1) &&
             ! string.IsNullOrWhiteSpace(a.City) &&
-            ! string.IsNullOrWhiteSpace(a.State) &&
             ! string.IsNullOrWhiteSpace(a.PostalCode);
+    }
+
+    protected void cvWrongShippingMethod_OnServerValidate(object source, ServerValidateEventArgs args)
+    {
+        targetOrder.ShippingMethod = rblShipping.SelectedValue;
+        var packet = PreprocessOrder();
+        args.IsValid = packet != null && !packet.ShippingCarrierError;
     }
 }

@@ -19,6 +19,7 @@ public partial class directory_SearchDirectory_ViewDetails : PortalPage
     protected SearchManifest targetManifest;
     protected DataView dvDetailsFields;
     protected DataRow targetDetailsRow;
+    protected DataRow drMembership;
 
     #endregion
 
@@ -43,7 +44,22 @@ public partial class directory_SearchDirectory_ViewDetails : PortalPage
             return;
         }
 
+        using (IConciergeAPIService proxy = GetConciegeAPIProxy())
+        {
+            Search sMembership = new Search(msEntity.CLASS_NAME) { ID = msMembership.CLASS_NAME };
+            sMembership.AddOutputColumn("ID");
+            sMembership.AddOutputColumn("Membership");
+            sMembership.AddOutputColumn("Membership.ReceivesMemberBenefits");
+            sMembership.AddOutputColumn("Membership.TerminationDate");
+            sMembership.AddCriteria(Expr.Equals("ID", ConciergeAPI.CurrentEntity.ID));
+            sMembership.AddSortColumn("ID");
 
+            SearchResult srMembership = proxy.ExecuteSearch(sMembership, 0, 1).ResultValue;
+            drMembership = srMembership != null && srMembership.Table != null &&
+                           srMembership.Table.Rows.Count > 0
+                               ? srMembership.Table.Rows[0]
+                               : null;
+        }
     }
 
     /// <summary>
@@ -67,6 +83,57 @@ public partial class directory_SearchDirectory_ViewDetails : PortalPage
         generateFieldsDataView();
         rptDirectoryFields.DataSource = dvDetailsFields;
         rptDirectoryFields.DataBind();
+    }
+
+    protected override bool CheckSecurity()
+    {
+        if (!base.CheckSecurity())
+            return false;
+
+        return isMembershipDirectoryAvailable();
+    }
+
+    private bool isMembershipDirectoryAvailable()
+    {
+        if (!PortalConfiguration.Current.MembershipDirectoryEnabled)
+            return false;
+
+        //If the directory is enabled and not restricted to members it's available and no need to check membership status
+        if (!PortalConfiguration.Current.MembershipDirectoryForMembersOnly)
+            return true;
+
+        //Directory is for members only
+        return isActiveMember();
+    }
+
+    protected bool isActiveMember()
+    {
+        if (drMembership == null)
+            return false;
+
+        //Check if the appropriate fields exist - if they do not then the membership module is inactive
+        if (
+            !(drMembership.Table.Columns.Contains("Membership") &&
+              drMembership.Table.Columns.Contains("Membership.ReceivesMemberBenefits") &&
+              drMembership.Table.Columns.Contains("Membership.TerminationDate")))
+            return false;
+
+        //Check there is a membership
+        if (string.IsNullOrWhiteSpace(Convert.ToString(drMembership["Membership"])))
+            return false;
+
+        //Check the membership indicates membership benefits
+        if (!drMembership.Field<bool>("Membership.ReceivesMemberBenefits"))
+            return false;
+
+        //At this point if the termination date is null the member should be able to see the restricted directory
+        DateTime? terminationDate = drMembership.Field<DateTime?>("Membership.TerminationDate");
+
+        if (terminationDate == null)
+            return true;
+
+        //There is a termination date so check if it's future dated
+        return terminationDate > DateTime.Now;
     }
 
     #endregion

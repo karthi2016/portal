@@ -126,6 +126,21 @@ public partial class onlinestorefront_EditCart : PortalPage
         MultiStepWizards.PlaceAnOrder.InitiateOrderProcess(null);
     }
 
+    private static msOrderLineItem GetLineItem(string lineItemId)
+    {
+        var lineItem = MultiStepWizards.PlaceAnOrder.ShoppingCart.LineItems.SingleOrDefault(
+            li => li.OrderLineItemID == lineItemId);
+
+        return lineItem;
+    }
+
+    private static msOrderLineItem GetLineItem(Control gridRow)
+    {
+        var ctl = gridRow.FindControl("lblLineItemID") as HiddenField;
+
+        return ctl == null ? null : GetLineItem(ctl.Value);
+    }
+
     protected void gvShoppingCart_RowDataBound(object sender, GridViewRowEventArgs e)
     {
         msOrderLineItem li = (msOrderLineItem)e.Row.DataItem;
@@ -156,6 +171,15 @@ public partial class onlinestorefront_EditCart : PortalPage
                 Label lblProductPrice = (Label)e.Row.FindControl("lblProductPrice");
 
                 tbQuantity.Text = li.Quantity.ToString("F0");
+
+                // MS-4788 We're using hidden field value to associate visual grid row with actual shopping cart item. 
+                var lblLineItemId = (HiddenField)e.Row.FindControl("lblLineItemID");
+                lblLineItemId.Value = li.OrderLineItemID;
+                // MS-4788 Enable the grid row if it represents actual shopping cart item.
+                // The item can have bundled items which don't have associated row in shopping cart. 
+                // Such bundled items are handled by server.
+                e.Row.Enabled = GetLineItem(li.OrderLineItemID) != null;
+                
 
                 string productName = "Product";
 
@@ -194,8 +218,12 @@ public partial class onlinestorefront_EditCart : PortalPage
                     TextBox tbQuantity = (TextBox)row.FindControl("tbQuantity");
                     int quantity = int.Parse(tbQuantity.Text);
 
-                    msOrderLineItem lineItem =
-                        MultiStepWizards.PlaceAnOrder.ShoppingCart.LineItems[row.DataItemIndex];
+                    // MS-4788 Check if visual grid row has actual line item in shopping cart.
+                    var lineItem = GetLineItem(row);
+                    if (lineItem == null)
+                    {
+                        continue;
+                    }
 
                     if (quantity < 1)
                     {
@@ -224,7 +252,12 @@ public partial class onlinestorefront_EditCart : PortalPage
         {
             case "delete":
                 MultiStepWizards.PlaceAnOrder.ShoppingCart.DiscountCodes = null;    // remove any discounts
-                MultiStepWizards.PlaceAnOrder.ShoppingCart.LineItems.RemoveAt(gvr.DataItemIndex);
+                // MS-4788 Check if visual grid row has actual line item in shopping cart.
+                var lineItem = GetLineItem(gvr);
+                if (lineItem != null)
+                {
+                    MultiStepWizards.PlaceAnOrder.ShoppingCart.LineItems.Remove(lineItem);                    
+                }
                 break;
         }
     }

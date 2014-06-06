@@ -28,6 +28,8 @@
         runat="server" />
         <ASP:CustomValidator ID="cvInvalidAddress" runat="server" OnServerValidate="cvInvalidAddress_OnServerValidate" ErrorMessage="The address you have selected is invalid - a line 1, city, state, and postal code are required. Please select another address or enter in a new address."
                              Display="None"/>
+        <ASP:CustomValidator ID="cvWrongShippingMethod" runat="server" OnServerValidate="cvWrongShippingMethod_OnServerValidate" ErrorMessage="The shipping method you have selected is invalid."
+                             Display="None"/>
         <div style="margin-top: 20px">
             <table style="width: 100%">
                 <tr>
