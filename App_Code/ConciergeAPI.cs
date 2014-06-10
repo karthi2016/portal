@@ -19,28 +19,49 @@ using MemberSuite.SDK.Utilities;
 public class ConciergeAPI : IConciergeAPISessionIdProvider, IConciergeAPIBrowserIdProvider
 {
     private const string BrowserCacheKey = "ConciergeAPIBrowserID";
-    private const string COOKIE_USERNAME = "UserName"; //For APM (DynaTrace) user identification - not to be used for any security function
+    private const string COOKIE_CONSOLE_USERNAME = "ConsoleUser"; //For APM (DynaTrace) user identification - not to be used for any security function
+    private const string COOKIE_PORTAL_USERNAME = "PortalUser"; //For APM (DynaTrace) user identification - not to be used for any security function
 
     private static void setUserIdentificationCookie()
     {
         //For APM (DynaTrace) user identification - not to be used for any security function
-        HttpCookie userNameCookie = new HttpCookie(COOKIE_USERNAME);
+        HttpCookie portalUserCookie = new HttpCookie(COOKIE_PORTAL_USERNAME);
+        HttpCookie consoleUserCookie = new HttpCookie(COOKIE_CONSOLE_USERNAME);
+
         if (CurrentUser != null)
         {
-            userNameCookie.Value = CurrentUser.Name;
+            portalUserCookie.Value = CurrentUser.Name;
         }
         else
         {
-            userNameCookie.Expires = DateTime.Now.AddDays(-1);
+            portalUserCookie.Expires = DateTime.Now.AddDays(-1);
         }
 
-        HttpContext.Current.Response.SetCookie(userNameCookie);
+        //Can't just check BackgroundUser because that will always have a value
+        //It will be a user like "MemberSuite Agent" if there is no interactive console user
+        if (HasBackgroundConsoleUser && BackgroundUser != null)
+        {
+            consoleUserCookie.Value = BackgroundUser.Name;
+        }
+        else
+        {
+            consoleUserCookie.Expires = DateTime.Now.AddDays(-1);
+        }
+
+        HttpContext.Current.Response.SetCookie(portalUserCookie);
+        HttpContext.Current.Response.SetCookie(consoleUserCookie);
     }
 
     public static msPortalUser CurrentUser
     {
         get { return SessionManager.Get<msPortalUser>("ConciergeAPICurrentUser");}
         set { SessionManager.Set("ConciergeAPICurrentUser", value); }
+    }
+
+    public static msUser BackgroundUser
+    {
+        get { return SessionManager.Get<msUser>("ConciergeAPIBackgroundUser"); }
+        set { SessionManager.Set("ConciergeAPIBackgroundUser", value); }
     }
 
     public static msEntity CurrentEntity
@@ -155,6 +176,10 @@ public class ConciergeAPI : IConciergeAPISessionIdProvider, IConciergeAPIBrowser
     {
         get
         {
+            //Can't just check BackgroundUser because that will always have a value
+            //It will be a user like "MemberSuite Agent" if there is no interactive console user
+            //So instead check if there's a return URL from the console - that's always set when a
+            //console user is impersonating a portal user
             if (string.IsNullOrWhiteSpace(ConsoleReturnUrl))
                 return false;
 
@@ -179,6 +204,8 @@ public class ConciergeAPI : IConciergeAPISessionIdProvider, IConciergeAPIBrowser
         CurrentUser  = result.PortalUser.ConvertTo<msPortalUser>();
         CurrentEntity = result.PortalEntity.ConvertTo<msEntity>();
         CurrentAssociation = result.Association.ConvertTo<msAssociation>();
+
+        BackgroundUser = result.User.ConvertTo<msUser>();
 
         if (result.ConsoleMetadata != null && result.ConsoleMetadata.Tabs != null)
         {
