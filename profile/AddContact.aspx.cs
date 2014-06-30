@@ -259,26 +259,36 @@ public partial class profile_AddContact : PortalPage
         
         msRelationship newRelationship = new msRelationship {Type = targetRelationshipType.ID};
 
+        string targetEmail;
+
         if(targetRelationshipType.LeftSideType == msOrganization.CLASS_NAME)
         {
             newRelationship.LeftSide = targetOrganization.ID;
             newRelationship.RightSide = targetIndividual.ID;
+            targetEmail = targetIndividual.EmailAddress;
         }
         else
         {
             newRelationship.RightSide = targetOrganization.ID;
             newRelationship.LeftSide = targetIndividual.ID;
+            targetEmail = targetOrganization.EmailAddress;
         }
 
         newRelationship = SaveObject(newRelationship).ConvertTo<msRelationship>();
 
-        if(sendInvitation)
-            using (IConciergeAPIService proxy = GetConciegeAPIProxy())
+
+        using (IConciergeAPIService proxy = GetConciegeAPIProxy())
+        {
+            //The API GetOrCreatePortalUser will attempt to match the supplied credentials to a portal user, individual, or organization. 
+            //If a portal user is found it will be returned.  If not and an individual / organization uses the email address it will create and return a new Portal User
+            var result = proxy.SearchAndGetOrCreatePortalUser(targetEmail);
+
+            if (sendInvitation)
             {
                 //Send the welcome email
-                proxy.SendEmail("BuiltIn:Welcome", new List<string> {targetIndividual.ID}, null);
+                proxy.SendWelcomePortalUserEmail(result.ResultValue.ID, targetEmail);
             }
-
+        }
         string nextUrl = "~/profile/ManageContacts.aspx";
         if(!string.IsNullOrWhiteSpace(ContextID))
             string.Format("{0}?contextID{1}", nextUrl, ContextID);

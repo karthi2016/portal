@@ -15,6 +15,8 @@ using MemberSuite.SDK.Searching;
 using MemberSuite.SDK.Searching.Operations;
 using MemberSuite.SDK.Types;
 using MemberSuite.SDK.Web.Controls;
+using Telerik.Web.UI;
+using DataKey = System.Web.UI.WebControls.DataKey;
 using Image = System.Drawing.Image;
 
 public partial class profile_CreateAccount_Complete : PortalPage
@@ -206,6 +208,42 @@ public partial class profile_CreateAccount_Complete : PortalPage
 
         }
 
+        //Communication Preferences
+        chkDoNotEmail.Checked = targetIndividual.DoNotEmail;
+        chkDoNotFax.Checked = targetIndividual.DoNotFax;
+        chkDoNotMail.Checked = targetIndividual.DoNotMail;
+
+        populateMessageCategories();
+
+        //Bind selected opt out message categories
+        if (targetIndividual.OptOuts != null)
+            foreach (var optOut in targetIndividual.OptOuts)
+            {
+                var rli = dlbMessageCategories.Source.FindItemByValue(optOut);
+
+                if (rli == null)
+                    continue;
+
+                dlbMessageCategories.Source.Transfer(rli, dlbMessageCategories.Source, dlbMessageCategories.Destination);
+            }
+
+    }
+
+    private void populateMessageCategories()
+    {
+        List<msMessageCategory> categories = getMessageCategories();
+
+        foreach (var category in categories)
+            dlbMessageCategories.Source.Items.Add(new RadListBoxItem(category.Name, category.ID)); // add it
+    }
+
+    private List<msMessageCategory> getMessageCategories()
+    {
+        var result = GetAllObjects<msMessageCategory>(msMessageCategory.CLASS_NAME);
+
+        result.RemoveAll(x => !x.IsActive);
+        result.Sort((x, y) => x.DisplayOrder.GetValueOrDefault().CompareTo(y.DisplayOrder.GetValueOrDefault()));
+        return result;
     }
 
     private void bindOrganizationToPage()
@@ -365,6 +403,17 @@ public partial class profile_CreateAccount_Complete : PortalPage
             targetIndividual.SeasonalAddressStart = mdpIndividualSeasonalStart.Date;
             targetIndividual.SeasonalAddressEnd = mdpIndividualSeasonalEnd.Date;
         }
+
+        //Communication Preferences
+        targetIndividual.DoNotEmail = chkDoNotEmail.Checked;
+        targetIndividual.DoNotFax = chkDoNotFax.Checked;
+        targetIndividual.DoNotMail = chkDoNotMail.Checked;
+        targetIndividual.CommunicationsLastVerified = DateTime.UtcNow;
+        targetIndividual.CommunicationsLastVerifiedFrom = Utils.GetIP();
+
+        //Unbind selected opt out message categories
+        targetIndividual.OptOuts = (from category in dlbMessageCategories.Destination.Items
+                                select category.Value).ToList();
 
         // finally, the custom fields
         cfsIndividualCustomFields.Harvest();

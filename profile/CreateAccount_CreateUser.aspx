@@ -306,6 +306,65 @@
                             </tr>
                         </table>
                     </asp:PlaceHolder>
+                    <asp:PlaceHolder ID="PlaceHolder1" runat="server">
+                        <h2>
+                            <asp:Literal ID="lCommunicationPrefs" runat="server">Communication Preferences</asp:Literal></h2>
+                        <div>
+                            <h3>
+                                <asp:Literal ID="lGeneralOptions" runat="server">General Communication Options</asp:Literal></h3>
+                            <p>
+                                <asp:Literal ID="lNoteIfYouSelect" runat="server">Note that if you select <b>Do Not Email?</b> you will not receive any email blasts,
+                but you will still receive confirmation emails.</asp:Literal>
+                            </p>
+                            <table cellpadding="0" cellspacing="0" style="margin-top: 10px;">
+                                <tr id="trDoNotEmail" runat="server">
+                                    <td width="50px">
+                                        &nbsp;
+                                    </td>
+                                    <td class="columnHeader" width="100px">
+                                        <asp:Literal ID="lDoNotEmail" runat="server">Do Not Email?</asp:Literal>
+                                    </td>
+                                    <td align="left">
+                                        <asp:CheckBox runat="server" ID="chkDoNotEmail" />
+                                    </td>
+                                </tr>
+                                <tr id="trDoNotMail" runat="server">
+                                    <td width="50px">
+                                        &nbsp;
+                                    </td>
+                                    <td class="columnHeader">
+                                        <asp:Literal ID="lDoNotMail" runat="server">Do Not Mail?</asp:Literal>
+                                    </td>
+                                    <td>
+                                        <asp:CheckBox runat="server" ID="chkDoNotMail" />
+                                    </td>
+                                </tr>
+                                <tr id="trDoNotFax" runat="server">
+                                    <td width="50px">
+                                        &nbsp;
+                                    </td>
+                                    <td class="columnHeader">
+                                        <asp:Literal ID="lDoNotFax" runat="server">Do Not Fax?</asp:Literal>
+                                    </td>
+                                    <td>
+                                        <asp:CheckBox runat="server" ID="chkDoNotFax" />
+                                    </td>
+                                </tr>
+                            </table>
+                            <p>
+                            </p>
+                            <h3>
+                                <asp:Literal ID="lMessageCategories" runat="server">Message Categories</asp:Literal></h3>
+                            <p>
+                                <asp:Literal ID="lBelowYouCan" runat="server">Below you can opt out of certain "categories" of communication, allowing you to
+                control what kinds of emails you get. When an email blast is sent, if you have chosen
+                to opt out of the category you will be automatically excluded from the blast. Below
+                are the message categories for which you will receive messages.</asp:Literal>
+                            </p>
+                            <cc1:DualListBox runat="server" ID="dlbMessageCategories" LeftLabel="You are opted IN to these lists"
+                                RightLabel="You are opted OUT of these lists" />
+                        </div>
+                    </asp:PlaceHolder>
                     <asp:PlaceHolder ID="phIndividualOtherInformation" runat="server">
                         <uc1:CustomFieldSet ID="cfsIndividualCustomFields" runat="server" />
                     </asp:PlaceHolder>

@@ -10,6 +10,7 @@ using MemberSuite.SDK.Results;
 using MemberSuite.SDK.Searching;
 using MemberSuite.SDK.Searching.Operations;
 using MemberSuite.SDK.Types;
+using Telerik.Web.UI;
 
 public partial class profile_ManageContacts : PortalPage
 {
@@ -40,7 +41,6 @@ public partial class profile_ManageContacts : PortalPage
         if (targetOrganization == null)
         {
             GoToMissingRecordPage();
-            return;
         }
     }
 
@@ -53,16 +53,16 @@ public partial class profile_ManageContacts : PortalPage
     protected override void InitializePage()
     {
         base.InitializePage();
+        
+        //loadDataFromConcierge();
 
-        loadDataFromConcierge();
+        //divPastRelationships.Visible = dvPastRelationships != null && dvPastRelationships.Count > 0;
 
-        divPastRelationships.Visible = dvPastRelationships != null && dvPastRelationships.Count > 0;
+        //gvCurrentRelationships.DataSource = dvCurrentRelationships;
+        //gvCurrentRelationships.DataBind();
 
-        gvCurrentRelationships.DataSource = dvCurrentRelationships;
-        gvCurrentRelationships.DataBind();
-
-        gvPastRelationships.DataSource = dvPastRelationships;
-        gvPastRelationships.DataBind();
+        //gvPastRelationships.DataSource = dvPastRelationships;
+        //gvPastRelationships.DataBind();
 
         //rptRelationshipTypes.DataSource = dvRelationshipTypes;
         //rptRelationshipTypes.DataBind();
@@ -70,18 +70,40 @@ public partial class profile_ManageContacts : PortalPage
 
     #endregion
 
+    //MS-4881
+    protected void CurrentContactsNeedDataSource(object sender, GridNeedDataSourceEventArgs e)
+    {
+        int totalCount;
+
+        gvCurrentRelationships.DataSource = LoadDataFromConcierge(true, gvCurrentRelationships.CurrentPageIndex * gvCurrentRelationships.PageSize, gvCurrentRelationships.PageSize, out totalCount);
+        gvCurrentRelationships.VirtualItemCount = totalCount;
+    }
+
+    //MS-4881
+    protected void PastContactsNeedDataSource(object sender, GridNeedDataSourceEventArgs e)
+    {
+        int totalCount;
+
+        gvPastRelationships.DataSource = LoadDataFromConcierge(false, gvPastRelationships.CurrentPageIndex * gvPastRelationships.PageSize, gvPastRelationships.PageSize, out totalCount);
+        gvPastRelationships.VirtualItemCount = totalCount;
+
+        if (divPastRelationships != null)
+            divPastRelationships.Visible = totalCount > 0;
+    }
+
     #region Methods
 
-    protected void loadDataFromConcierge()
+    //MS-4881
+    protected DataTable LoadDataFromConcierge(bool currentContacts, int start, int count, out int totalCount)
     {
         List<Search> searches = new List<Search>();
 
         //Relationships
         Search sRelationships = new Search("RelationshipsForARecord")
-                                    {
-                                        ID = msRelationship.CLASS_NAME,
-                                        Context = targetOrganization.ID
-                                    };
+        {
+            ID = msRelationship.CLASS_NAME,
+            Context = targetOrganization.ID
+        };
         sRelationships.AddOutputColumn("ID");
         sRelationships.AddOutputColumn("RightSide_Individual.LocalID");
         sRelationships.AddOutputColumn("Target_ID");
@@ -89,51 +111,20 @@ public partial class profile_ManageContacts : PortalPage
         sRelationships.AddOutputColumn("IsActive");
         sRelationships.AddOutputColumn("RightSide_Individual.EmailAddress");
         sRelationships.AddOutputColumn("RelationshipTypeName");
-        //sRelationships.AddCriteria(Expr.DoesNotEqual("Target_ID", CurrentUser.Owner));
         sRelationships.AddCriteria(Expr.IsNotBlank("RightSide_Individual.Name"));    // bring individuals over only MS-4426
+        sRelationships.AddCriteria(Expr.Equals("IsActive", currentContacts));
         sRelationships.AddSortColumn("Target_Name");
         searches.Add(sRelationships);
 
-        ////Relationship Types
-        //Search sRelationshipTypes = new Search(msRelationshipType.CLASS_NAME) {ID = msRelationshipType.CLASS_NAME};
-        //sRelationshipTypes.AddOutputColumn("ID");
-        //sRelationshipTypes.AddOutputColumn("Name");
-        //sRelationshipTypes.AddOutputColumn("LeftSideType");
-        //sRelationshipTypes.AddOutputColumn("RightSideType");
-
-        //SearchOperationGroup individualGroup = new SearchOperationGroup
-        //{
-        //    FieldName = "LeftSideType",
-        //    GroupType = SearchOperationGroupType.Or
-        //};
-        //individualGroup.Criteria.Add(Expr.Equals("LeftSideType", msIndividual.CLASS_NAME));
-        //individualGroup.Criteria.Add(Expr.Equals("RightSideType", msIndividual.CLASS_NAME));
-
-        //SearchOperationGroup organizationGroup = new SearchOperationGroup
-        //{
-        //    FieldName = "RightSideType",
-        //    GroupType = SearchOperationGroupType.Or
-        //};
-        //organizationGroup.Criteria.Add(Expr.Equals("LeftSideType", msOrganization.CLASS_NAME));
-        //organizationGroup.Criteria.Add(Expr.Equals("RightSideType", msOrganization.CLASS_NAME));
-
-        //sRelationshipTypes.AddCriteria(individualGroup);
-        //sRelationshipTypes.AddCriteria(organizationGroup);
-        //sRelationshipTypes.AddSortColumn("DisplayOrder");
-        //sRelationshipTypes.AddSortColumn("Name");
-        //searches.Add(sRelationshipTypes);
-
-        List<SearchResult> searchResults = ExecuteSearches(searches, 0, null);
-        
+        List<SearchResult> searchResults = ExecuteSearches(searches, start, count);        
         SearchResult srRelationships = searchResults.Single(x => x.ID == msRelationship.CLASS_NAME);
-        dvCurrentRelationships = new DataView(srRelationships.Table, "IsActive = true", "Target_Name", DataViewRowState.CurrentRows);
-        dvPastRelationships = new DataView(srRelationships.Table, "IsActive = false", "Target_Name", DataViewRowState.CurrentRows);
 
-        //SearchResult srRelationshipTypes = searchResults.Single(x => x.ID == msRelationshipType.CLASS_NAME);
-        //dvRelationshipTypes = new DataView(srRelationshipTypes.Table);
+        totalCount = srRelationships.TotalRowCount;
+
+        return srRelationships.Table;
     }
 
-    protected void deleteItem(string id)
+    protected void DeleteItem(string id)
     {
         using (IConciergeAPIService serviceProxy = GetServiceAPIProxy())
         {
@@ -145,36 +136,29 @@ public partial class profile_ManageContacts : PortalPage
 
     #region Event Handlers
 
-    protected void gvRelationships_RowCommand(object sender, GridViewCommandEventArgs e)
+    protected void DeleteCurrentContact(object sender, CommandEventArgs e)
     {
-        switch (e.CommandName.ToLower())
-        {
-            case "deleterelationship":
-                deleteItem(e.CommandArgument.ToString());
-                QueueBannerMessage("Relationship deleted successfully.");
-                Refresh();
-                break;
-        }
+        DeleteItem(e.CommandArgument.ToString());
+        QueueBannerMessage("Relationship deleted successfully.");
+        Refresh();        
     }
 
-    protected void gvRelationships_RowDataBound(object sender, GridViewRowEventArgs e)
+    protected void ContactRowBound(object sender, GridItemEventArgs e)
     {
-        if (e.Row.DataItem == null)
+        var dataItem = e.Item as GridDataItem;
+        if (dataItem == null)
             return;
 
-        DataRowView drv = (DataRowView) e.Row.DataItem;
+        var drv = (DataRowView)dataItem.DataItem;
 
-        switch (e.Row.RowType)
-        {
-            case DataControlRowType.DataRow:
-                if (ConciergeAPI.CurrentUser.Owner == drv["Target_ID"].ToString())
-                {
-                    LinkButton lbDelete = (LinkButton) e.Row.Cells[6].FindControl("lbDelete");
-                    if(lbDelete != null)
-                        lbDelete.Visible = false;
-                }
-                break;
-        }
+        if (ConciergeAPI.CurrentUser.Owner != drv["Target_ID"].ToString()) 
+            return;
+
+        var lbdelete = (LinkButton) dataItem.FindControl("lbDelete");
+        if (lbdelete == null)
+            return;
+
+        lbdelete.Visible = false;
     }
 
     #endregion

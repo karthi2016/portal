@@ -1,6 +1,6 @@
 ﻿<%@ Page Language="C#" AutoEventWireup="true" CodeFile="ManageContacts.aspx.cs" MasterPageFile="~/App_Master/GeneralPage.master"
     Inherits="profile_ManageContacts" %>
-
+<%@ Register Assembly="Telerik.Web.UI" Namespace="Telerik.Web.UI" TagPrefix="telerik" %>
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="Server">
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="TopMenu" runat="Server">
@@ -14,6 +14,20 @@
 <asp:Content ID="Content5" ContentPlaceHolderID="TopRightContent" runat="Server">
 </asp:Content>
 <asp:Content ID="Content6" ContentPlaceHolderID="PageContent" runat="Server">
+    <telerik:RadAjaxManager ID="AjaxManager1" runat="server">
+        <AjaxSettings>
+            <telerik:AjaxSetting AjaxControlID="gvCurrentRelationships">
+                <UpdatedControls>
+                    <telerik:AjaxUpdatedControl ControlID="gvCurrentRelationships"/>
+                </UpdatedControls>
+            </telerik:AjaxSetting>
+            <telerik:AjaxSetting AjaxControlID="gvPastRelationships">
+                <UpdatedControls>
+                    <telerik:AjaxUpdatedControl ControlID="gvPastRelationships"/>
+                </UpdatedControls>
+            </telerik:AjaxSetting>
+        </AjaxSettings>        
+    </telerik:RadAjaxManager>
     <div class="section" style="margin-top: 10px">
         <div class="sectionHeaderTitle">
             <h2>
@@ -21,29 +35,29 @@
         </div>
         <asp:Literal ID="PageText" runat="server"/>
         <div class="sectionContent">
-            <asp:GridView ID="gvCurrentRelationships" runat="server" GridLines="None" AutoGenerateColumns="false"
-                OnRowCommand="gvRelationships_RowCommand" OnRowDataBound="gvRelationships_RowDataBound"
-                EmptyDataText="There are currently no contacts tied to this organization.">
-                <Columns>
-                    <asp:BoundField DataField="RightSide_Individual.LocalID" HeaderStyle-HorizontalAlign="Left"
-                        HeaderText="ID" />
-                    <asp:BoundField DataField="Target_Name" HeaderStyle-HorizontalAlign="Left" HeaderText="Name" />
-                    <asp:BoundField DataField="RightSide_Individual.EmailAddress" HeaderStyle-HorizontalAlign="Left"
-                        HeaderText="Email Address" />
-                    <asp:BoundField DataField="RelationshipTypeName" HeaderStyle-HorizontalAlign="Left"
-                        HeaderText="Relationship" />
-                    <asp:HyperLinkField DataNavigateUrlFormatString="~\profile\EditIndividualInfo.aspx?contextID={0}"
-                        DataNavigateUrlFields="Target_ID" Text="(edit)" />
-                    <asp:HyperLinkField DataNavigateUrlFormatString="~\profile\ChangeRelationship.aspx?contextID={0}"
-                        DataNavigateUrlFields="ID" Text="(change relationship)" />
-                    <asp:TemplateField>
-                        <ItemTemplate>
+            <telerik:RadCodeBlock ID="RadCodeBlock1" runat="server">                           
+            <telerik:RadGrid ID="gvCurrentRelationships" runat="server" GridLines="None" OnNeedDataSource="CurrentContactsNeedDataSource" PageSize="5" AllowAutomaticDeletes="True"
+                OnItemDataBound="ContactRowBound" OnDeleteCommand="DeleteCurrentContact">
+               <PagerStyle AlwaysVisible="True"/>
+               <MasterTableView AllowPaging="True" AllowCustomPaging="True" AutoGenerateColumns="False" ItemStyle-VerticalAlign="Top" 
+                    AlternatingItemStyle-VerticalAlign="Top" ShowFooter="true" EnableViewState="True">
+                    <Columns>
+                       <telerik:GridBoundColumn DataField="RightSide_Individual.LocalID" HeaderStyle-HorizontalAlign="Left" HeaderText="ID"/>
+                       <telerik:GridBoundColumn DataField="Target_NAme" HeaderStyle-HorizontalAlign="Left" HeaderText="Name"/>    
+                       <telerik:GridBoundColumn DataField="RightSide_Individual.EmailAddress" HeaderStyle-HorizontalAlign="Left" HeaderText="Email Address" />
+                       <telerik:GridBoundColumn DataField="RelationshipTypeName" HeaderStyle-HorizontalAlign="Left" HeaderText="Relationship"/>
+                       <telerik:GridHyperLinkColumn DataNavigateUrlFormatString="~\profile\EditIndividualInfo.aspx?contextID={0}" DataNavigateUrlFields="Target_ID" Text="(edit)"/>
+                       <telerik:GridHyperLinkColumn DataNavigateUrlFormatString="~\profile\ChangeRelationship.aspx?contextID={0}" DataNavigateUrlFields="ID" Text="(change relationship)" />
+                       <telerik:GridTemplateColumn>
+                         <ItemTemplate>
                             <asp:LinkButton runat="server" ID="lbDelete" CommandArgument='<%# Bind("ID") %>'
-                                CommandName="deleterelationship" CausesValidation="false" Text="(delete)" OnClientClick="if (!window.confirm('Are you sure you want to unlink this person from your organization? DO NOT DO THIS if the person has simply left the organization – if the person has left the organization, update the relationship with an end date.')) return false;" />
-                        </ItemTemplate>
-                    </asp:TemplateField>
-                </Columns>
-            </asp:GridView>
+                                CommandName="Delete" CausesValidation="false" Text="(delete)" OnClientClick="if (!window.confirm('Are you sure you want to unlink this person from your organization? DO NOT DO THIS if the person has simply left the organization – if the person has left the organization, update the relationship with an end date.')) return false;" />
+                         </ItemTemplate>                           
+                       </telerik:GridTemplateColumn>
+                   </Columns>
+               </MasterTableView> 
+            </telerik:RadGrid>
+            </telerik:RadCodeBlock>
         </div>
     </div>
     <div class="section" style="margin-top: 10px" runat="server" id="divPastRelationships">
@@ -52,28 +66,28 @@
                 <asp:Literal ID="lPastContacts" runat="server">Past Contacts</asp:Literal></h2>
         </div>
         <div class="sectionContent">
-            <asp:GridView ID="gvPastRelationships" runat="server" GridLines="None" AutoGenerateColumns="false"
-                OnRowCommand="gvRelationships_RowCommand" OnRowDataBound="gvRelationships_RowDataBound">
-                <Columns>
-                    <asp:BoundField DataField="RightSide_Individual.LocalID" HeaderStyle-HorizontalAlign="Left"
-                        HeaderText="ID" />
-                    <asp:BoundField DataField="Target_Name" HeaderStyle-HorizontalAlign="Left" HeaderText="Name" />
-                    <asp:BoundField DataField="RightSide_Individual.EmailAddress" HeaderStyle-HorizontalAlign="Left"
-                        HeaderText="Email Address" />
-                    <asp:BoundField DataField="RelationshipTypeName" HeaderStyle-HorizontalAlign="Left"
-                        HeaderText="Relationship" />
-                    <asp:HyperLinkField DataNavigateUrlFormatString="~\profile\EditIndividualInfo.aspx?contextID={0}"
-                        DataNavigateUrlFields="Target_ID" Text="(edit)" />
-                    <asp:HyperLinkField DataNavigateUrlFormatString="~\profile\ChangeRelationship.aspx?contextID={0}"
-                        DataNavigateUrlFields="ID" Text="(change relationship)" />
-                    <asp:TemplateField>
+            <telerik:RadCodeBlock ID="RadCodeBlock2" runat="server">                           
+            <telerik:RadGrid ID="gvPastRelationships" runat="server" GridLines="None" OnNeedDataSource="PastContactsNeedDataSource" PageSize="5" AllowAutomaticDeletes="True"
+                OnItemDataBound="ContactRowBound" OnDeleteCommand="DeleteCurrentContact">
+               <PagerStyle AlwaysVisible="True"/>
+               <MasterTableView AllowPaging="True" AllowCustomPaging="True" AutoGenerateColumns="False" ItemStyle-VerticalAlign="Top" AlternatingItemStyle-VerticalAlign="Top" ShowFooter="true" EnableViewState="True">
+                 <Columns>
+                    <telerik:GridBoundColumn DataField="RightSide_Individual.LocalID" HeaderStyle-HorizontalAlign="Left" HeaderText="ID" />
+                    <telerik:GridBoundColumn DataField="Target_Name" HeaderStyle-HorizontalAlign="Left" HeaderText="Name" />
+                    <telerik:GridBoundColumn DataField="RightSide_Individual.EmailAddress" HeaderStyle-HorizontalAlign="Left" HeaderText="Email Address" />
+                    <telerik:GridBoundColumn DataField="RelationshipTypeName" HeaderStyle-HorizontalAlign="Left" HeaderText="Relationship" />
+                    <telerik:GridHyperLinkColumn DataNavigateUrlFormatString="~\profile\EditIndividualInfo.aspx?contextID={0}" DataNavigateUrlFields="Target_ID" Text="(edit)" />
+                    <telerik:GridHyperLinkColumn DataNavigateUrlFormatString="~\profile\ChangeRelationship.aspx?contextID={0}" DataNavigateUrlFields="ID" Text="(change relationship)" />
+                    <telerik:GridTemplateColumn>
                         <ItemTemplate>
                             <asp:LinkButton runat="server" ID="lbDelete" CommandArgument='<%# Bind("ID") %>'
-                                CommandName="deleterelationship" CausesValidation="false" Text="(delete)" OnClientClick="if (!window.confirm('Are you sure you want to unlink this person from your organization? DO NOT DO THIS if the person has simply left the organization – if the person has left the organization, update the relationship with an end date.')) return false;" />
+                                CommandName="Delete" CausesValidation="false" Text="(delete)" OnClientClick="if (!window.confirm('Are you sure you want to unlink this person from your organization? DO NOT DO THIS if the person has simply left the organization – if the person has left the organization, update the relationship with an end date.')) return false;" />
                         </ItemTemplate>
-                    </asp:TemplateField>
+                    </telerik:GridTemplateColumn>
                 </Columns>
-            </asp:GridView>
+              </MasterTableView>
+            </telerik:RadGrid>
+            </telerik:RadCodeBlock>
         </div>
     </div>
     <div class="section" style="margin-top: 10px">

@@ -10,6 +10,19 @@ using MemberSuite.SDK.Types;
 /// </summary>
 public static class Utils
 {
+    public static String GetIP()
+    {
+        String ip =
+            HttpContext.Current.Request.ServerVariables["HTTP_X_FORWARDED_FOR"];
+
+        if (string.IsNullOrEmpty(ip))
+        {
+            ip = HttpContext.Current.Request.ServerVariables["REMOTE_ADDR"];
+        }
+
+        return ip;
+    }
+
     /// <summary>
     /// Sets the list item to the selected value if the value exists
     /// </summary>

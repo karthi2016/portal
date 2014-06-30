@@ -19,37 +19,35 @@ using MemberSuite.SDK.Utilities;
 public class ConciergeAPI : IConciergeAPISessionIdProvider, IConciergeAPIBrowserIdProvider
 {
     private const string BrowserCacheKey = "ConciergeAPIBrowserID";
-    private const string COOKIE_CONSOLE_USERNAME = "ConsoleUser"; //For APM (DynaTrace) user identification - not to be used for any security function
-    private const string COOKIE_PORTAL_USERNAME = "PortalUser"; //For APM (DynaTrace) user identification - not to be used for any security function
+    private const string COOKIE_APM_USER = "APMUser"; //For APM (DynaTrace) user identification - not to be used for any security function
 
     private static void setUserIdentificationCookie()
     {
         //For APM (DynaTrace) user identification - not to be used for any security function
-        HttpCookie portalUserCookie = new HttpCookie(COOKIE_PORTAL_USERNAME);
-        HttpCookie consoleUserCookie = new HttpCookie(COOKIE_CONSOLE_USERNAME);
-
-        if (CurrentUser != null)
-        {
-            portalUserCookie.Value = CurrentUser.Name;
-        }
-        else
-        {
-            portalUserCookie.Expires = DateTime.Now.AddDays(-1);
-        }
+        HttpCookie apmUserCookie = new HttpCookie(COOKIE_APM_USER);
 
         //Can't just check BackgroundUser because that will always have a value
         //It will be a user like "MemberSuite Agent" if there is no interactive console user
+        //Use any console user doing impersonation first because that's the user that is experiencing any issues
         if (HasBackgroundConsoleUser && BackgroundUser != null)
         {
-            consoleUserCookie.Value = BackgroundUser.Name;
+            apmUserCookie.Value = BackgroundUser.Name;
         }
         else
         {
-            consoleUserCookie.Expires = DateTime.Now.AddDays(-1);
+            //No console user so use the portal user
+            if (CurrentUser != null)
+            {
+                apmUserCookie.Value = CurrentUser.Name;
+            }
+            else
+            {
+                //No portal user either - delete the cookie if it exists
+                apmUserCookie.Expires = DateTime.Now.AddDays(-1);
+            }
         }
 
-        HttpContext.Current.Response.SetCookie(portalUserCookie);
-        HttpContext.Current.Response.SetCookie(consoleUserCookie);
+        HttpContext.Current.Response.SetCookie(apmUserCookie);
     }
 
     public static msPortalUser CurrentUser

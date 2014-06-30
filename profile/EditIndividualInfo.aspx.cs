@@ -297,6 +297,8 @@ public partial class profile_EditIndividualInfo : PortalPage
         targetObject.DoNotEmail = chkDoNotEmail.Checked;
         targetObject.DoNotFax = chkDoNotFax.Checked;
         targetObject.DoNotMail = chkDoNotMail.Checked;
+        targetObject.CommunicationsLastVerified = DateTime.UtcNow;
+        targetObject.CommunicationsLastVerifiedFrom = Utils.GetIP();
 
         //Unbind selected opt out message categories
         targetObject.OptOuts = (from category in dlbMessageCategories.Destination.Items
