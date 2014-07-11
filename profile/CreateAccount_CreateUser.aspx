@@ -18,7 +18,7 @@
 <asp:Content ID="Content5" ContentPlaceHolderID="PageContent" runat="Server">
     <asp:Literal ID="PageText" runat="server" />
     <asp:Wizard ID="wizCreateAccount" runat="server" DisplaySideBar="false" OnFinishButtonClick="wizCreateAccount_FinishButtonClick"
-        OnNextButtonClick="wizCreateAccount_NextButtonClick" OnCancelButtonClick="wizCreateAccount_CancelButtonClick"
+        OnNextButtonClick="wizCreateAccount_NextButtonClick" OnPreviousButtonClick="wizCreateAccount_PreviousButtonClick"  OnCancelButtonClick="wizCreateAccount_CancelButtonClick"
         CssClass="sectionContent" Width="300">
         <WizardSteps>
             <asp:WizardStep ID="wizIndividualInformationStep" runat="server" Title="Account Information">

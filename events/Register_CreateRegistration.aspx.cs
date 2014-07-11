@@ -504,6 +504,16 @@ public partial class events_Register_CreateRegistration : PortalPage
 
                         lblPrice.Text = !string.IsNullOrWhiteSpace(erpi.DisplayPriceAs) ? erpi.DisplayPriceAs : erpi.Price.ToString("C");
                     }
+
+                    // MS-5023 If all session fees are ineligible, then hide drop-down box,
+                    // disable the session row and show wording with explanations
+                    if (ddlFee.Items.Count == 0)
+                    {
+                        ddlFee.Visible = false;
+                        lblPrice.Visible = true;
+                        lblPrice.Text = "No eligible fees";
+                        e.Row.Enabled = false;
+                    }
                 }
                 else
                 {

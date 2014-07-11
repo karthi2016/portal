@@ -175,8 +175,9 @@ public partial class profile_CreateAccount_Complete : PortalPage
         if (individualAddressTypes.Count > 0)
         {
             phIndividualAddresses.Visible = true;
-            rptIndividualAddresses.DataSource = individualAddressTypes;
-            rptIndividualAddresses.DataBind();
+
+            // MS-5208
+            BindIndividualAddresses();
 
             // set the preferred addresss
             ddlIndividualPreferredAddress.DataSource = individualAddressTypes;
@@ -229,6 +230,26 @@ public partial class profile_CreateAccount_Complete : PortalPage
 
     }
 
+    // MS-5208
+    private void EnsureAddressTypesInitialized()
+    {
+        if (individualAddressTypes != null && organizationAddressTypes != null) 
+            return;
+
+        using (var proxy = ConciergeAPIProxyGenerator.GenerateProxy())
+        {
+            getAddressTypes(proxy);
+        }
+    }
+
+    // MS-5208
+    private void BindIndividualAddresses()
+    {
+        EnsureAddressTypesInitialized();
+        rptIndividualAddresses.DataSource = individualAddressTypes;
+        rptIndividualAddresses.DataBind();
+    }
+
     private void populateMessageCategories()
     {
         List<msMessageCategory> categories = getMessageCategories();
@@ -259,8 +280,9 @@ public partial class profile_CreateAccount_Complete : PortalPage
         if (organizationAddressTypes.Count > 0)
         {
             phOrganizationAddresses.Visible = true;
-            rptOrganizationAddresses.DataSource = organizationAddressTypes;
-            rptOrganizationAddresses.DataBind();
+
+            // MS-5208
+            BindOrganizationAddresses();
 
             // set the preferred addresss
             ddlOrganizationPreferredAddress.DataSource = organizationAddressTypes;
@@ -269,6 +291,14 @@ public partial class profile_CreateAccount_Complete : PortalPage
             ddlOrganizationPreferredAddress.DataValueField = "ID";
             ddlOrganizationPreferredAddress.DataBind();
         }
+    }
+
+    // MS-5208
+    private void BindOrganizationAddresses()
+    {
+        EnsureAddressTypesInitialized();
+        rptOrganizationAddresses.DataSource = organizationAddressTypes;
+        rptOrganizationAddresses.DataBind();
     }
 
     private void unbindOrganizationRelationship()
@@ -848,9 +878,15 @@ public partial class profile_CreateAccount_Complete : PortalPage
                 {
                     MultiStepWizards.CreateAccount.TargetOrganization = null;
                     saveAndGoHome();
+
+                    return;
                 }
 
                 setConfirmationText();
+
+                // MS-5208. Going forward to organization part. Bind Organization's addresses repeater.                    
+                BindOrganizationAddresses();
+
                 break;
 
             case 1:
@@ -869,6 +905,22 @@ public partial class profile_CreateAccount_Complete : PortalPage
 
             case 2:
                 setConfirmationText();
+                break;
+        }
+    }
+
+    protected void wizCreateAccount_PreviousButtonClick(object sender, WizardNavigationEventArgs e)
+    {
+        switch (e.CurrentStepIndex)
+        {
+            case 2:
+                // MS-5208. Going back to organization part. Bind Organization's addresses repeater.                    
+                BindOrganizationAddresses();
+                break;
+
+            case 1:
+                // MS-5208. Going back to individual part. Bind Individual's addresses repeater.
+                BindIndividualAddresses();
                 break;
         }
     }
@@ -934,8 +986,10 @@ public partial class profile_CreateAccount_Complete : PortalPage
     {
         msAddressType at = (msAddressType)e.Item.DataItem;
 
-        if (Page.IsPostBack)
-            return;				// only do this if there's a postback - otherwise, preserve ViewState
+        // MS-5208. We're commenting out IsPostBack check below since wizCreateAccount_NextButtonClick/wizCreateAccount_PreviousButtonClick handlers are 
+        // causing data binding events
+        //if (Page.IsPostBack)
+        //    return;				// only do this if there's a postback - otherwise, preserve ViewState
 
         switch (e.Item.ItemType)
         {
@@ -946,8 +1000,6 @@ public partial class profile_CreateAccount_Complete : PortalPage
                 break;
 
             case ListItemType.AlternatingItem:
-                goto case ListItemType.Item;
-
             case ListItemType.Item:
                 Label lblAddressType = (Label)e.Item.FindControl("lblIndividualAddressType");
                 AddressControl acAddress = (AddressControl)e.Item.FindControl("acIndividualAddress");
@@ -1054,8 +1106,10 @@ public partial class profile_CreateAccount_Complete : PortalPage
     {
         msAddressType at = (msAddressType)e.Item.DataItem;
 
-        if (Page.IsPostBack)
-            return;				// only do this if there's a postback - otherwise, preserve ViewState
+        // MS-5208. We're commenting out IsPostBack check below since wizCreateAccount_NextButtonClick/wizCreateAccount_PreviousButtonClick handlers are 
+        // causing data binding events
+        //if (Page.IsPostBack)
+        //    return;				// only do this if there's a postback - otherwise, preserve ViewState
 
         switch (e.Item.ItemType)
         {
@@ -1066,8 +1120,6 @@ public partial class profile_CreateAccount_Complete : PortalPage
                 break;
 
             case ListItemType.AlternatingItem:
-                goto case ListItemType.Item;
-
             case ListItemType.Item:
                 Label lblAddressType = (Label)e.Item.FindControl("lblOrganizationAddressType");
                 AddressControl acAddress = (AddressControl)e.Item.FindControl("acOrganizationAddress");

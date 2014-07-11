@@ -391,9 +391,11 @@ public partial class orders_ConfirmOrder : PortalPage
 
                 if (log == null)
                 {
+                    // MS-5204. Don't create job posting here. If JES is down then, job posting will be created 
+                    // during order processing. Otherwise we'll endup with duplicate job postings.
                     // hack - let's save the job posting
-                    if (MultiStepWizards.PostAJob.JobPosting != null)
-                        SaveObject(MultiStepWizards.PostAJob.JobPosting);
+                    //if (MultiStepWizards.PostAJob.JobPosting != null)
+                    //    SaveObject(MultiStepWizards.PostAJob.JobPosting);
 
                     MultiStepWizards.PostAJob.JobPosting = null;
 
