@@ -19,8 +19,7 @@ public partial class KeepAlive : System.Web.UI.Page
         sbCloseScript.AppendLine("<script language=\"JavaScript\">");
         sbCloseScript.AppendLine("HideThisRadWindow();");
         sbCloseScript.AppendLine("</script>");
-
-        Page.RegisterStartupScript("closeme", sbCloseScript.ToString());
-
+        
+        ClientScript.RegisterStartupScript(typeof(Page), "closeme", sbCloseScript.ToString(), false);
     }
 }

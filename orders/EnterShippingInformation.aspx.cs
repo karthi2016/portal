@@ -41,7 +41,7 @@ public partial class orders_EnterShippingInformation : PortalPage
         else
             targetOrder = MultiStepWizards.PlaceAnOrder.ShoppingCart;
 
-        if(targetOrder == null)
+        if (targetOrder == null)
         {
             QueueBannerError("Unable to checkout without an active shopping cart.");
             GoHome();
@@ -73,8 +73,8 @@ public partial class orders_EnterShippingInformation : PortalPage
         if (!preProcessedOrderPacket.ShippingMethodRequired)    // no shipping method needed
             GoTo("EnterBillingInfo.aspx?useTransient=" + isTransient);
 
-     
-       setupShipping();
+
+        setupShipping();
     }
 
     private PreProcessedOrderPacket PreprocessOrder()
@@ -104,7 +104,6 @@ public partial class orders_EnterShippingInformation : PortalPage
     /// </summary>
     private void setupShipping()
     {
-       
         // when the order is preprocessed, a default shipping method is selected
 
         // let's harvest that from the pre-processed order
@@ -129,8 +128,6 @@ public partial class orders_EnterShippingInformation : PortalPage
             acBillingAddress.Address = targetOrder.ShippingAddress;
         }
 
-        
-
         // we need to get all of the available shipping methods from the API
         Search sShippingMethods = new Search { Type = msShippingMethod.CLASS_NAME };
         sShippingMethods.AddCriteria(Expr.Equals("IsActive", true));
@@ -152,10 +149,8 @@ public partial class orders_EnterShippingInformation : PortalPage
         if (rblShipping.Items.Count == 0)
             rblShipping.Items.Add(new ListItem("No shipping method available.", null));
 
-       if (rblShipping.SelectedIndex < 0)
-             rblShipping.SelectedIndex = 0;  // almost select the first
-
-
+        if (rblShipping.SelectedIndex < 0)
+            rblShipping.SelectedIndex = 0;  // almost select the first
     }
 
     #endregion
@@ -170,23 +165,18 @@ public partial class orders_EnterShippingInformation : PortalPage
             MultiStepWizards.PlaceAnOrder.CrossSellItems = null;
         }
 
-
         GoHome();
     }
 
     protected void btnContinue_Click(object sender, EventArgs e)
     {
-        if (!IsValid)
-            return ;
-
         targetOrder.ShippingAddress = GetBillingAddress();
         targetOrder.ShippingMethod = rblShipping.SelectedValue;
 
-        
-
+        if (!IsValid)
+            return;
 
         GoTo("EnterBillingInfo.aspx?useTransient=" + isTransient);
-
     }
 
 
@@ -214,8 +204,6 @@ public partial class orders_EnterShippingInformation : PortalPage
         rb.Checked = true;
 
         return addresses[index].Address;
-
-
     }
 
     #endregion
@@ -263,15 +251,26 @@ public partial class orders_EnterShippingInformation : PortalPage
 
         args.IsValid =
             a != null &&
-            ! string.IsNullOrWhiteSpace(a.Line1) &&
-            ! string.IsNullOrWhiteSpace(a.City) &&
-            ! string.IsNullOrWhiteSpace(a.PostalCode);
+            !string.IsNullOrWhiteSpace(a.Line1) &&
+            !string.IsNullOrWhiteSpace(a.City) &&
+            !string.IsNullOrWhiteSpace(a.PostalCode);
     }
 
     protected void cvWrongShippingMethod_OnServerValidate(object source, ServerValidateEventArgs args)
     {
+        // Reset the error text in case this is a second attempt.
+        cvWrongShippingMethod.ErrorMessage = "The shipping method or address you have selected is invalid.";
+
+        targetOrder.ShippingAddress = GetBillingAddress();
         targetOrder.ShippingMethod = rblShipping.SelectedValue;
+
         var packet = PreprocessOrder();
+
         args.IsValid = packet != null && !packet.ShippingCarrierError;
+
+        if (packet != null && packet.ShippingCarrierError)
+        {
+            cvWrongShippingMethod.ErrorMessage += " " + packet.ShippingCarrierErrorMessage;
+        }
     }
 }

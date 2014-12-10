@@ -92,7 +92,7 @@ public partial class careercenter_SearchResume_ViewDetails : PortalPage
 
             litResumeText.Text = string.IsNullOrWhiteSpace(resumeAsHtml) ? "Unable to produce textual representation of the resume.  You can download the file below." : resumeAsHtml;
         }
-        catch (Exception e)
+        catch
         {
             divTextualRepresentation.Visible = false;
             divResumeDetailsTitle.Visible = false;

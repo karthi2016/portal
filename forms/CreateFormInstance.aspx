@@ -14,14 +14,16 @@
 <asp:Content ID="Content5" ContentPlaceHolderID="TopRightContent" runat="Server">
 </asp:Content>
 <asp:Content ID="Content6" ContentPlaceHolderID="PageContent" runat="Server">
+    <asp:HiddenField ID="CurrentFormID" runat="server"/>
     <asp:Literal ID="lPageText" runat="server" />
     <asp:Wizard ID="wzEnterInfo" runat="server" NavigationStyle-HorizontalAlign="Center" StartNextButtonText="Continue &amp; Confirm" 
-     StepNextButtonText="Save Changes" FinishCompleteButtonType="Link"
-     FinishCompleteButtonText="Go Home" FinishDestinationPageUrl="/"
-     OnActiveStepChanged="wzEnterInfo_StepChanged"  >
+        DisplayCancelButton="True"
+        OnCancelButtonClick="wzEnterInfo_OnCancelButtonClick"
+        StepNextButtonText="Save Changes" FinishCompleteButtonType="Link"
+        FinishCompleteButtonText="Go Home" FinishDestinationPageUrl="/"
+        OnActiveStepChanged="wzEnterInfo_StepChanged">
         <WizardSteps>
             <asp:WizardStep>
-                <%= targetForm.FormInstructions  %>
                 <br />
                 <uc1:CustomFieldSet ID="CustomFieldSet1" runat="server" />
                 <hr />

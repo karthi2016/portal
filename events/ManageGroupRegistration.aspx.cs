@@ -52,6 +52,7 @@ public partial class events_ManageGroupRegistration : PortalPage
         gvRegistrants.DataBind();
 
         hlRegistration.NavigateUrl += targetEvent.ID + "&organizationID=" + targetOrganization.ID;
+        hlBackToEvents.NavigateUrl += targetEvent.ID;
 
         initializePendingRegistrations();
         initializeRegistrations();

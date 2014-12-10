@@ -1033,3 +1033,11 @@ input, select, textarea {
     border-width: 1px;
     border-color: Red;
 }
+
+.bottomButtonContainer {
+    margin-top: 10px;
+}
+
+.communicationPreferencesWrapper, .customFieldsWrapper {
+    margin-bottom: 10px;
+}

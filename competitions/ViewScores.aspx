@@ -60,6 +60,18 @@
             </asp:GridView>
         </div>
     </div>
+    <div class="section" style="margin-top: 10px">
+        <div class="sectionHeaderTitle">
+            <h2>
+                <ASP:Literal ID="lTasks" runat="server">Tasks</ASP:Literal></h2>
+        </div>
+        <ul>
+            <li><asp:HyperLink ID="hlReviewEntries" runat="server">Review Entries</asp:HyperLink>
+            </li>
+            <li><asp:HyperLink ID="hlGoHome" runat="server" NavigateUrl="/">Go Home</asp:HyperLink>
+            </li>
+        </ul>
+    </div>
 </asp:Content>
 <asp:Content ID="Content7" ContentPlaceHolderID="FooterContent" runat="Server">
 </asp:Content>

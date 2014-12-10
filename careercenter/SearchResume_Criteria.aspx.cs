@@ -102,7 +102,7 @@ public partial class careercenter_SearchResume_Criteria : PortalPage
                 continue;
             }
 
-            string safeFieldName = RegularExpressions.GetSafeFieldName(searchOperation.FieldName);
+            string safeFieldName = Formats.GetSafeFieldName(searchOperation.FieldName);
 
             if (mso.Fields.ContainsKey(safeFieldName))
                 continue;

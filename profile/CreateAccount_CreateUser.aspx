@@ -5,6 +5,16 @@
     TagPrefix="cc1" %>
 <%@ Register Src="../controls/CustomFieldSet.ascx" TagName="CustomFieldSet" TagPrefix="uc1" %>
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="Server">
+    <style type="text/css">
+        .noWrap
+        {
+            white-space: nowrap;
+        }
+        .padded
+        {
+            margin: 10px;
+        }
+    </style>
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="TopMenu" runat="Server">
 </asp:Content>
@@ -16,15 +26,66 @@
 <asp:Content ID="Content4" ContentPlaceHolderID="TopRightContent" runat="Server">
 </asp:Content>
 <asp:Content ID="Content5" ContentPlaceHolderID="PageContent" runat="Server">
+    <script type="text/javascript">
+        var onNextClick = (function () {
+            var nextClicked = false;
+            return function () {
+                if (!Page_ClientValidate() || nextClicked)
+                    return false;
+
+                nextClicked = true;
+                return true;
+            };
+        })();
+
+        $(document).ready(function() {
+            $("#rbNotListed").change(
+                function() {
+                    $("#rbNoAffiliation").trigger('change');
+                }
+            );
+
+            $("#rbNoAffiliation").change(function() {
+                $(".padded").hide();
+                window.ValidatorEnable($("#rfvddlOrganization")[0], false);
+                //MS-5317
+                window.ValidatorEnable($("#cfvddlOrganization")[0], false);
+            });
+
+            $("#rbHaveOrg").change(function() {
+                $(".padded").show();
+
+                window.ValidatorEnable($("#rfvddlOrganization")[0], true);
+                //MS-5317
+                window.ValidatorEnable($("#cfvddlOrganization")[0], true);
+            });
+
+        });
+
+        //MS-5317
+        function ValidateSelectedOrganizationValue(sender, args) {
+            args.IsValid = false;
+            var orgCtl = $("#ddlOrganization")[0];
+            if (orgCtl && orgCtl.control) {
+                var node = orgCtl.control.findItemByText(orgCtl.control.get_text());
+                if (node) {
+                    args.IsValid = true;
+                }
+            }
+        }
+    </script>
     <asp:Literal ID="PageText" runat="server" />
-    <asp:Wizard ID="wizCreateAccount" runat="server" DisplaySideBar="false" OnFinishButtonClick="wizCreateAccount_FinishButtonClick"
-        OnNextButtonClick="wizCreateAccount_NextButtonClick" OnPreviousButtonClick="wizCreateAccount_PreviousButtonClick"  OnCancelButtonClick="wizCreateAccount_CancelButtonClick"
+    <asp:Wizard ID="wizCreateAccount" runat="server" DisplaySideBar="false" 
+        OnFinishButtonClick="wizCreateAccount_FinishButtonClick"
+        OnNextButtonClick="wizCreateAccount_NextButtonClick" 
+        OnPreviousButtonClick="wizCreateAccount_PreviousButtonClick"  
+        OnCancelButtonClick="wizCreateAccount_CancelButtonClick"
         CssClass="sectionContent" Width="300">
         <WizardSteps>
             <asp:WizardStep ID="wizIndividualInformationStep" runat="server" Title="Account Information">
                 <div class="sectionContent">
                     <p>
-                       <asp:Literal ID="lPleaseEnterBelow" runat="server">Please enter your contact information below.</ASP:Literal>
+                        <asp:Literal ID="lPleaseEnterBelow" runat="server">Please enter your contact information below.</asp:Literal>
                     </p>
                     <asp:CustomValidator ID="cvIndividualPhoneNumber" runat="server" Display="None" ValidationGroup="IndividualPhoneNumberAddress"
                         ErrorMessage="Please enter at least one phone number." />
@@ -38,28 +99,60 @@
                         <h2>
                             <asp:Literal ID="lOrgInfo" runat="server">Organization Information</asp:Literal></h2>
                         <p>
-                            <asp:Literal ID="lOrgTIedTo" runat="server">We’d like to know what organization you are tied to. If you don’t see the organization
-                            in the list below, select <b>My Organization is not listed</b> from the drop downlist.</asp:Literal></p>
+                            <asp:Literal ID="lOrgTIedTo" runat="server">What organization do you belong to?</asp:Literal></p>
                         <table style="width: 100%">
                             <tr>
-                                <td class="columnHeader">
-                                    <asp:Literal ID="lWhatOrg" runat="server">What organization do you belong to?</asp:Literal>
-                                </td>
-                                <td>
-                                    <asp:DropDownList runat="server" ID="ddlAllOrganizations" DataTextField="Name" DataValueField="ID"
-                                        AppendDataBoundItems="true">
-                                        <asp:ListItem Text="I am not affiliated with an organization" Value="" Selected="True" />
-                                        <asp:ListItem Text="My Organization is not listed" Value="notlisted" />
-                                    </asp:DropDownList>
+                                <td style="vertical-align: top;">
+                                    <asp:RadioButton ID="rbHaveOrg" runat="server" GroupName="orgOption" Text=" I am affiliated with an organization."
+                                        ClientIDMode="Static" />
+                                    <table class="padded">
+                                        <tr>
+                                            <%--  <td class="columnHeader" style="width: 400px; vertical-align: top">
+                                                <asp:Literal ID="lWhatOrg" runat="server">With what organization are you primarily affiliated?</asp:Literal>
+                                                <span class="requiredField">*</span>
+                                            </td>--%>
+                                            <td id="tdOrganization" runat="server" style="float: left; vertical-align: top" colspan="2">
+                                                <%--DO NOT REMOVE THIS COLUM- IT IS DYNAMICALLY FILLED FROM CODE BEHIND--%>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td colspan="2">
+                                                <asp:Label ID="lblOrgTIedTo" runat="server">
+                                    
+                                    Start typing your organization's name in the field above. If your organization does not appear, be sure your spelling is correct or an alternate name isn't available.  If your organization's name still does not appear, choose the "My organization is not listed" option below
+                                    
+                                                </asp:Label>
+                                            </td>
+                                        </tr>
+                                        <tr runat="server" id="trOrganizationRole">
+                                            <td class="columnHeader">
+                                                <asp:Literal ID="lWhatRole" runat="server">What is your role in the organization?</asp:Literal>
+                                            </td>
+                                            <td>
+                                                <asp:DropDownList runat="server" ID="ddlPortalSignupRelationshipTypes" DataTextField="Name"
+                                                    DataValueField="ID" />
+                                            </td>
+                                        </tr>
+                                    </table>
                                 </td>
                             </tr>
-                            <tr runat="server" id="trOrganizationRole">
-                                <td class="columnHeader">
-                                    <asp:Literal ID="lWhatRole" runat="server">What is your role in the organization?</asp:Literal>
+                            <tr>
+                                <td style="vertical-align: top;">
+                                    <asp:RadioButton ID="rbNotListed" runat="server" GroupName="orgOption" Text=" I am affiliated with an organization, but it does not appear."
+                                        ClientIDMode="Static" />
+                                    <div class="padded">
+                                        <asp:Literal ID="lNoAffiliation" runat="server">
+                                                                     
+                                                                     
+                                    
+                                        </asp:Literal>
+                                    </div>
                                 </td>
-                                <td>
-                                    <asp:DropDownList runat="server" ID="ddlPortalSignupRelationshipTypes" DataTextField="Name"
-                                        DataValueField="ID" />
+                            </tr>
+                            <tr>
+                                <td style="vertical-align: top;">
+                                    <asp:RadioButton ID="rbNoAffiliation" runat="server" GroupName="orgOption" Text=" I am not affiliated with an organization."
+                                        ClientIDMode="Static" CssClass="noWrap" />
                                 </td>
                             </tr>
                         </table>
@@ -72,10 +165,11 @@
                                 <table style="width: 100%">
                                     <tr>
                                         <td class="columnHeader">
-                                            <asp:Literal ID="lLoginID" runat="server">Login ID:</asp:Literal>
+                                            <asp:Literal ID="lLoginID" runat="server">Login (email address):</asp:Literal>
+                                            <span class="requiredField">*</span>
                                         </td>
                                         <td>
-                                            <asp:TextBox ID="tbLoginID" runat="server" TabIndex="3" /><font color="red">*</font>
+                                            <asp:TextBox ID="tbLoginID" runat="server" TabIndex="3" />
                                             <asp:RequiredFieldValidator ID="rfvLogin" runat="server" ErrorMessage="Please enter your login ID"
                                                 ControlToValidate="tbLoginID" Display="None" />
                                         </td>
@@ -83,10 +177,10 @@
                                     <tr>
                                         <td class="columnHeader">
                                             <asp:Literal ID="lPassword" runat="server">Password:</asp:Literal>
+                                            <span class="requiredField">*</span>
                                         </td>
                                         <td>
-                                            <asp:TextBox ID="tbPassword" TextMode="Password" runat="server" TabIndex="5" /><font
-                                                color="red">*</font>
+                                            <asp:TextBox ID="tbPassword" TextMode="Password" runat="server" TabIndex="5" />
                                             <asp:RequiredFieldValidator ID="rfvPassword" runat="server" ErrorMessage="Please enter a new password"
                                                 ControlToValidate="tbPassword" Display="None" />
                                         </td>
@@ -94,10 +188,12 @@
                                     <tr>
                                         <td class="columnHeader">
                                             <asp:Literal ID="lConfirmPassword" runat="server">Confirm Password:</asp:Literal>
+                                            <span class="requiredField">*</span>
                                         </td>
                                         <td>
-                                            <asp:TextBox ID="tbConfirmPassword" TextMode="Password" runat="server" TabIndex="8" /><font
-                                                color="red">*</font>
+                                            <asp:TextBox ID="tbConfirmPassword" TextMode="Password" runat="server" TabIndex="8" />
+                                            <asp:RequiredFieldValidator ID="rfvConfirmPassword" runat="server" ErrorMessage="Please enter a password confirmation"
+                                                ControlToValidate="tbConfirmPassword" Display="None" />
                                             <asp:CompareValidator ID="cvPasswordConfirm" runat="server" ErrorMessage="Password and confirmation password do not match"
                                                 ControlToValidate="tbConfirmPassword" ControlToCompare="tbPassword" Display="None" />
                                         </td>
@@ -112,7 +208,8 @@
                                     </tr>-->
                                     <tr>
                                         <td class="columnHeader">
-                                            <asp:Literal ID="lFirstName" runat="server">First Name:</asp:Literal><span class="requiredField">*</span>
+                                            <asp:Literal ID="lFirstName" runat="server">First Name:</asp:Literal>
+                                            <span class="requiredField">*</span>
                                         </td>
                                         <td>
                                             <asp:TextBox ID="tbIndividualFirstName" runat="server" TabIndex="20" />
@@ -120,7 +217,7 @@
                                                 ControlToValidate="tbIndividualFirstName" Display="None" />
                                         </td>
                                     </tr>
-                                   <!-- <tr>
+                                    <!-- <tr>
                                         <td class="columnHeader">
                                             Middle Name:
                                         </td>
@@ -130,7 +227,8 @@
                                     </tr>-->
                                     <tr>
                                         <td class="columnHeader">
-                                            <asp:Literal ID="lLastName" runat="server">Last Name:</asp:Literal> <span class="requiredField">*</span>
+                                            <asp:Literal ID="lLastName" runat="server">Last Name:</asp:Literal>
+                                            <span class="requiredField">*</span>
                                         </td>
                                         <td>
                                             <asp:TextBox ID="tbIndividualLastName" runat="server" TabIndex="40" />
@@ -146,7 +244,7 @@
                                             <asp:TextBox ID="tbIndividualSuffix" runat="server" TabIndex="50" />
                                         </td>
                                     </tr>
-                                   <!-- <tr>
+                                    <!-- <tr>
                                         <td class="columnHeader">
                                             Nickname:
                                         </td>
@@ -156,7 +254,8 @@
                                     </tr>-->
                                     <tr>
                                         <td class="columnHeader">
-                                            <asp:Literal ID="lEmailAddress" runat="server">Email Address:</asp:Literal><span class="requiredField">*</span>
+                                            <asp:Literal ID="lEmailAddress" runat="server">Email Address:</asp:Literal>
+                                            <span class="requiredField">*</span>
                                         </td>
                                         <td>
                                             <asp:TextBox ID="tbIndividualEmail" runat="server" TabIndex="100" />
@@ -164,7 +263,7 @@
                                                 ControlToValidate="tbIndividualEmail" Display="None" />
                                         </td>
                                     </tr>
-                                  <!--  <tr>
+                                    <!--  <tr>
                                         <td class="columnHeader">
                                             Email Address #2:
                                         </td>
@@ -182,7 +281,7 @@
                                     </tr>-->
                                 </table>
                             </td>
-                            <td valign="top">
+                            <td>
                                 <table id="tblProfilePhoto" runat="server">
                                     <tr>
                                         <td class="columnHeader">
@@ -227,13 +326,14 @@
                                     <ItemTemplate>
                                         <asp:Label ID="lblIndividualPhoneNumberType" runat="server" />
                                         Phone Number:
-                                         <asp:Literal ID="lPhoneNumberRequired" runat="server" Visible="false"><span class="requiredField">*</span></asp:Literal>
+                                        <asp:Literal ID="lPhoneNumberRequired" runat="server" Visible="false"><span class="requiredField">*</span></asp:Literal>
                                     </ItemTemplate>
                                 </asp:TemplateField>
                                 <asp:TemplateField HeaderStyle-BackColor="White">
                                     <ItemTemplate>
                                         <asp:TextBox ID="tbIndividualPhoneNumber" runat="server" />
-                                        <asp:RequiredFieldValidator ID="rfvPhoneNumber" ControlToValidate="tbIndividualPhoneNumber" runat="server" />
+                                        <asp:RequiredFieldValidator ID="rfvPhoneNumber" ControlToValidate="tbIndividualPhoneNumber"
+                                            runat="server" />
                                     </ItemTemplate>
                                 </asp:TemplateField>
                                 <asp:TemplateField HeaderStyle-HorizontalAlign="Center" ItemStyle-HorizontalAlign="Center"
@@ -252,7 +352,6 @@
                     <asp:PlaceHolder ID="phIndividualAddresses" runat="server">
                         <h2>
                             <asp:Literal ID="lAddressInfo" runat="server">Address Information</asp:Literal></h2>
-                         
                         <div>
                             <table cellpadding="0" cellspacing="0" style="margin-top: 10px;">
                                 <tr>
@@ -309,7 +408,7 @@
                     <asp:PlaceHolder ID="PlaceHolder1" runat="server">
                         <h2>
                             <asp:Literal ID="lCommunicationPrefs" runat="server">Communication Preferences</asp:Literal></h2>
-                        <div>
+                        <div class="communicationPreferencesWrapper">
                             <h3>
                                 <asp:Literal ID="lGeneralOptions" runat="server">General Communication Options</asp:Literal></h3>
                             <p>
@@ -366,7 +465,9 @@
                         </div>
                     </asp:PlaceHolder>
                     <asp:PlaceHolder ID="phIndividualOtherInformation" runat="server">
+                        <div class="customFieldsWrapper">
                         <uc1:CustomFieldSet ID="cfsIndividualCustomFields" runat="server" />
+                        </div>
                     </asp:PlaceHolder>
                 </div>
             </asp:WizardStep>
@@ -378,11 +479,12 @@
                     <asp:Literal ID="lOrgBasic" runat="server">Basic Information</asp:Literal></h2>
                 <table>
                     <tr>
-                        <td valign="top">
+                        <td>
                             <table style="width: 100%">
                                 <tr>
                                     <td class="columnHeader">
-                                       <asp:Literal ID="lOrgName" runat="server">Organization Name:</asp:Literal><span class="requiredField">*</span>
+                                        <asp:Literal ID="lOrgName" runat="server">Organization Name:</asp:Literal>
+                                        <span class="requiredField">*</span>
                                     </td>
                                     <td>
                                         <asp:TextBox ID="tbOrganizationName" runat="server" TabIndex="10" />
@@ -399,7 +501,8 @@
                 <table>
                     <tr>
                         <td class="columnHeader">
-                            <asp:Literal ID="lOrgBillingName" runat="server">Name:</asp:Literal><span class="requiredField">*</span>
+                            <asp:Literal ID="lOrgBillingName" runat="server">Name:</asp:Literal>
+                            <span class="requiredField">*</span>
                         </td>
                         <td>
                             <asp:TextBox ID="tbBillingContactName" runat="server" TabIndex="100" />
@@ -409,7 +512,8 @@
                     </tr>
                     <tr>
                         <td class="columnHeader">
-                            <asp:Literal ID="lOrgPhoneNumber" runat="server">Phone Number:</asp:Literal><span class="requiredField">*</span>
+                            <asp:Literal ID="lOrgPhoneNumber" runat="server">Phone Number:</asp:Literal>
+                            <span class="requiredField">*</span>
                         </td>
                         <td>
                             <asp:TextBox ID="tbBillingContactPhoneNumber" runat="server" TabIndex="100" />
@@ -419,7 +523,8 @@
                     </tr>
                     <tr>
                         <td class="columnHeader">
-                            <asp:Literal ID="lOrgEmail" runat="server">Email Address:</asp:Literal><span class="requiredField">*</span>
+                            <asp:Literal ID="lOrgEmail" runat="server">Email Address:</asp:Literal>
+                            <span class="requiredField">*</span>
                         </td>
                         <td>
                             <asp:TextBox ID="tbOrganizationEmail" runat="server" TabIndex="100" />
@@ -440,13 +545,15 @@
                             <asp:TemplateField HeaderStyle-BackColor="White">
                                 <ItemTemplate>
                                     <asp:Label ID="lblOrganizationPhoneNumberType" runat="server" />
-                                    Phone Number: <asp:Literal ID="lPhoneNumberRequired" runat="server" Visible="false"><span class="requiredField">*</span></asp:Literal>
+                                    Phone Number:
+                                    <asp:Literal ID="lPhoneNumberRequired" runat="server" Visible="false"><span class="requiredField">*</span></asp:Literal>
                                 </ItemTemplate>
                             </asp:TemplateField>
                             <asp:TemplateField HeaderStyle-BackColor="White">
                                 <ItemTemplate>
-                                    <asp:TextBox ID="tbOrganizationPhoneNumber" runat="server" /><asp:RequiredFieldValidator ID="rfvPhoneNumber" Enabled="false" Display="None" ControlToValidate="tbOrganizationPhoneNumber"
-                            runat="server" />
+                                    <asp:TextBox ID="tbOrganizationPhoneNumber" runat="server" /><asp:RequiredFieldValidator
+                                        ID="rfvPhoneNumber" Enabled="false" Display="None" ControlToValidate="tbOrganizationPhoneNumber"
+                                        runat="server" />
                                 </ItemTemplate>
                             </asp:TemplateField>
                             <asp:TemplateField HeaderStyle-HorizontalAlign="Center" ItemStyle-HorizontalAlign="Center"
@@ -556,6 +663,7 @@
                 <tr>
                     <td align="center">
                         <asp:Button runat="server" ID="btnNext" CommandName="MoveNext" CausesValidation="true"
+                            onClientClick="return onNextClick();"
                             Text="Next" />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                         <asp:Button runat="server" ID="btnCancel" CommandName="Cancel" CausesValidation="false"
                             Text="Cancel" />
@@ -568,6 +676,7 @@
                 <tr>
                     <td align="center">
                         <asp:Button runat="server" ID="btnNext" CommandName="MoveNext" CausesValidation="true"
+                            onClientClick="return onNextClick();"
                             Text="Next" />
                         <asp:Button runat="server" ID="btnPrevious" CommandName="MovePrevious" CausesValidation="false"
                             Text="Back" />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;

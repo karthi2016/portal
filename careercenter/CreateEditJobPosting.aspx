@@ -46,11 +46,15 @@
                     </td>
                 </tr>
                 <tr>
+                    <%-- MS-5754 This field is required in order to save down the target job posting.  Saving the target job
+                        posting is necessary in order for the merge fields in the BuiltIn:JobPosted email template to be populated. --%>
                     <td class="columnHeader">
-                        <ASP:Literal ID="lCompanyName" runat="server">Company Name:</ASP:Literal>
+                        <ASP:Literal ID="lCompanyName" runat="server">Company Name: <span class="redHighlight">*</span></ASP:Literal>
                     </td>
                     <td>
                         <asp:TextBox ID="tbCompanyName" runat="server" />
+                        <asp:RequiredFieldValidator runat="server" ID="rfvCompanyName" ControlToValidate="tbCompanyName"
+                            Display="None" ErrorMessage="Please specify a Company Name." />
                     </td>
                 </tr>
                 <tr>
@@ -100,7 +104,7 @@
             <p>
             </p>
             <h2><ASP:Literal ID="lBody" runat="server">Job Posting Body</ASP:Literal></h2>
-            <telerik:RadEditor NewLineBr="false" runat="server" ID="reBody" ToolsFile="~/controls/telerik/ToolsFileDeluxe.xml" />
+            <telerik:RadEditor runat="server" ID="reBody" ToolsFile="~/controls/telerik/ToolsFileDeluxe.xml" />
         </div>
         <uc1:CustomFieldSet ID="CustomFieldSet1" runat="server" />
         <div class="sectionContent">

@@ -121,3 +121,20 @@ function GetItemsIfNeeded(sender, eventArgs) {
     if (sender.get_items()._array.length <= 1)
         sender.requestItems(sender.get_text(), false);
 }  
+
+function JumpToExternalLink(tokenUrl, nextUrl, newWindow) {
+    var newForm = jQuery('<form>', {
+        'action': '/JumpToExternal.aspx',
+        'target': newWindow ? '_blank' : '_top'
+    }).append(jQuery('<input>', {
+        'name': 'TargetUrl',
+        'value': tokenUrl,
+        'type': 'hidden'
+    })).append(jQuery('<input>', {
+        'name': 'NextUrl',
+        'value': nextUrl,
+        'type': 'hidden'
+    }));
+
+    newForm.appendTo('body').submit();
+}

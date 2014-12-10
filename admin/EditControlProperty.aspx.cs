@@ -22,6 +22,9 @@ public partial class admin_EditControlProperty : PortalPage
     protected override void InitializePage()
     {
         base.InitializePage();
+#pragma warning disable 0618
+        reValue.NewLineBr = false;
+#pragma warning restore 0618
         if (!string.IsNullOrWhiteSpace(MultiStepWizards.CustomizePage.EditModeControlName))
         {
             lControlName.Text = MultiStepWizards.CustomizePage.EditModeControlName;

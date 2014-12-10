@@ -110,17 +110,6 @@ public partial class careercenter_ConfirmJobPosting : PortalPage
         dvResumes = new DataView(sr.Table);
     }
 
-    protected void PostJobAndRedirect()
-    {
-        using (IConciergeAPIService proxy = GetConciegeAPIProxy())
-        {
-
-            proxy.Save(targetJobPosting);
-            Redirect();
-        }
-    }
-
-
     protected void Redirect()
     {
         using (IConciergeAPIService proxy = GetConciegeAPIProxy())
@@ -167,7 +156,6 @@ public partial class careercenter_ConfirmJobPosting : PortalPage
 
     public void btnPost_Click(object sender, EventArgs e)
     {
-
         using (var api = GetServiceAPIProxy())
         {
             var er =
@@ -175,7 +163,13 @@ public partial class careercenter_ConfirmJobPosting : PortalPage
                     ResultValue;
 
             if (er.IsEntitled && er.Quantity > 0)
-                PostJobAndRedirect();
+            {
+                api.Save(targetJobPosting);
+                // MS-5386 Adjust entitlement (-1). Otherwise user will be able to use the entitlement forever.
+                api.AdjustEntitlementAvailableQuantity(ConciergeAPI.CurrentEntity.ID, msJobPostingEntitlement.CLASS_NAME,
+                    null, -1);
+                Redirect();
+            }
             else
             {
                 MultiStepWizards.PostAJob.JobPosting = targetJobPosting;

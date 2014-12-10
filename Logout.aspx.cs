@@ -17,15 +17,19 @@ public partial class Logout : System.Web.UI.Page
         ConciergeAPI.ClearSession();
         SessionManager.Set<object>("PortalLinks", null );  // force portal link reload, so non-public links don't show
 
+        var logoutUrl = ConciergeAPI.LogoutUrl;
+
+        SessionManager.Clear();
+
         if (!string.IsNullOrWhiteSpace(NextUrl) && Uri.IsWellFormedUriString(NextUrl, UriKind.RelativeOrAbsolute))
         {
             Response.Redirect(NextUrl);
             return;
         }
 
-        if (!string.IsNullOrWhiteSpace(ConciergeAPI.LogoutUrl))
+        if (!string.IsNullOrWhiteSpace(logoutUrl))
         {
-            Response.Redirect(ConciergeAPI.LogoutUrl);
+            Response.Redirect(logoutUrl);
             return;
         }
 

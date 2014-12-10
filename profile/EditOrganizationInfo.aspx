@@ -73,7 +73,8 @@
     <table>
     <tr>
             <td class="columnHeader">
-                <ASP:Literal ID="lContactName" runat="server">Name:</ASP:Literal><span class="requiredField">*</span>
+                <ASP:Literal ID="lContactName" runat="server">Name:</ASP:Literal>
+                <span class="requiredField">*</span>
             </td>
             <td>
                 <asp:TextBox ID="tbBillingContactName" runat="server" TabIndex="100" />
@@ -83,7 +84,8 @@
         </tr>
           <tr>
             <td class="columnHeader">
-                <ASP:Literal ID="lBillingPhoneNumber" runat="server">Phone Number:</ASP:Literal><span class="requiredField">*</span>
+                <ASP:Literal ID="lBillingPhoneNumber" runat="server">Phone Number:</ASP:Literal>
+                <span class="requiredField">*</span>
             </td>
             <td>
                 <asp:TextBox ID="tbBillingContactPhoneNumber" runat="server" TabIndex="100" />
@@ -93,7 +95,8 @@
         </tr>
         <tr>
             <td class="columnHeader">
-                <ASP:Literal ID="lBillingEmailAddress" runat="server">Email Address:</ASP:Literal><span class="requiredField">*</span>
+                <ASP:Literal ID="lBillingEmailAddress" runat="server">Email Address:</ASP:Literal>
+                <span class="requiredField">*</span>
             </td>
             <td>
                 <asp:TextBox ID="tbEmail" runat="server" TabIndex="100" />

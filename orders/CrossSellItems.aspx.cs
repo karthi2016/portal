@@ -62,7 +62,16 @@ public partial class orders_CrossSellItems : PortalPage
         // let's preprocess and figure out whether we need shipping information
         using (var api = GetConciegeAPIProxy())
         {
-            preProcessedOrderPacket = api.PreProcessOrder(targetOrder).ResultValue;
+            // MS-5176 - handle error messages in case product is restricted for any reason  (e.g. Member Only)
+            var r = api.PreProcessOrder(targetOrder);
+
+            if (!r.Success)
+            {
+                QueueBannerError(r.FirstErrorMessage);
+                GoHome();
+            }
+
+            preProcessedOrderPacket = r.ResultValue; 
         }
 
         if (preProcessedOrderPacket.CrossSellCandidates == null || preProcessedOrderPacket.CrossSellCandidates.Count  == 0)

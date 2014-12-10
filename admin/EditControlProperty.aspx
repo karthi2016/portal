@@ -44,7 +44,7 @@
         </tr>
     </table>
     <h2>Text/Property Value:</h2>
-       <telerik:RadEditor NewLineBr="false" runat="server" ID="reValue" ToolsFile="~/controls/telerik/ToolsFileDeluxe.xml" />
+       <telerik:RadEditor runat="server" ID="reValue" ToolsFile="~/controls/telerik/ToolsFileDeluxe.xml" />
 
        <h2>Description/Notes:</h2>
        <asp:TextBox ID="tbNotes" runat="server" TextMode="MultiLine" Rows=5 Columns=100 />

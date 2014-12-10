@@ -72,7 +72,7 @@ public partial class profile_ResetPassword : PortalPage
                 login = serviceProxy.LoginPortalUserWithHash(
                     UserId, PasswordHash).ResultValue;
             }
-            catch(ConciergeClientException ex)
+            catch(ConciergeClientException)
             {
                 QueueBannerError("Unable to reset password.");
                 GoTo("~/Login.aspx");

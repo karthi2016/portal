@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-using System.Web.UI;
-using System.Web.UI.WebControls;
+﻿using System.ServiceModel.Activities;
 using MemberSuite.SDK.Concierge;
 using MemberSuite.SDK.Types;
+using System;
+using System.Collections.Generic;
 
 public partial class forms_CreateFormInstance : PortalPage 
 {
@@ -36,40 +33,48 @@ public partial class forms_CreateFormInstance : PortalPage
         using (var api = GetServiceAPIProxy())
             targetFormManifest = api.DescribePortalForm(targetForm.ID, entityID).ResultValue;
 
-        if (!targetFormManifest.CanCreate)
-            GoTo("/AccessDenied.aspx");
-        
+        // MS-5922 - only check this on initial load so that it will not fail on completion of creation of last allowed instance
+        if (!IsPostBack)
+        {
+            if (!targetFormManifest.CanCreate)
+                GoTo("/AccessDenied.aspx");
+        }
+
         if (ConciergeAPI.CurrentEntity == null && !targetForm.AllowAnonymousSubmissions ) // we need them to go through registration
         {
             GoTo("~/profile/CreateAccount_BasicInfo.aspx?t=PortalForm&formID=" + targetForm.ID);
             return;
         }
-     
-        
-        // ok, so we allow anonymous submissions here
 
-        targetInstance = CreateNewObject(targetFormManifest.UnderlyingObjectName);
-        targetInstance["Owner"] = entityID;
+        // ok, so we allow anonymous submissions here
+        // MS-5360
+        if (string.IsNullOrWhiteSpace(CurrentFormID.Value))
+        {
+            targetInstance = CreateNewObject(targetFormManifest.UnderlyingObjectName);
+            targetInstance["Owner"] = entityID;            
+        }
+        else
+        {
+            targetInstance = LoadObjectFromAPI(CurrentFormID.Value);
+        }        
     }
 
     protected override bool CheckSecurity()
     {
         if (!base.CheckSecurity())
             return false;
-        
-        return targetFormManifest.CanCreate;
+
+        // MS-5922 - only check this on initial load so that it will not fail on completion of creation of last allowed instance
+        return IsPostBack || targetFormManifest.CanCreate;
     }
 
     protected override void InstantiateCustomFields(IConciergeAPIService proxy)
     {
-
-        instantiateEditFields(proxy);
-
-        
-            instantiateViewFields(proxy);
+        InstantiateEditFields(proxy);
+        InstantiateViewFields(proxy);
     }
 
-    private void instantiateEditFields(IConciergeAPIService proxy)
+    private void InstantiateEditFields(IConciergeAPIService proxy)
     {
         CustomFieldSet1.MemberSuiteObject = targetInstance;
 
@@ -80,18 +85,13 @@ public partial class forms_CreateFormInstance : PortalPage
         // setup the metadata
         CustomFieldSet1.Metadata = proxy.DescribeObject(targetFormManifest.UnderlyingObjectName).ResultValue;
         CustomFieldSet1.PageLayout = pageLayout.Metadata;
-
-
         CustomFieldSet1.Render();
     }
 
-    private void instantiateViewFields(IConciergeAPIService proxy)
-    {
-        CustomFieldSet1.Harvest();
-        
+    private void InstantiateViewFields(IConciergeAPIService proxy)
+    {        
         CustomFieldSet2.MemberSuiteObject = targetInstance;
  
-
         // setup the metadata
         CustomFieldSet2.Metadata = CustomFieldSet1.Metadata;
         CustomFieldSet2.PageLayout = CustomFieldSet1.PageLayout;
@@ -100,28 +100,48 @@ public partial class forms_CreateFormInstance : PortalPage
         CustomFieldSet2.Render();
     }
 
+    // MS-5360
+    private void DeleteCurrentForm()
+    {
+        if (string.IsNullOrWhiteSpace(CurrentFormID.Value))
+            return;
+
+        using (var api = GetServiceAPIProxy())
+            api.Delete(CurrentFormID.Value);
+        CurrentFormID.Value = null;        
+    }
+
     protected void wzEnterInfo_StepChanged(object sender, EventArgs e)
     {
         switch (wzEnterInfo.ActiveStepIndex)
         {
+            // MS-5360
+            case 0:
+                DeleteCurrentForm();
+                break;
+
             case 1:
                 CustomFieldSet1.Harvest();
+                // MS-5360
+                targetInstance = SaveObject(targetInstance);
+                CurrentFormID.Value = targetInstance["ID"].ToString();
                 CustomFieldSet2.MemberSuiteObject = targetInstance;
-                CustomFieldSet2.Bind();
-                
+                CustomFieldSet2.Bind();                
                 break;
 
             case 2:
-                submitForm();
+                SubmitForm();
                 if (ConciergeAPI.CurrentEntity == null && targetForm.AnonymousSubmissionCompletionUrl != null)
                     wzEnterInfo.FinishDestinationPageUrl = targetForm.AnonymousSubmissionCompletionUrl;
+
+                wzEnterInfo.DisplayCancelButton = false;
+
                 break;
         }
     }
 
-    private void submitForm()
+    private void SubmitForm()
     {
-        CustomFieldSet1.Harvest();
         targetInstance =  SaveObject(targetInstance);
 
         // ok, log an activity
@@ -145,5 +165,12 @@ public partial class forms_CreateFormInstance : PortalPage
                 
             }
         }
+    }
+
+    // MS-5360
+    protected void wzEnterInfo_OnCancelButtonClick(object sender, EventArgs e)
+    {
+        DeleteCurrentForm();
+        GoHome();
     }
 }

@@ -54,8 +54,7 @@ public partial class careercenter_CreateEditJobPosting : PortalPage
                 GoToMissingRecordPage();
                 return;
             }
-        }
-
+        }        
     }
 
     /// <summary>
@@ -67,7 +66,9 @@ public partial class careercenter_CreateEditJobPosting : PortalPage
     protected override void InitializePage()
     {
         base.InitializePage();
-
+#pragma warning disable 0618
+        reBody.NewLineBr = false;
+#pragma warning restore 0618
         loadDataFromConcierge();
 
         if(string.IsNullOrWhiteSpace(ContextID) && ConciergeAPI.CurrentEntity != null )
@@ -210,6 +211,11 @@ public partial class careercenter_CreateEditJobPosting : PortalPage
 
         targetJobPosting.Categories = (from item in dlbCategories.Destination.Items
                                        select item.Value).ToList();
+
+        // MS-5754 (Modified 11/6/2014) At this point, it is worth checking that the target job posting has a proper ID.
+        // If it doesn't, then save the object so that it does
+        if (string.IsNullOrWhiteSpace(targetJobPosting.ID))
+            targetJobPosting = SaveObject(targetJobPosting);
 
         CustomFieldSet1.Harvest();
     }

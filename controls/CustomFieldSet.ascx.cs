@@ -199,7 +199,6 @@ public partial class controls_CustomFieldSet : System.Web.UI.UserControl, IContr
         manager.Initialize(this, control);
         registerControlManager(manager);
 
-        bool createNewRow = false;
         tableRow.Attributes["style"] = "vertical-align: top";
         // add the form group
         var tdLabel = new HtmlTableCell();
@@ -224,7 +223,7 @@ public partial class controls_CustomFieldSet : System.Web.UI.UserControl, IContr
 
             if (!SuppressValidation && manager.IsRequired() &&
                 !(manager is CheckBoxControlManager) && !(manager is LabelControlManager))   // special exception - don't show required for checbkoxes/labels it makes no sense
-                controlLabel += "<font color=red>*</font>";
+                controlLabel += " <span class=\"requiredField\">*</span>";
 
             label.Controls.Add(new LiteralControl(controlLabel));
 
@@ -269,7 +268,7 @@ public partial class controls_CustomFieldSet : System.Web.UI.UserControl, IContr
                     labelBuilder.Append(manager.GetLabel());
                     if (manager.IsRequired())
                     {
-                        labelBuilder.Append("<font color=\"red\">*</font>");
+                        labelBuilder.Append("<span class=\"requiredField\">*</span>");
                     }
                     labelBuilder.Append("<p/>");
                     ctls.Insert(0, new LiteralControl(labelBuilder.ToString()));

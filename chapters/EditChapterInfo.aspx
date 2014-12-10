@@ -56,7 +56,7 @@
             <asp:Literal ID="lInformation" runat="server">This information shows to chapter members who view your chapter in the portal.
             </asp:Literal>
             <p />
-            <telerik:RadEditor NewLineBr="false" runat="server" ID="reDescription" ToolsFile="~/controls/telerik/ToolsFileDeluxe.xml" />
+            <telerik:RadEditor runat="server" ID="reDescription" ToolsFile="~/controls/telerik/ToolsFileDeluxe.xml" />
         </div>
     </div>
     <div class="section" style="margin-top: 10px" runat="server" id="divPhoneNumbers">

@@ -7,41 +7,26 @@ using System.Web.UI.WebControls;
 using MemberSuite.SDK.Concierge;
 using MemberSuite.SDK.Types;
 
-public partial class documents_DownloadFile : PortalPage 
+public partial class documents_DownloadFile : PortalPage
 {
-    public string ContextID;
-
-    protected override void OnLoad(EventArgs e)
+    protected override bool CheckSecurity()
     {
-
-        base.OnLoad(e);
-
-        ContextID = Request.QueryString["contextID"];
-
-        if (!CheckSecurity())
-            Response.Redirect("/AccessDenied.aspx");
-
-        if (!IsPostBack)
-            InitializePage();
-    }
-    protected  bool CheckSecurity()
-    {
-        if (DocumentsLogic.CheckTemporaryFileAccess(ContextID))
-            return true;
-
-        return DocumentsLogic.CanAccessFile( ContextID );
+        return DocumentsLogic.CheckTemporaryFileAccess(ContextID) || DocumentsLogic.CanAccessFile(ContextID);
     }
 
-    protected void InitializePage()
+    protected override void InitializePage()
     {
-        
-        
+        if (ContextID == null)
+        {
+            QueueBannerError("No File Provided.");
+            GoHome();
+        }
+
         using (var api = ConciergeAPIProxyGenerator.GenerateProxy())
         {
-            var fileURL = api.DownloadFile(ContextID).ResultValue;
+            var r = api.DownloadFile(ContextID);
+            var fileURL = r.ResultValue;
             Response.Redirect(fileURL);
-            
         }
-        
     }
 }

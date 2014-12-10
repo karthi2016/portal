@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Activities.Expressions;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
@@ -10,10 +11,12 @@ using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 using MemberSuite.SDK.Concierge;
+using MemberSuite.SDK.Manifests.Command;
 using MemberSuite.SDK.Results;
 using MemberSuite.SDK.Searching;
 using MemberSuite.SDK.Searching.Operations;
 using MemberSuite.SDK.Types;
+using MemberSuite.SDK.Web.ControlManagers;
 using MemberSuite.SDK.Web.Controls;
 using Telerik.Web.UI;
 using DataKey = System.Web.UI.WebControls.DataKey;
@@ -92,7 +95,7 @@ public partial class profile_CreateAccount_Complete : PortalPage
     {
         base.InitializePage();
 
-        using (IConciergeAPIService proxy = ConciergeAPIProxyGenerator.GenerateProxy())
+        using (var proxy = ConciergeAPIProxyGenerator.GenerateProxy())
         {
             getDataFromConcierge(proxy);
         }
@@ -100,9 +103,7 @@ public partial class profile_CreateAccount_Complete : PortalPage
         bindIndividualToPage();
         bindOrganizationToPage();
 
-        string pageTitle = Request.QueryString["pageTitle"];
-        if (pageTitle == null)
-            pageTitle = MultiStepWizards.CreateAccount.Request.Name;
+        var pageTitle = Request.QueryString["pageTitle"] ?? MultiStepWizards.CreateAccount.Request.Name;
 
         if (pageTitle != null)
             lblTitle.Text = pageTitle;
@@ -110,13 +111,74 @@ public partial class profile_CreateAccount_Complete : PortalPage
         ddlPortalSignupRelationshipTypes.DataSource = dtPortalSignupRelationshipTypes;
         ddlPortalSignupRelationshipTypes.DataBind();
 
-        ddlAllOrganizations.DataSource = dvAllOrganizations;
-        ddlAllOrganizations.DataBind();
+        divOrganizationInformation.Visible = ddlPortalSignupRelationshipTypes.Items.Count > 0;
+        trOrganizationRole.Visible = ddlPortalSignupRelationshipTypes.Items.Count > 1;
+    }
 
-        divOrganizationInformation.Visible = dtPortalSignupRelationshipTypes.Rows.Count > 0;
-        trOrganizationRole.Visible = dtPortalSignupRelationshipTypes.Rows.Count > 1;
+    private void bindOrganization()
+    {
+        if (!IsPostBack)
+            rbHaveOrg.Checked = true;
+        var meta = new FieldMetadata
+            {
+                DataType = FieldDataType.Reference,
+                DisplayType = FieldDisplayType.AjaxComboBox
+            };
 
 
+        var manager = ControlManagerResolver.Resolve(meta.DisplayType);
+        var control = new ControlMetadata
+            {
+                DataSourceExpression = "ID",
+                Name = "ID,",
+                ID = "ddlOrganization",
+                ReferenceType = "Organization",
+                Enabled = true,
+                EnabledString = "True",
+            };
+
+
+        manager.Initialize(this, control);
+
+        var c = manager.Instantiate();
+        // MS-3517 
+        var rad = (RadComboBox)c[0];
+        rad.ClientIDMode = ClientIDMode.Static; // We need to lookup combobox from javascript by ID
+        rad.MinFilterLength = 2;
+        rad.EmptyMessage = "Enter organization";
+
+        var rfv = new RequiredFieldValidator
+            {
+                ID = "rfvddlOrganization",
+                ClientIDMode = ClientIDMode.Static,
+                ControlToValidate = rad.ID,
+                Display = ValidatorDisplay.None,
+                CssClass = "requiredField",
+                ErrorMessage = " Please choose organization name."                
+            };
+
+        // MS-3517
+        // The purpose of this validator is to validate SelectedValue of the Organization's RadComboBox
+        // There could be situation when user entered org name which does not exist. In such case according
+        // RequiredFieldValidator will say okay, but we still need to make sure that SelectedValue is set.
+        var cfv = new CustomValidator
+        {
+            ID = "cfvddlOrganization",            
+            ClientIDMode = ClientIDMode.Static, 
+            ControlToValidate = rad.ID,
+            Display = ValidatorDisplay.Dynamic,
+            ErrorMessage = " Please choose organization name.",
+            Enabled = rbHaveOrg.Checked, // Enable only if rad combobox is enabled
+            EnableClientScript = true,
+            CssClass = "requiredField",
+            ClientValidationFunction = "ValidateSelectedOrganizationValue"
+        };
+        cfv.ServerValidate += (s, e) => { e.IsValid = !string.IsNullOrWhiteSpace(rad.SelectedValue); };
+
+        rad.SelectedValue = targetIndividual.SafeGetValue<string>("PrimaryOrganization__rtg");
+        tdOrganization.Controls.Add(rad);
+        tdOrganization.Controls.Add(rfv);
+        tdOrganization.Controls.Add(cfv);
     }
 
     protected override void InstantiateCustomFields(IConciergeAPIService proxy)
@@ -127,6 +189,7 @@ public partial class profile_CreateAccount_Complete : PortalPage
         var pageLayout = GetAppropriatePageLayout(targetIndividual);
         if ((pageLayout != null && pageLayout.Metadata != null) && !pageLayout.Metadata.IsEmpty())
         {
+            pageLayout.Metadata.RemoveControlByID("PrimaryOrganization__rtg");
             cfsIndividualCustomFields.Metadata = proxy.DescribeObject(msIndividual.CLASS_NAME).ResultValue;
             cfsIndividualCustomFields.PageLayout = pageLayout.Metadata;
 
@@ -146,9 +209,11 @@ public partial class profile_CreateAccount_Complete : PortalPage
 
             cfsOrganizationCustomFields.Render();
         }
+        bindOrganization();
     }
 
 
+	
     #endregion
 
     #region Data binding
@@ -208,7 +273,6 @@ public partial class profile_CreateAccount_Complete : PortalPage
 
 
         }
-
         //Communication Preferences
         chkDoNotEmail.Checked = targetIndividual.DoNotEmail;
         chkDoNotFax.Checked = targetIndividual.DoNotFax;
@@ -227,6 +291,7 @@ public partial class profile_CreateAccount_Complete : PortalPage
 
                 dlbMessageCategories.Source.Transfer(rli, dlbMessageCategories.Source, dlbMessageCategories.Destination);
             }
+
 
     }
 
@@ -303,7 +368,11 @@ public partial class profile_CreateAccount_Complete : PortalPage
 
     private void unbindOrganizationRelationship()
     {
-        if (!string.IsNullOrWhiteSpace(ddlAllOrganizations.SelectedValue))
+        // If the user selected the rbHaveOrg radio button, then MultiStepWizards.CreateAccount.TargetOrganization
+        // should not be null and should be the Organization selected by the user.
+        // If the user selected the rbNoListed radio button, then again, the MultiStepWizards.CreateAccount.TargetOrganization
+        // should not be null.  It should be the Organization created by the user.
+        if (MultiStepWizards.CreateAccount.TargetOrganization != null)
         {
             targetOrganizationRelationship = new msRelationship();
 
@@ -313,23 +382,29 @@ public partial class profile_CreateAccount_Complete : PortalPage
                     getPortalSignupRelationshipTypes(proxy);
                 }
 
-            DataRow drRelationshipType = dtPortalSignupRelationshipTypes.Rows.Count == 1 ? dtPortalSignupRelationshipTypes.Rows[0] : 
-                dtPortalSignupRelationshipTypes.Rows.Find(ddlPortalSignupRelationshipTypes.SelectedValue);
-            targetOrganizationRelationship.Type = drRelationshipType["ID"].ToString();
-
-            switch (drRelationshipType["LeftSideType"].ToString())
+            if (dtPortalSignupRelationshipTypes != null)
             {
-                case msIndividual.CLASS_NAME:
-                    targetOrganizationRelationship.LeftSide = targetIndividual.ID;
-                    targetOrganizationRelationship.RightSide = ddlAllOrganizations.SelectedValue.ToLower() != "notlisted" ? ddlAllOrganizations.SelectedValue : targetOrganization.ID;
-                    break;
-                case msOrganization.CLASS_NAME:
-                    targetOrganizationRelationship.LeftSide = ddlAllOrganizations.SelectedValue.ToLower() != "notlisted" ? ddlAllOrganizations.SelectedValue : targetOrganization.ID;
-                    targetOrganizationRelationship.RightSide = targetIndividual.ID;
-                    break;
-                default:
-                    throw new ApplicationException("A Relationship Type has EnablePortalSignup set to true but is NOT an Individual/Organization Relationship Type.");
+                var drRelationshipType = dtPortalSignupRelationshipTypes.Rows.Count == 1 ? dtPortalSignupRelationshipTypes.Rows[0] :
+                    dtPortalSignupRelationshipTypes.Rows.Find(ddlPortalSignupRelationshipTypes.SelectedValue);
+                targetOrganizationRelationship.Type = drRelationshipType["ID"].ToString();
+
+                switch (drRelationshipType["LeftSideType"].ToString())
+                {
+                    case msIndividual.CLASS_NAME:
+                        targetOrganizationRelationship.LeftSide = targetIndividual.ID;
+
+                        targetOrganizationRelationship.RightSide = MultiStepWizards.CreateAccount.TargetOrganization.ID;
+                        break;
+                    case msOrganization.CLASS_NAME:
+                        targetOrganizationRelationship.LeftSide = MultiStepWizards.CreateAccount.TargetOrganization.ID;
+                        targetOrganizationRelationship.RightSide = targetIndividual.ID;
+                        break;
+                    default:
+                        throw new ApplicationException(
+                            "A Relationship Type has EnablePortalSignup set to true but is NOT an Individual/Organization Relationship Type.");
+                }
             }
+
             targetOrganizationRelationship.IsPrimary = true;        // MS-4081
             MultiStepWizards.CreateAccount.TargetOrganizationRelationship = targetOrganizationRelationship;
         }
@@ -368,10 +443,9 @@ public partial class profile_CreateAccount_Complete : PortalPage
         targetIndividual.EmailAddress3 = tbIndividualEmail3.Text;
 
         // now, the phone numbers
-        bool atLeastOnePhoneNumber = false;
         foreach (GridViewRow grvPhoneNumberType in gvIndividualPhoneNumbers.Rows)
         {
-            DataKey dataKey = gvIndividualPhoneNumbers.DataKeys[grvPhoneNumberType.RowIndex];
+            var dataKey = gvIndividualPhoneNumbers.DataKeys[grvPhoneNumberType.RowIndex];
             if (dataKey == null)
                 continue;
 
@@ -381,15 +455,8 @@ public partial class profile_CreateAccount_Complete : PortalPage
 
             if (tb == null) continue;
             targetIndividual[code + "_PhoneNumber"] = tb.Text;
-            if (!string.IsNullOrWhiteSpace(tb.Text))
-                atLeastOnePhoneNumber = true;
-        }
 
-        //if (!atLeastOnePhoneNumber)
-        //{
-        //    cvIndividualPhoneNumber.IsValid = false;
-        //    return false;
-        //}
+        }
 
         // the preferred
         string preferredPhoneNumberID = Request.Form["IndividualPhoneNumberPreferredType"];
@@ -398,7 +465,6 @@ public partial class profile_CreateAccount_Complete : PortalPage
 
 
         // now, let's unbind the addresses
-        bool atLeastOneAddress = false;
         foreach (RepeaterItem riAddress in rptIndividualAddresses.Items)
         {
             AddressControl ac = (AddressControl)riAddress.FindControl("acIndividualAddress");
@@ -409,15 +475,7 @@ public partial class profile_CreateAccount_Complete : PortalPage
             string code = hfAddressCode.Value;  // remember we stuck the code in there during databinding
             targetIndividual[code + "_Address"] = ac.Address;
 
-            if (ac.Address != null && !string.IsNullOrWhiteSpace(ac.Address.Line1))
-                atLeastOneAddress = true;
         }
-
-        //if (!atLeastOneAddress)
-        //{
-        //    cvIndividualAddress.IsValid = false;
-        //    return false;
-        //}
 
         // let's get the preferred address
         targetIndividual.PreferredAddressType = ddlIndividualPreferredAddress.SelectedValue;
@@ -458,10 +516,6 @@ public partial class profile_CreateAccount_Complete : PortalPage
     {
         targetOrganization.Name = tbOrganizationName.Text;
 
-        ////unbind the image if applicable
-        //if (organizationImageUpload.HasFile)
-        //    targetOrganization["Image_Contents"] = getOrganizationImageFile();
-
         // now, the email
         targetOrganization.EmailAddress = tbOrganizationEmail.Text;
         targetOrganization["BillingContactName"] = tbBillingContactName.Text;
@@ -470,7 +524,7 @@ public partial class profile_CreateAccount_Complete : PortalPage
         // now, the phone numbers
         foreach (GridViewRow grvPhoneNumberType in gvOrganizationPhoneNumbers.Rows)
         {
-            DataKey dataKey = gvOrganizationPhoneNumbers.DataKeys[grvPhoneNumberType.RowIndex];
+            var dataKey = gvOrganizationPhoneNumbers.DataKeys[grvPhoneNumberType.RowIndex];
             if (dataKey == null)
                 continue;
 
@@ -546,42 +600,6 @@ public partial class profile_CreateAccount_Complete : PortalPage
 
         return result;
     }
-
-    //private MemberSuiteFile getOrganizationImageFile()
-    //{
-    //    if (!organizationImageUpload.HasFile)
-    //        return null;
-
-    //    MemoryStream stream = new MemoryStream(organizationImageUpload.FileBytes);
-    //    System.Drawing.Image image = Image.FromStream(stream);
-
-    //    //Resize the image if required - perserve scale
-    //    if (image.Width > 120 || image.Height > 120)
-    //    {
-    //        int largerDimension = image.Width > image.Height ? image.Width : image.Height;
-    //        decimal ratio = largerDimension / 120m; //Target size is 120x120 so this works for either dimension
-
-    //        int thumbnailWidth = Convert.ToInt32(image.Width / ratio); //Explicit convert will round
-    //        int thumbnailHeight = Convert.ToInt32(image.Height / ratio); //Explicit convert will round
-
-    //        //Create a thumbnail to resize the image.  The delegate is not used and IntPtr.Zero is always required.
-    //        //For more information see http://msdn.microsoft.com/en-us/library/system.drawing.image.getthumbnailimage.aspx
-    //        Image resizedImage = image.GetThumbnailImage(thumbnailWidth, thumbnailHeight, () => false, IntPtr.Zero);
-
-    //        //Replace the stream containing the original image with the resized image
-    //        stream = new MemoryStream();
-    //        resizedImage.Save(stream, image.RawFormat);
-    //    }
-
-    //    var result = new MemberSuiteFile
-    //    {
-    //        FileContents = stream.ToArray(),
-    //        FileName = organizationImageUpload.FileName,
-    //        FileType = organizationImageUpload.PostedFile.ContentType
-    //    };
-
-    //    return result;
-    //}
 
     #endregion
 
@@ -708,13 +726,29 @@ public partial class profile_CreateAccount_Complete : PortalPage
 
     protected void saveIndividualAndPortalUser(IConciergeAPIService proxy)
     {
-        //Save the individual
-        targetIndividual = proxy.Save(targetIndividual).ResultValue.ConvertTo<msIndividual>();
+        // Save the individual
+        var saveResult = proxy.Save(targetIndividual);
+        if (!saveResult.Success)
+        {
+            QueueBannerError(saveResult.FirstErrorMessage);
+            return;
+        }
 
-        //Save the portal user
+        targetIndividual = saveResult.ResultValue.ConvertTo<msIndividual>();
+
+        // Save the portal user
         targetPortalUser.Owner = targetIndividual.ID;
         string password = (string) targetPortalUser["Password"];
-        targetPortalUser = proxy.Save(targetPortalUser).ResultValue.ConvertTo<msPortalUser>();
+
+        saveResult = proxy.Save(targetPortalUser);
+        if (!saveResult.Success)
+        {
+            QueueBannerError(saveResult.FirstErrorMessage);
+            QueueBannerMessage(string.Format("Individual #{0} - {1} has been saved sucessfully.", targetIndividual.LocalID, targetIndividual.Name));
+            return;
+        }
+
+        targetPortalUser = saveResult.ResultValue.ConvertTo<msPortalUser>();
         targetPortalUser["Password"] = password;
 
         proxy.ResetPassword(targetPortalUser["ID"].ToString(), password);
@@ -727,7 +761,11 @@ public partial class profile_CreateAccount_Complete : PortalPage
     protected void saveOrganization(IConciergeAPIService proxy)
     {
         if (MultiStepWizards.CreateAccount.TargetOrganization != null)
+        {
             targetOrganization = proxy.Save(targetOrganization).ResultValue.ConvertTo<msOrganization>();
+            // MS-3517
+            MultiStepWizards.CreateAccount.TargetOrganization = targetOrganization;
+        }
     }
 
     protected void saveOrganizationRelationship(IConciergeAPIService proxy)
@@ -743,21 +781,37 @@ public partial class profile_CreateAccount_Complete : PortalPage
 
         liOrganization.Visible = MultiStepWizards.CreateAccount.TargetOrganization != null;
         litOrganization.Text = string.Format("Organization <b>{0}</b>", targetOrganization.Name);
+        
+        var org =
+            (from object c in tdOrganization.Controls where c.GetType().Name == typeof(RadComboBox).Name select c)
+                .Cast<RadComboBox>().FirstOrDefault();
 
         liRelationship.Visible = false;
-        if (!string.IsNullOrWhiteSpace(ddlAllOrganizations.SelectedValue))
+        if (org != null && !string.IsNullOrWhiteSpace(org.SelectedValue))
         {
             liRelationship.Visible = true;
 
             if (dtPortalSignupRelationshipTypes == null)
-                using (IConciergeAPIService proxy = ConciergeAPIProxyGenerator.GenerateProxy())
+                using (var proxy = ConciergeAPIProxyGenerator.GenerateProxy())
                 {
                     getPortalSignupRelationshipTypes(proxy);
                 }
 
-            DataRow drRelationshipType = dtPortalSignupRelationshipTypes.Rows.Count == 1 ? dtPortalSignupRelationshipTypes.Rows[0] : 
-                dtPortalSignupRelationshipTypes.Rows.Find(ddlPortalSignupRelationshipTypes.SelectedValue);
-            litRelationship.Text = string.Format("<b>{0}</b> relationship between <b>{1} {2}</b> and <b>{3}</b>", drRelationshipType["Name"], targetIndividual.FirstName, targetIndividual.LastName, targetOrganization != null && !string.IsNullOrWhiteSpace(targetOrganization.Name) ? targetOrganization.Name : ddlAllOrganizations.SelectedItem.Text);
+            if (dtPortalSignupRelationshipTypes != null)
+            {
+                var drRelationshipType = dtPortalSignupRelationshipTypes != null &&
+                                         dtPortalSignupRelationshipTypes.Rows.Count == 1
+                                             ? dtPortalSignupRelationshipTypes.Rows[0]
+                                             : dtPortalSignupRelationshipTypes.Rows.Find(
+                                                 ddlPortalSignupRelationshipTypes.SelectedValue);
+                litRelationship.Text = string.Format("<b>{0}</b> relationship between <b>{1} {2}</b> and <b>{3}</b>",
+                                                     drRelationshipType["Name"], targetIndividual.FirstName,
+                                                     targetIndividual.LastName,
+                                                     targetOrganization != null &&
+                                                     !string.IsNullOrWhiteSpace(targetOrganization.Name)
+                                                         ? targetOrganization.Name
+                                                         : org.Text);
+            }
         }
     }
 
@@ -769,12 +823,14 @@ public partial class profile_CreateAccount_Complete : PortalPage
             saveIndividualAndPortalUser(proxy);
 
             if (MultiStepWizards.CreateAccount.TargetOrganization != null)
-                saveOrganization(proxy);
+            {
+                if(rbNotListed.Checked) saveOrganization(proxy);
 
-            unbindOrganizationRelationship();
+                unbindOrganizationRelationship();
 
-            if (targetOrganizationRelationship != null)
-                saveOrganizationRelationship(proxy);
+            	if (targetOrganizationRelationship != null)
+                	saveOrganizationRelationship(proxy);
+			}
         }
 
         MultiStepWizards.CreateAccount.TargetIndividual = null;
@@ -874,17 +930,34 @@ public partial class profile_CreateAccount_Complete : PortalPage
                     return;
                 }
 
-                if (string.IsNullOrWhiteSpace(ddlAllOrganizations.SelectedValue) || ddlAllOrganizations.SelectedValue.ToLower() != "notlisted")
+                // MS-5462 Check if we have available organization relationships.
+                if (ddlPortalSignupRelationshipTypes.Items.Count == 0)
                 {
                     MultiStepWizards.CreateAccount.TargetOrganization = null;
                     saveAndGoHome();
 
-                    return;
+                    return;                    
                 }
+
+                var org = (from object c in tdOrganization.Controls
+                           where c.GetType().Name == typeof(RadComboBox).Name
+                           select c).Cast<RadComboBox>().FirstOrDefault();
+
+                if (rbNoAffiliation.Checked)
+                    MultiStepWizards.CreateAccount.TargetOrganization = null;
+
+                if (org != null && !string.IsNullOrWhiteSpace(org.SelectedValue))
+                {
+                    var selectedOrganization = LoadObjectFromAPI<msOrganization>(org.SelectedValue);
+                    MultiStepWizards.CreateAccount.TargetOrganization = selectedOrganization;
+                }
+
+                if (rbNoAffiliation.Checked || (org != null && !string.IsNullOrWhiteSpace(org.SelectedValue)))
+                    saveAndGoHome();                
 
                 setConfirmationText();
 
-                // MS-5208. Going forward to organization part. Bind Organization's addresses repeater.                    
+				// MS-5208. Going forward to organization part. Bind Organization's addresses repeater.                    
                 BindOrganizationAddresses();
 
                 break;
@@ -952,6 +1025,7 @@ public partial class profile_CreateAccount_Complete : PortalPage
                 var lRadioButtonMarkup = (Literal)e.Row.FindControl("lIndividualRadioButtonMarkup");
                 Literal lPhoneNumberRequired = (Literal)e.Row.FindControl("lPhoneNumberRequired");
                 RequiredFieldValidator rfvPhoneNumber = (RequiredFieldValidator)e.Row.FindControl("rfvPhoneNumber");
+
                 
 
                 bool requiredInPortal = pt.SafeGetValue<bool>("RequiredInPortal");
@@ -1065,13 +1139,13 @@ public partial class profile_CreateAccount_Complete : PortalPage
                 break;
 
 
-
             case DataControlRowType.DataRow:
                 Label lblPhoneNumberType = (Label)e.Row.FindControl("lblOrganizationPhoneNumberType");
                 TextBox tbPhoneNumber = (TextBox)e.Row.FindControl("tbOrganizationPhoneNumber");
                 var lRadioButtonMarkup = (Literal)e.Row.FindControl("lOrganizationRadioButtonMarkup");
                 Literal lPhoneNumberRequired = (Literal)e.Row.FindControl("lPhoneNumberRequired");
                 RequiredFieldValidator rfvPhoneNumber = (RequiredFieldValidator)e.Row.FindControl("rfvPhoneNumber");
+
                 
 
                 bool requiredInPortal = pt.SafeGetValue<bool>("RequiredInPortal");

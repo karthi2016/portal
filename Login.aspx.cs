@@ -147,7 +147,7 @@ public partial class Login : PortalPage
                 return CryptoManager.Sign(data, ConfigurationManager.AppSettings["SigningCertificateSubject"],
                                           ConfigurationManager.AppSettings["CertificatesStoreName"]);
             }
-            catch (Exception ex)
+            catch
             {
                 Response.Redirect(
                     "/SystemUnavailable.html?AdditionalInfo=Unable to sign token with portal certificate defined in web.config");
@@ -286,7 +286,7 @@ public partial class Login : PortalPage
 
             if (!result.Success)
             {
-                DisplayBannerMessage("Login Failure: " + result.FirstErrorMessage, true);
+                DisplayBannerMessage(true, "Login Failure: " + result.FirstErrorMessage);
                 return;
             }
 

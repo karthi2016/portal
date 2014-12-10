@@ -126,7 +126,9 @@ public partial class events_CreateEditEvent : PortalPage
     protected override void InitializePage()
     {
         base.InitializePage();
-
+#pragma warning disable 0618
+        reDescription.NewLineBr = false;
+#pragma warning restore 0618
         ddlCategory.DataSource = eventFieldMetadata["Category"].PickListEntries;
         ddlCategory.DataBind();
 

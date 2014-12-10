@@ -1,12 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Linq;
-using System.Web;
-
-using MemberSuite.SDK.Concierge;
-using MemberSuite.SDK.Types;
-using MemberSuite.SDK.Utilities;
+﻿using System.Web;
 
 /// <summary>
 /// Manages all communication and storage of session information.
@@ -16,9 +8,6 @@ using MemberSuite.SDK.Utilities;
 /// than they would be otherwise.</remarks>
 public static class SessionManager
 {
-   
-
-    
     public static T Get<T>( string key )  
 	{
         if (HttpContext.Current == null || HttpContext.Current.Session == null)
@@ -33,22 +22,23 @@ public static class SessionManager
         sessionValue = HttpContext.Current.Session[key];
         if (sessionValue == null)
             return default(T);
-
-        //if (typeof(MemberSuiteObject).IsAssignableFrom(typeof(T))
-        //     && sessionValue is string && RegularExpressions.GuidRegex.IsMatch((string)sessionValue))    // we stored a guid
-        //{
-        //    var api = ConciergeAPIProxyGenerator.GenerateProxy();
-        //    string id = (string) sessionValue;
-        //    var mso = api.Get(id).ResultValue;
-        //    if (mso == null) return default(T);
-        //    if (typeof (T) != mso.GetType()) // need to convert
-        //        return (T) (object) mso.ConvertTo( typeof(T) );
-
-        //    return (T) (object) mso;
-        //}
-
+        
         return (T)sessionValue ;
 	}
+
+    public static void Clear()
+    {
+        // Must Clear this first as it will be lost on the "Current.Items.Clear()" call
+        if (HttpContext.Current.Session != null)
+        {
+            HttpContext.Current.Session.Clear();
+        }
+
+        if (HttpContext.Current.Items != null)
+        {
+            HttpContext.Current.Items.Clear();
+        }
+    }
 
     public static void Set<T>(string key, T valueToSet)
     {

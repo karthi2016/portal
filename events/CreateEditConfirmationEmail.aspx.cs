@@ -86,7 +86,9 @@ public partial class events_CreateEditConfirmationEmail : PortalPage
     protected override void InitializePage()
     {
         base.InitializePage();
-
+#pragma warning disable 0618
+        reHtmlMessageBody.NewLineBr = false;
+#pragma warning restore 0618
         lblEventName.Text = targetEvent.Name;
 
         if (targetChapter != null)

@@ -5,6 +5,8 @@ using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 using MemberSuite.SDK.Concierge;
+using MemberSuite.SDK.Searching;
+using MemberSuite.SDK.Searching.Operations;
 using MemberSuite.SDK.Types;
 
 public partial class donations_DonationComplete : PortalPage
@@ -12,6 +14,8 @@ public partial class donations_DonationComplete : PortalPage
     #region Fields
 
     protected msOrder targetOrder;
+
+    protected msGift targetGift;
 
     #endregion
 
@@ -49,9 +53,29 @@ public partial class donations_DonationComplete : PortalPage
         using (IConciergeAPIService proxy = ConciergeAPIProxyGenerator.GenerateProxy())
         {
             loadTargetOrder(proxy);
-        }
 
-        if (targetOrder == null) GoToMissingRecordPage();
+            if (targetOrder == null) GoToMissingRecordPage();
+
+            // If an Order found, try to get a related Gift object
+            var giftSearch = new Search(msGift.CLASS_NAME);
+            giftSearch.AddCriteria(Expr.Equals(msGift.FIELDS.Order, ContextID));
+
+            var result = proxy.GetObjectsBySearch(giftSearch, msAggregate.FIELDS.ID, 0, 1);
+            if (result.Success && result.ResultValue.TotalRowCount > 0)
+            {
+                targetGift = result.ResultValue.Objects[0].ConvertTo<msGift>();
+
+                if (targetGift != null)
+                {
+                    hlViewOrder.NavigateUrl = "/donations/ViewGift.aspx?contextID=" + targetGift.ID;
+                }
+                else
+                {
+                    // If a gift not found, at least go to the completed Order
+                    hlViewOrder.NavigateUrl = "/financial/ViewOrder.aspx?contextID=" + targetOrder.ID;
+                }
+            }
+        }
     }
 
     protected void loadTargetOrder(IConciergeAPIService serviceProxy)

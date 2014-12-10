@@ -154,7 +154,7 @@ public partial class volunteers_ViewMyVolunteerProfile : PortalPage
             case ListItemType.Item:
                 HyperLink hlViewTraits = (HyperLink)e.Item.FindControl("hlViewTraits");
 
-                hlViewTraits.Text = string.Format("<li>View My {0}</li>", RegularExpressions.GetFriendlyPluralName(nvp.Name));
+                hlViewTraits.Text = string.Format("<li>View My {0}</li>", Formats.GetFriendlyPluralName(nvp.Name));
                 hlViewTraits.NavigateUrl += targetVolunteer.ID + "&traitTypeID=" + nvp.Value;
 
                 break;

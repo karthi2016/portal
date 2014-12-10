@@ -22,11 +22,17 @@ public partial class homepagecontrols_Membership : HomePageUserControl
         /*Lets get membership organizations already used by this entity*/
 
         var exclude = new List<string>();
+        // MS-5444
+        const string renewalRangeColumn = "MembershipOrganization.NumberOfDaysPriorToExpirationToPromptForRenewal";
+        const string expirationDateColumn = "ExpirationDate";
         using (var proxy = ConciergeAPIProxyGenerator.GenerateProxy())
         {
             var s = new Search(msMembership.CLASS_NAME);
             s.AddCriteria(Expr.Equals("MembershipOrganization.MembersCanRenewThroughThePortal", true));
             s.AddOutputColumn("MembershipOrganization");
+            // MS-5444
+            s.AddOutputColumn(renewalRangeColumn);
+            s.AddOutputColumn(expirationDateColumn);
             s.AddOutputColumn("Product.Name");
             s.AddOutputColumn("Type.Name");
             var tGroup = new SearchOperationGroup { FieldName = "TerminationDate" };
@@ -49,15 +55,23 @@ public partial class homepagecontrols_Membership : HomePageUserControl
                     var id = Convert.ToString(dr["MembershipOrganization"]);
                     if (string.IsNullOrEmpty(id) || exclude.Contains(id))
                         continue;
-                    exclude.Add(id);
+
+                    // MS-5444 Exclude current membership organization from renewal list only if member's expiration date is not within a renewal range.
+                    var suppressRenew = true;
+                    if (dr.Table.Columns.Contains(renewalRangeColumn) && dr[renewalRangeColumn] != DBNull.Value && 
+                        dr.Table.Columns.Contains(expirationDateColumn) && dr[expirationDateColumn] != DBNull.Value)
+                    {
+                        var renewalRange = Convert.ToInt32(dr[renewalRangeColumn]);
+                        var expirationDate = Convert.ToDateTime(dr[expirationDateColumn]);
+                        suppressRenew = DateTime.Now.AddDays(renewalRange) < expirationDate;
+                    }
+
+                    if (suppressRenew)
+                        exclude.Add(id);
                     
                     _exitingMembeships.Add(Convert.ToString(dr["ID"]), Convert.ToString(dr["Product.Name"]));
                 }
-
-
             }
-
-
         }
 
         // now, we need the default membership organization
@@ -303,7 +317,7 @@ public partial class homepagecontrols_Membership : HomePageUserControl
         ViewMemberships.Visible = false;
         if (_exitingMembeships != null)
         {
-            ViewMemberships.Visible = (_exitingMembeships != null && _exitingMembeships.Count > 0);
+            ViewMemberships.Visible = _exitingMembeships.Count > 0;
             rptMemOrgsView.DataSource = _exitingMembeships;
             rptMemOrgsView.DataBind();
         }

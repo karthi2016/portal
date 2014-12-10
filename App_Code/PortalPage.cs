@@ -272,7 +272,7 @@ public abstract class PortalPage : Page, IControlHost
         if (refControl == null || String.IsNullOrWhiteSpace(controlName)) return null;
 
         Control c = refControl.FindControl(controlName);
-        if (c != null) // found it
+        if (c != null && c.ID == controlName) // found it - MS-5264: RadioButtonList and others will ALWAYS return itself when FindControl is called 
             return c;
 
         foreach (Control cc in refControl.Controls)
@@ -310,7 +310,7 @@ public abstract class PortalPage : Page, IControlHost
         }
         catch (ConciergeClientException ex)
         {
-            DisplayBannerMessage(ex.Message, true);
+            DisplayBannerMessage(true, ex.Message);
         }
     }
 
@@ -464,6 +464,11 @@ public abstract class PortalPage : Page, IControlHost
         SessionManager.Set("BannerMessageType", "Success");
     }
 
+    public void QueueBannerMessage(string msg, params object[] args)
+    {
+        QueueBannerMessage(string.Format(msg, args));
+    }
+
     /// <summary>
     /// Dequeues the banner message if it's present and displays it
     /// </summary>
@@ -473,15 +478,20 @@ public abstract class PortalPage : Page, IControlHost
         if (msg == null) return;    // no message
         bool isError = (string) SessionManager.Get<string>("BannerMessageType") == "Error";
 
-        DisplayBannerMessage(msg, isError);
+        DisplayBannerMessage(isError, msg);
+    }
+
+    public void DisplayBannerMessage(bool isError, string msg, params object[] args)
+    {
+        DisplayBannerMessage(isError, string.Format(msg, args));
     }
 
     /// <summary>
     /// Displays the banner message.
     /// </summary>
-    /// <param name="msg">The MSG.</param>
     /// <param name="isError">if set to <c>true</c> [is error].</param>
-    public void DisplayBannerMessage(string msg, bool isError)
+    /// <param name="msg">The MSG.</param>
+    public void DisplayBannerMessage(bool isError, string msg)
     {
         if ( Master == null ) return;
 
@@ -554,7 +564,8 @@ public abstract class PortalPage : Page, IControlHost
     {
         using (var api = GetConciegeAPIProxy())
         {
-            return api.Save(msoObjectToSave).ResultValue;
+            var result = api.Save(msoObjectToSave);
+            return result.ResultValue;
         }
     }
 
@@ -562,8 +573,8 @@ public abstract class PortalPage : Page, IControlHost
     {
         using (var api = GetConciegeAPIProxy())
         {
-            var result = api.Save(msoObjectToSave).ResultValue;
-            return result == null ? null : result.ConvertTo<T>();
+            var result = api.Save(msoObjectToSave);
+            return result.ResultValue == null ? null : result.ResultValue.ConvertTo<T>();
         }
     }
 
@@ -615,7 +626,8 @@ public abstract class PortalPage : Page, IControlHost
     /// <returns></returns>
     protected SearchResult ExecuteSearch(IConciergeAPIService serviceProxy, Search searchToRun, int startRecord, int? maximumNumberOfRecordsToReturn)
     {
-        return serviceProxy.ExecuteSearch(searchToRun, startRecord, maximumNumberOfRecordsToReturn).ResultValue;
+        var result = serviceProxy.ExecuteSearch(searchToRun, startRecord, maximumNumberOfRecordsToReturn);
+        return result.ResultValue;
     }
 
 
@@ -630,14 +642,16 @@ public abstract class PortalPage : Page, IControlHost
     {
         using (var api = GetConciegeAPIProxy())
         {
-            return api.ExecuteSearch(searchToRun, startRecord, maximumNumberOfRecordsToReturn).ResultValue;
+            var result = api.ExecuteSearch(searchToRun, startRecord, maximumNumberOfRecordsToReturn);
+            return result.ResultValue;
         }
     }
 
 
     protected List<SearchResult> ExecuteSearches(IConciergeAPIService serviceProxy, List<Search> searchesToRun, int startRecord, int? maximumNumberOfRecordsToReturn)
     {
-        return serviceProxy.ExecuteSearches(searchesToRun, startRecord, maximumNumberOfRecordsToReturn).ResultValue;
+        var result = serviceProxy.ExecuteSearches(searchesToRun, startRecord, maximumNumberOfRecordsToReturn);
+        return result.ResultValue;
     }
 
 
@@ -645,7 +659,8 @@ public abstract class PortalPage : Page, IControlHost
     {
         using (var api = GetConciegeAPIProxy())
         {
-            return api.ExecuteSearches(searchesToRun, startRecord, maximumNumberOfRecordsToReturn).ResultValue;
+            var multiResult = api.ExecuteSearches(searchesToRun, startRecord, maximumNumberOfRecordsToReturn);
+            return multiResult.ResultValue;
         }
     }
 
@@ -664,7 +679,8 @@ public abstract class PortalPage : Page, IControlHost
     {
         using (var api = GetConciegeAPIProxy())
         {
-            return api.DescribeProducts(targetEntityId, productsToDescribe).ResultValue;
+            var result = api.DescribeProducts(targetEntityId, productsToDescribe);
+            return result.ResultValue;
         }
     }
 
@@ -733,7 +749,7 @@ public abstract class PortalPage : Page, IControlHost
     {
         foreach (var fieldMetadata in targetCriteriaFields)
         {
-            string fieldName = RegularExpressions.GetSafeFieldName(fieldMetadata.Name);
+            string fieldName = Formats.GetSafeFieldName(fieldMetadata.Name);
             bool found = false;
 
             if (_isValidRange(criteria.SafeGetValue(fieldName + "__from")))
@@ -878,9 +894,7 @@ public abstract class PortalPage : Page, IControlHost
                     return result;
             }
         }
-        catch (Exception ex)
-        {
-        }
+        catch{}
 
         //There was no local resource file or no resource matching the specified name so check from the API
         return ConciergeAPI.ResolveResource(resourceName, returnNullIfNothingFound);
@@ -927,7 +941,10 @@ public abstract class PortalPage : Page, IControlHost
     public SearchManifest DescribeSearch(string searchType, string searchContext)
     {
         using (var api = GetConciegeAPIProxy())
-            return api.DescribeSearch(searchType, searchContext).ResultValue;
+        {
+            var result = api.DescribeSearch(searchType, searchContext);
+            return result.ResultValue;
+        }
     }
 
     public TimeZoneInfo GetCurrentTimeZone()
@@ -1107,7 +1124,7 @@ public abstract class PortalPage : Page, IControlHost
         foreach (var field in fields)
         {
             var newField = field.Clone();
-            newField.Name = RegularExpressions.GetSafeFieldName(newField.Name);
+            newField.Name = Formats.GetSafeFieldName(newField.Name);
             result.Fields.Add(newField);
         }
         return result;
@@ -1259,7 +1276,7 @@ public abstract class PortalPage : Page, IControlHost
         if (lCurrentPage != null) lCurrentPage.Text = ((PageStart / PAGE_SIZE) + 1).ToString("N0"); ;
 
         string currentUrl = Request.Url.LocalPath;
-        currentUrl += RegularExpressions.GetQueryString(new NameValueCollection(Request.QueryString), new[] {"page"});
+        currentUrl += Formats.GetQueryString(new NameValueCollection(Request.QueryString), new[] { "page" });
 
         if (firstPageLink != null)
         {

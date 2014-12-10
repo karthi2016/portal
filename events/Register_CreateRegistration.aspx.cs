@@ -466,7 +466,7 @@ public partial class events_Register_CreateRegistration : PortalPage
 
                         rbRegister.Visible = true;
                         rbRegister.Checked = session.SessionID == null; // select the "do not register" option by default
-                        string groupName = RegularExpressions.GetSafeFieldName(session.TimeSlotID);
+                        string groupName = Formats.GetSafeFieldName(session.TimeSlotID);
 
                         // hack to work around ASP.NET RadioButtons in repeater controls bug
                         // http://www.codeguru.com/csharp/csharp/cs_controls/custom/article.php/c12371/
@@ -480,8 +480,9 @@ public partial class events_Register_CreateRegistration : PortalPage
 
                 if (session.Fees != null)
                 {
-                    //MS-1587 - add where filter
-                    foreach (var fee in session.Fees.Where(x => x.IsEligible))
+                    // MS-1587 - add where filter
+                    // MS-5481 - only show session fees that are flagged to be sold online
+                    foreach (var fee in session.Fees.Where(x => x.IsEligible && x.SellOnline))
                     {
                         // let's show the fee w/o the session name
                         string name = string.Format("{0} - {1}", fee.ProductName.Replace(session.SessionName + " - ", "")
@@ -500,7 +501,8 @@ public partial class events_Register_CreateRegistration : PortalPage
 
                         //MS-1587
                         //Since there's one item in the list there must be one fee where IsEligible == true
-                        EventRegistrationProductInfo erpi = session.Fees.Single(x => x.IsEligible);
+                        // MS-5481 - only show session fees that are flagged to be sold online
+                        EventRegistrationProductInfo erpi = session.Fees.Single(x => x.IsEligible && x.SellOnline);
 
                         lblPrice.Text = !string.IsNullOrWhiteSpace(erpi.DisplayPriceAs) ? erpi.DisplayPriceAs : erpi.Price.ToString("C");
                     }

@@ -177,32 +177,36 @@ public partial class careercenter_SelectCareerCenterProduct : PortalPage
         //and just complete the order as normal (the job posting will be saved since it's in the PlaceAnOrder.ObjectsToBeSaved collection)
         //Otherwise this is the start of the workflow and after the order direct the user to the page to enter job posting details.
         MultiStepWizards.PlaceAnOrder.OrderCompleteUrl = TransientJobPosting
-                                                             ? "~/careercenter/ConfirmJobPosting.aspx?post=true"
-                                                             : "~/careercenter/CreateEditJobPosting.aspx";
+            ? "~/careercenter/ConfirmJobPosting.aspx?post=true"
+            : "~/careercenter/CreateEditJobPosting.aspx";
 
         MultiStepWizards.PlaceAnOrder.ReloadEntityOnOrderComplete = true;
 
-        OrderPayload pl = new OrderPayload();
 
-                var targetJobPosting = MultiStepWizards.PostAJob.JobPosting;
+        var targetJobPosting = MultiStepWizards.PostAJob.JobPosting;
+        var memo = targetJobPosting == null ? "Not available" : "Job posting '" + targetJobPosting.Name + "'";
 
-
-        pl.EntitlementAdjustments = new List<OrderPayloadEntitlementAdjustments>();
-        pl.EntitlementAdjustments.Add(new OrderPayloadEntitlementAdjustments
+        var pl = new OrderPayload
+        {
+            EntitlementAdjustments = new List<OrderPayloadEntitlementAdjustments>
             {
-                EntityID = targetOrder.BillTo,
-                AmountToAdjust = -1,
-                EntitlementType = msJobPostingEntitlement.CLASS_NAME,
-                Memo = "Job posting '" + targetJobPosting.Name + "'" 
+                new OrderPayloadEntitlementAdjustments
+                {
+                    EntityID = targetOrder.BillTo,
+                    AmountToAdjust = -1,
+                    EntitlementType = msJobPostingEntitlement.CLASS_NAME,
+                    Memo = memo
+                }
+            }
+        };
 
-            });
+        if (targetJobPosting != null)
+        {
+            targetJobPosting.Order = "{OrderID}";
+            pl.ObjectsToSave = new List<MemberSuiteObject> {new MemberSuiteObject(targetJobPosting)};
+        }
 
-        targetJobPosting.Order = "{OrderID}";
-        pl.ObjectsToSave = new List<MemberSuiteObject> { new MemberSuiteObject( targetJobPosting )} ;
-
-        
-        MultiStepWizards.PlaceAnOrder.InitiateOrderProcess(targetOrder, pl );
-
+        MultiStepWizards.PlaceAnOrder.InitiateOrderProcess(targetOrder, pl);
     }
 
     protected void SetCareerCenterProduct(string careerCenterProductID)

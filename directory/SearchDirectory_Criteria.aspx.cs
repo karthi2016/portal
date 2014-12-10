@@ -214,6 +214,11 @@ public partial class directory_SearchDirectory_Criteria : PortalPage
 
         s.AddCriteria(Expr.Equals(msMembership.FIELDS.MembershipDirectoryOptOut, false));
         s.AddCriteria(Expr.IsBlank(msMembership.FIELDS.TerminationDate ));
+
+        // MS-5850 - Control whether or not inherited memberships are included
+        if ( ! PortalConfiguration.Current.MembershipDirectoryIncludeInheritedMemberships )
+            s.AddCriteria(Expr.Equals(msMembership.FIELDS.IsInherited, false ));
+
         s.AddCriteria(sog); // now, add the criteria
 
         GoTo("~/directory/SearchDirectory_Results.aspx");

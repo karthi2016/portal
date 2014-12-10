@@ -55,7 +55,7 @@ public partial class orders_ConfirmOrder : PortalPage
     protected override void OnLoad(EventArgs e)
     {
         base.OnLoad(e);
-        ClientScript.RegisterStartupScript(GetType(), "UpdatePayment", "updatePayment();", true);
+        ClientScript.RegisterStartupScript(GetType(), "UpdatePayment", "if (window.updatePayment) updatePayment();", true);
     }
 
     protected override void InitializePage()
@@ -144,6 +144,8 @@ public partial class orders_ConfirmOrder : PortalPage
         if (isTransient)
         {
             lbCancel.Enabled = false; // you can't do this for a transient order - you have to proceed
+            CancelOrderWrapper.Visible = false;
+
             lblContinueShoppingInstructions.Visible = false;
             hlChangeShippingMethod.NavigateUrl += "?useTransient=true";
         }

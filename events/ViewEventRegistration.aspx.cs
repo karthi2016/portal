@@ -259,7 +259,7 @@ public partial class events_ViewEventRegistration : PortalPage
 
         foreach (var field in targetRegistrationFields)
         {
-            field.DataSource = RegularExpressions.GetSafeFieldName(field.DataSource); // rename the data source
+            field.DataSource = Formats.GetSafeFieldName(field.DataSource); // rename the data source
             field.DataSourceExpression = field.Name; // set the name
         }
     }
@@ -277,7 +277,7 @@ public partial class events_ViewEventRegistration : PortalPage
             fieldMetadata.PortalPrompt = targetRegistrationField.PortalPrompt;
             fieldMetadata.HelpText = targetRegistrationField.HelpText;
             fieldMetadata.PortalAccessibility = PortalAccessibility.ReadOnly;
-            fieldMetadata.Name = RegularExpressions.GetSafeFieldName(targetRegistrationField.Name);
+            fieldMetadata.Name = Formats.GetSafeFieldName(targetRegistrationField.Name);
             result.Fields.Add(fieldMetadata);
         }
         return result;

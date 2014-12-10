@@ -86,7 +86,7 @@ public class IntegrationLinkPage : Page
                 return CryptoManager.Sign(data, ConfigurationManager.AppSettings["SigningCertificateSubject"],
                                           ConfigurationManager.AppSettings["CertificatesStoreName"]);
             }
-            catch (Exception ex)
+            catch
             {
                 Response.Redirect(
                     "/SystemUnavailable.html?AdditionalInfo=Unable to sign token with certificate defined in web.config");

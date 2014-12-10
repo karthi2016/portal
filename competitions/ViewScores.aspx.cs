@@ -97,6 +97,8 @@ public partial class competitions_ViewScores : PortalPage
         loadDataFromConcierge();
         setSummaryInformation();
         generateScoresGrid();
+
+        hlReviewEntries.NavigateUrl = "/competitions/JudgeEntries.aspx?contextID=" + JudgingTeamId;
     }
 
     #endregion

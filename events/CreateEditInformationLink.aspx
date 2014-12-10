@@ -82,7 +82,7 @@
                 <asp:Literal ID="lHTML" runat="Server">HTML</asp:Literal></h2>
         </div>
         <div class="sectionContent">
-            <telerik:RadEditor NewLineBr="false" runat="server" ID="reHtml" ToolsFile="~/controls/telerik/ToolsFileDeluxe.xml" />
+            <telerik:RadEditor runat="server" ID="reHtml" ToolsFile="~/controls/telerik/ToolsFileDeluxe.xml" />
         </div>
     </div>
     <div class="sectionContent">

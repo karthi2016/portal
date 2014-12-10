@@ -29,7 +29,8 @@
     <table>
         <tr id="trQuantity" runat="server">
             <td class="columnHeader" style="width: 150px">
-                <asp:Literal ID="lQuantity" runat="server">Quantity:</asp:Literal><font color=red>*</font>
+                <asp:Literal ID="lQuantity" runat="server">Quantity:</asp:Literal>
+                <span class="requiredField">*</span>
             </td>
             <td>
                 <asp:TextBox ID="tbQuantity" Text="1" Width="30px" runat="server" />

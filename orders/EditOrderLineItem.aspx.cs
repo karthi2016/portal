@@ -10,7 +10,7 @@ using MemberSuite.SDK.Types;
 
 public partial class orders_EditOrderLineItem : PortalPage 
 {
-    protected void Page_Load(object sender, EventArgs e)
+    protected new void Page_Load(object sender, EventArgs e)
     {
 
     }

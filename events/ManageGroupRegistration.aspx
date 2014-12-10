@@ -81,7 +81,7 @@
         <div class="sectionContent" style="width: 400px">
             <ul>
                 <asp:HyperLink runat="server" ID="hlRegistration" NavigateUrl="~/events/GroupRegistrationStep1.aspx?contextID="><LI>Add a Registration</LI></asp:HyperLink>
-                <asp:HyperLink runat="server" ID="hlBackToEvents"><LI>Back to Event Home Page</LI></asp:HyperLink>
+                <asp:HyperLink runat="server" ID="hlBackToEvents" NavigateUrl="~/events/ViewEvent.aspx?contextID="><LI>Back to Event Home Page</LI></asp:HyperLink>
             </ul>
         </div>
     </div>

@@ -21,7 +21,6 @@ public partial class onlinestorefront_BrowseMerchandise : PortalPage
     protected DataTable Merchandise;
     protected PreProcessedOrderPacket PreProcessedOrderPacket;
     protected msProductCategory TargetCategory;
-    private bool _filterRequested = false;
 
     protected override bool IsPublic
     {
@@ -106,8 +105,6 @@ public partial class onlinestorefront_BrowseMerchandise : PortalPage
             phCategories.Visible = false;
 
         BindRecentItems();
-
-
     }
 
 
@@ -164,6 +161,9 @@ public partial class onlinestorefront_BrowseMerchandise : PortalPage
 
     protected void BindRecentItems()
     {
+        var lineItems = MultiStepWizards.PlaceAnOrder.ShoppingCart.LineItems;
+        hlCartSubTotal.Text = string.Format("Cart Subtotal: {0:C}", lineItems.Sum(x => x.UnitPrice * x.Quantity));
+
         if (MultiStepWizards.PlaceAnOrder.RecentlyAddedItems == null)
             MultiStepWizards.PlaceAnOrder.RecentlyAddedItems = new List<DataRow>();
 
@@ -369,8 +369,6 @@ public partial class onlinestorefront_BrowseMerchandise : PortalPage
                 PreProcessOrder(proxy);
             }
         }
-        var o = PreProcessedOrderPacket.FinalizedOrder.ConvertTo<msOrder>();
-        hlCartSubTotal.Text = string.Format("Cart Subtotal: {0:C}", o.LineItems.Sum(x => x.UnitPrice * x.Quantity));
 
         MultiStepWizards.PlaceAnOrder.RecentlyAddedItems.Remove(selectedProduct);
         BindRecentItems();

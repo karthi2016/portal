@@ -31,7 +31,7 @@
         </tr>
         <tr>
             <td style="width: 50px">
-                <asp:TextBox ID="tbRoutingNumber" runat="server" />
+                <asp:TextBox ID="tbRoutingNumber" runat="server" autocomplete="off" />
                 <asp:RegularExpressionValidator ID="revRoutingNumber" ValidationExpression="^((0[0-9])|(1[0-2])|(2[1-9])|(3[0-2])|(6[1-9])|(7[0-2])|80)([0-9]{7})$"
                     ControlToValidate="tbRoutingNumber" Display="None" ErrorMessage="Please enter a valid nine digit routing number"
                     runat="server" />
@@ -39,7 +39,7 @@
                     Display="None" ErrorMessage="You have not entered a routing number." />
             </td>
             <td>
-                <asp:TextBox ID="tbBankAccountNumber" runat="server" />
+                <asp:TextBox ID="tbBankAccountNumber" runat="server" autocomplete="off" />
                 <asp:RequiredFieldValidator ID="rfvBankAccountNumber" runat="server" ControlToValidate="tbBankAccountNumber"
                     Display="None" ErrorMessage="You have not entered a bank account number." />
             </td>
@@ -68,7 +68,7 @@
     <div style="text-align: center">
         <asp:Button ID="btnContinue" runat="server" Text="Save this Account" OnClick="btnSaveCard_Click" />
         or
-        <asp:LinkButton ID="lbCancel" runat="server" Text="Cancel " OnClick="lbCancel_Click" />
+        <asp:LinkButton ID="lbCancel" runat="server" Text="Cancel " OnClick="lbCancel_Click" CausesValidation="False" />
     </div>
 </asp:Content>
 <asp:Content ID="Content7" ContentPlaceHolderID="FooterContent" runat="Server">

@@ -42,7 +42,8 @@
                     </tr>
                     <tr>
                         <td class="columnHeader">
-                            <asp:Literal ID="lFirstName" runat="server">First Name:</asp:Literal><span class="requiredField">*</span>
+                            <asp:Literal ID="lFirstName" runat="server">First Name:</asp:Literal>
+                            <span class="requiredField">*</span>
                         </td>
                         <td>
                             <asp:TextBox ID="tbFirstName" runat="server" TabIndex="20" />
@@ -87,8 +88,8 @@
                     </tr>
                     <tr>
                         <td class="columnHeader">
-                            <asp:Literal ID="lEmailAddress" runat="server">Email Address:</asp:Literal><span
-                                class="requiredField">*</span>
+                            <asp:Literal ID="lEmailAddress" runat="server">Email Address:</asp:Literal>
+                            <span class="requiredField">*</span>
                         </td>
                         <td>
                             <asp:TextBox ID="tbEmail" runat="server" TabIndex="100" />
@@ -242,7 +243,7 @@
     <asp:PlaceHolder ID="PlaceHolder1" runat="server">
         <h2>
             <asp:Literal ID="lCommunicationPrefs" runat="server">Communication Preferences</asp:Literal></h2>
-        <div>
+        <div class="communicationPreferencesWrapper">
             <h3>
                 <asp:Literal ID="lGeneralOptions" runat="server">General Communication Options</asp:Literal></h3>
             <p>
@@ -299,9 +300,11 @@
         </div>
     </asp:PlaceHolder>
     <asp:PlaceHolder ID="phOtherInformation" runat="server">
+        <div class="customFieldsWrapper">
         <uc1:CustomFieldSet ID="CustomFieldSet1" runat="server" />
+        </div>
     </asp:PlaceHolder>
-    <div align="center">
+    <div align="center" class="bottomButtonContainer">
         <asp:Button ID="btnSave" runat="server" Text="Save Changes" OnClick="btnSave_Click" />
         <asp:Button ID="btnCancel" runat="server" Text="Cancel" CausesValidation="False"
             OnClick="btnCancel_Click" />

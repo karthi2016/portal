@@ -227,7 +227,6 @@ public partial class profile_EditIndividualInfo : PortalPage
         targetObject.EmailAddress3 = tbEmail3.Text;
 
         // now, the phone numbers
-        bool atLeastOnePhoneNumber = false;
         foreach (GridViewRow grvPhoneNumberType in gvPhoneNumbers.Rows)
         {
             DataKey dataKey = gvPhoneNumbers.DataKeys[grvPhoneNumberType.RowIndex];
@@ -240,8 +239,6 @@ public partial class profile_EditIndividualInfo : PortalPage
 
             if (tb == null) continue;
             targetObject[code + "_PhoneNumber"] = tb.Text;
-            if (!string.IsNullOrWhiteSpace(tb.Text))
-                atLeastOnePhoneNumber = true;
         }
 
         //if (!atLeastOnePhoneNumber)
@@ -257,7 +254,6 @@ public partial class profile_EditIndividualInfo : PortalPage
 
 
         // now, let's unbind the addresses
-        bool atLeastOneAddress = false;
         foreach (RepeaterItem riAddress in rptAddresses.Items)
         {
             AddressControl ac = (AddressControl)riAddress.FindControl("acAddress");
@@ -267,9 +263,6 @@ public partial class profile_EditIndividualInfo : PortalPage
 
             string code = hfAddressCode.Value;  // remember we stuck the code in there during databinding
             targetObject[code + "_Address"] = ac.Address;
-
-            if (ac.Address != null && !string.IsNullOrWhiteSpace(ac.Address.Line1))
-                atLeastOneAddress = true;
         }
 
         //if (!atLeastOneAddress)

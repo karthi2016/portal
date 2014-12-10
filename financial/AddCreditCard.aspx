@@ -25,7 +25,7 @@
                 Card Number: <span class="requiredField">*</span>
             </td>
             <td>
-                <asp:TextBox ID="tbCardNumber" CssClass="inputText" runat="server" />
+                <asp:TextBox ID="tbCardNumber" CssClass="inputText" runat="server" autocomplete="off" />
                 <asp:RequiredFieldValidator ID="rfvCreditCardNumber" runat="server" ControlToValidate="tbCardNumber"
                       Display="None" ErrorMessage="You have not entered a credit card number."
                     />
@@ -36,7 +36,7 @@
                 Name on Card:<span class="requiredField">*</span>
             </td>
             <td>
-                <asp:TextBox ID="tbNameOnCard" runat="server" />
+                <asp:TextBox ID="tbNameOnCard" runat="server" autocomplete="off" />
                 <asp:RequiredFieldValidator ID="rfvNameOnCard" runat="server" ControlToValidate="tbNameOnCard"
                     Display="None" ErrorMessage="You have not entered a name for the credit card."
                       />
@@ -47,7 +47,7 @@
                 Security Code:<span class="requiredField">*</span>
             </td>
             <td>
-                <asp:TextBox ID="tbCCV" Width="50px" runat="server" />
+                <asp:TextBox ID="tbCCV" Width="50px" runat="server" autocomplete="off" />
                 <asp:RequiredFieldValidator ID="rfvSecurityCode" runat="server" ControlToValidate="tbCCV"
                     Display="None" ErrorMessage="You have not entered a security code for the credit card."
                      />
@@ -66,7 +66,7 @@
     <div style="text-align: center">
         <asp:Button ID="btnContinue" runat="server" Text="Save this Card" OnClick="btnSaveCard_Click" />
         or
-        <asp:LinkButton ID="lbCancel" runat="server" Text="Cancel " OnClick="lbCancel_Click" />
+        <asp:LinkButton ID="lbCancel" runat="server" Text="Cancel " OnClick="lbCancel_Click" CausesValidation="false" />
     </div>
 </asp:Content>
 <asp:Content ID="Content7" ContentPlaceHolderID="FooterContent" runat="Server">

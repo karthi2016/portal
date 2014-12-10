@@ -84,7 +84,9 @@ public partial class events_CreateEditEventMerchandise : PortalPage
     protected override void InitializePage()
     {
         base.InitializePage();
-
+#pragma warning disable 0618
+        reDescription.NewLineBr = false;
+#pragma warning restore 0618
         loadDataFromConcierge();
         
         lblEventName.Text = targetEvent.Name;

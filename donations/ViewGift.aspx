@@ -138,6 +138,9 @@
             <ul>
                 <asp:HyperLink ID="hlUpdatePaymentMethod" runat="server" ><li>Update Billing Information</li></asp:HyperLink>
                 <li>
+                    <asp:HyperLink ID="hlGivingHistory" runat="server" NavigateUrl="/donations/BrowseDonations.aspx">My Giving History</asp:HyperLink>
+                </li>
+                <li>
                     <asp:HyperLink ID="hlGoHome" runat="server" NavigateUrl="/">Go Home</asp:HyperLink>
                 </li>
             </ul>

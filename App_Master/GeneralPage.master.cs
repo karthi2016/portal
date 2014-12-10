@@ -74,8 +74,9 @@ public partial class App_Master_GeneralPage : System.Web.UI.MasterPage
 
     protected void lbBackgroundUser_Click(object sender, EventArgs e)
     {
+        var returnUrl = ConciergeAPI.ConsoleReturnUrl;
         Logout(!ConciergeAPI.HasBackgroundConsoleUser);
-        Response.Redirect(ConciergeAPI.ConsoleReturnUrl);
+        Response.Redirect(returnUrl);
     }
 
     protected void lblLogout_Click(object sender, EventArgs e)
@@ -87,9 +88,14 @@ public partial class App_Master_GeneralPage : System.Web.UI.MasterPage
     {
         ConciergeAPI.ClearSession();
         SessionManager.Set<object>("PortalLinks", null );  // force portal link reload, so non-public links don't show
+
+        var logoutUrl = ConciergeAPI.LogoutUrl;
+
+        SessionManager.Clear();
+
         if (redirect)
-            Response.Redirect(!string.IsNullOrWhiteSpace(ConciergeAPI.LogoutUrl)
-                                  ? ConciergeAPI.LogoutUrl
+            Response.Redirect(!string.IsNullOrWhiteSpace(logoutUrl)
+                                  ? logoutUrl
                                   : "~/Login.aspx");
     }
 
@@ -184,7 +190,7 @@ public partial class App_Master_GeneralPage : System.Web.UI.MasterPage
 
         // are we dealing with a GUID?
         string imageUrl;
-        if (RegularExpressions.GuidRegex.IsMatch(PortalConfiguration.Current.PortalGraphicHeaderUrl))
+        if (Regex.IsMatch(PortalConfiguration.Current.PortalGraphicHeaderUrl, RegularExpressions.GuidRegex, RegexOptions.Compiled))
             imageUrl = string.Format("{0}/{1}/{2}/{3}", ConfigurationManager.AppSettings["ImageServerUri"],
                                      PortalConfiguration.Current.AssociationID, PortalConfiguration.Current.PartitionKey,
                                      PortalConfiguration.Current.PortalGraphicHeaderUrl);

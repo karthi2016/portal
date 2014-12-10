@@ -224,31 +224,24 @@ public partial class orders_EnterBillingInfo : PortalPage
 
     protected void btnApplyDiscountCode_Click(object sender, EventArgs e)
     {
-
-
-        msOrder order = targetOrder;
-        if (order == null) return;
-
+        var order = targetOrder;
+        if (order == null) 
+            return;
 
         string discountCode = tbPromoCode.Text.ToUpper().Trim();
         tbPromoCode.Text = "";
+        
+        if (string.IsNullOrWhiteSpace(discountCode)) 
+            return;
 
-
-        if (string.IsNullOrWhiteSpace(discountCode)) return;
-
-        string discountCodeID = retrieveIDForDiscountCode(discountCode);
-
+        var discountCodeID = retrieveIDForDiscountCode(discountCode);
         if (discountCodeID == null)
         {
-            DisplayBannerMessage(string.Format("Discount code '{0}' was not found.",
-                                                                            discountCode), true);
+            DisplayBannerMessage(true, "Discount code '{0}' was not found.", discountCode);
             return;
         }
-
-
+        
         // put it both in the original order, and the cloned order
-       
-
         if (order.DiscountCodes == null)
             order.DiscountCodes = new List<msOrderDiscountCode>();
 
@@ -256,22 +249,21 @@ public partial class orders_EnterBillingInfo : PortalPage
 
         using (var api = GetServiceAPIProxy())
         {
-            var preProcessedOrderPacket = api.PreProcessOrder(targetOrder).ResultValue;
-            var cleanOrder = preProcessedOrderPacket.FinalizedOrder.ConvertTo<msOrder>();
-
+            var preProcessedOrderPacket = api.PreProcessOrder(targetOrder);
+            if (preProcessedOrderPacket.Errors.Any())
+            {
+                DisplayBannerMessage(true, "Error processing the order: {0}", string.Join(", ", preProcessedOrderPacket.Errors.Select(x => x.Message)));
+                return;
+            }
+            
             // if the discount code was removed, it means it was invalid
-
-
-            if (cleanOrder.DiscountCodes == null ||
-                !cleanOrder.DiscountCodes.Exists(x => x.DiscountCode == discountCodeID))
-                QueueBannerMessage(string.Format("Discount code '{0}' is not applicable.", discountCode));
-            else
-                QueueBannerMessage(string.Format("Discount code '{0}' was applied successfully.", discountCode));
+            var cleanOrder = preProcessedOrderPacket.ResultValue.FinalizedOrder.ConvertTo<msOrder>();
+            var applicable = cleanOrder.DiscountCodes != null && cleanOrder.DiscountCodes.Any(x => x.DiscountCode == discountCodeID);
+            var message = applicable ? "was applied successfully" : "is not applicable";
+            QueueBannerMessage("Discount code '{0}' {1}.", discountCode, message);
         }
 
         Refresh();
-
-
     }
 
     private string retrieveIDForDiscountCode(string discountCode)

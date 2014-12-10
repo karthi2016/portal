@@ -50,7 +50,9 @@ public partial class committees_EditCommittee : PortalPage
     protected override void InitializePage()
     {
         base.InitializePage();
-
+#pragma warning disable 0618
+        reDescription.NewLineBr = false;
+#pragma warning restore 0618
         if (targetChapter != null)
             setOwnerBackLinks(targetChapter.ID, targetChapter.Name, "~/chapters/ViewChapter.aspx", "~/chapters/ManageChapterEvents.aspx");
 

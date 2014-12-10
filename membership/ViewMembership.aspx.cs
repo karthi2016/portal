@@ -335,6 +335,10 @@ public partial class membership_ViewMembership : PortalPage
 
     protected bool canRenew()
     {
+        // MS-5847 - prevent inherited membership renewal in the portal
+        if (targetMembership.IsInherited)
+            return false;   
+
         if (targetMembership.Owner == CurrentEntity.ID)
             return true;
 

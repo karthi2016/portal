@@ -160,7 +160,7 @@ public partial class profile_CreateAccount_BasicInfo : PortalPage
 
             if (!result.Success)
             {
-                DisplayBannerMessage("Login Failure: " + result.FirstErrorMessage, true);
+                DisplayBannerMessage(true, "Login Failure: " + result.FirstErrorMessage);
                 return;
             }
 

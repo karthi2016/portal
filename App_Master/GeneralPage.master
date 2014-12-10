@@ -174,11 +174,11 @@
                     </div>
                     <!-- / site content header -->
                     <!-- page content -->
-                    <asp:Panel ID="pnlMessage" runat="server" Width="100%" BackColor="Green" Style="text-align: center"
+                    <asp:Panel ID="pnlMessage" runat="server" Width="100%" BackColor="Green" ForeColor="white" Style="text-align: center"
                         Visible="false" EnableViewState="false">
-                        <font color="white"><b>
+                        <span class="feedbackMessage"><b>
                             <asp:Literal ID="lMessage" runat="server" />
-                        </b></font>
+                        </b></span>
                     </asp:Panel>
                     <asp:ValidationSummary ID="vsSummary" DisplayMode="BulletList" ShowSummary="false"
                         ShowMessageBox="true" HeaderText="We were unable to continue for the following reasons:"

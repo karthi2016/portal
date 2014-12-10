@@ -159,8 +159,9 @@ public partial class membership_PurchaseMembership1 : PortalPage
         using (var api = GetServiceAPIProxy())
         {
             allDescribedProducts =
-                api.DescribeProducts(targetEntity.ID, allProducts.Select(x => x.ProductID).ToList()).ResultValue;
+                api.DescribeProducts(targetEntity.ID, allProducts.Select(x => x.ProductID).ToList()).ResultValue;           
         }
+
 
         //MS-1952 Special prices showing up as 0.00 when not matched
         allProducts.RemoveAll(x => allDescribedProducts.Exists(y => y.ProductID == x.ProductID && !y.IsEligible));

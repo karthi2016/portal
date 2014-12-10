@@ -114,7 +114,7 @@ public partial class events_Register_RegistrationForm : PortalPage
         //and put a seperator between the set of questions for each product
         foreach (var field in targetRegistrationFields)
         {
-            field.DataSource = RegularExpressions.GetSafeFieldName(field.DataSource); // rename the data source
+            field.DataSource = Formats.GetSafeFieldName(field.DataSource); // rename the data source
             field.DataSourceExpression = string.Format( "{0}|{1}", field.DataSource, field.Name); // set the name
         }
     }
@@ -154,7 +154,7 @@ public partial class events_Register_RegistrationForm : PortalPage
             fieldMetadata.PortalPrompt = targetRegistrationField.PortalPrompt;
             fieldMetadata.HelpText = targetRegistrationField.HelpText;
             fieldMetadata.PortalAccessibility = PortalAccessibility.Full;
-            fieldMetadata.Name = RegularExpressions.GetSafeFieldName(targetRegistrationField.Name);
+            fieldMetadata.Name = Formats.GetSafeFieldName(targetRegistrationField.Name);
             fieldMetadata.IsRequired = fieldMetadata.IsRequiredInPortal = targetRegistrationField.IsRequiredInPortal.HasValue && targetRegistrationField.IsRequiredInPortal.Value;
             result.Fields.Add(fieldMetadata);
         }
@@ -248,7 +248,7 @@ public partial class events_Register_RegistrationForm : PortalPage
             // otherwise, copy all of the values
             li.Options = new List<NameValueStringPair>();
             var relevantFields = (from f in mso.Fields
-                                  where f.Key != null && f.Key.StartsWith( RegularExpressions.GetSafeFieldName( li.OrderLineItemID))
+                                  where f.Key != null && f.Key.StartsWith(Formats.GetSafeFieldName(li.OrderLineItemID))
                                   select f);
             foreach (var entry in relevantFields)
             {

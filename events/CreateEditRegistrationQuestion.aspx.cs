@@ -322,7 +322,7 @@ public partial class events_CreateEditRegistrationQuestion : PortalPage
             (FieldDisplayType) Enum.Parse(typeof (FieldDisplayType), ddlDisplayType.SelectedValue);
 
         targetCustomField.Name = string.IsNullOrWhiteSpace(tbApiName.Text)
-                                     ? RegularExpressions.GetSafeFieldName(tbFieldLabel.Text)
+                                     ? Formats.GetSafeFieldName(tbFieldLabel.Text)
                                      : tbApiName.Text;
         targetCustomField.FieldDefinition.IsRequired = chkRequired.Checked;
         targetCustomField.FieldDefinition.DefaultValue = tbDefaultValue.Text;

@@ -239,9 +239,11 @@
     <div style="text-align: center">
          
         <asp:Button ID="btnPlaceOrder" runat="server" Text="Place Order" OnClick="btnPlaceOrder_Click" />
+        <asp:PlaceHolder runat="server" ID="CancelOrderWrapper">
            or
         <asp:LinkButton ID="lbCancel" runat="server" Text="Cancel Your Order" CausesValidation="false"
             OnClick="btnContinueShopping_Click" />
+        </asp:PlaceHolder>
     </div>
 </asp:Content>
 <asp:Content ID="Content7" ContentPlaceHolderID="FooterContent" runat="Server">

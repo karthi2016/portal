@@ -29,7 +29,6 @@ public class DocumentsLogic
         using (var api = ConciergeAPIProxyGenerator.GenerateProxy())
         {
             var msoFileCabinet = api.Get(fileCabinetID).ResultValue;
-            Search s1;
             switch (msoFileCabinet.ClassType)
             {
                 case msCommitteeFileCabinet.CLASS_NAME:

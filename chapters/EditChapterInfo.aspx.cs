@@ -55,7 +55,9 @@ public partial class chapters_EditChapterInfo : PortalPage
     protected override void InitializePage()
     {
         base.InitializePage();
-
+#pragma warning disable 0618
+        reDescription.NewLineBr = false;
+#pragma warning restore 0618
         bindObjectToPage();
     }
 
