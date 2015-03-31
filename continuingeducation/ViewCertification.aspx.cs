@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Linq;
-using System.Web;
-using System.Web.UI;
 using System.Web.UI.WebControls;
 using MemberSuite.SDK.Concierge;
+using MemberSuite.SDK.Constants;
 using MemberSuite.SDK.Searching;
 using MemberSuite.SDK.Searching.Operations;
 using MemberSuite.SDK.Types;
@@ -162,7 +160,7 @@ public partial class continuingeducation_ViewCertification : PortalPage
             case "Resend":
                 string id = Convert.ToString(e.CommandArgument);
                 using (var api = GetServiceAPIProxy())
-                    api.SendEmail("BuiltIn:CertificationRecommendation", new List<string> {id}, null);
+                    api.SendEmail(EmailTemplates.Certifications.CertificationRecommendation, new List<string> {id}, null);
 
                 var rec = LoadObjectFromAPI<msCertificationRecommendation>(id);
                 QueueBannerMessage("An recommendation submission request has successfully been sent to " + rec.EmailAddress);

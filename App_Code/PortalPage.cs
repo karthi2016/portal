@@ -56,8 +56,64 @@ public abstract class PortalPage : Page, IControlHost
         // etc - and so it's imperative that this is set
         
     }
+    /// <summary>
+    /// MS-5424 -System is not respecting organization contact restrictions
+    /// </summary>
+    /// <param name="relationshipType"></param>
+    /// <param name="organizationType"></param>
+    /// <remarks>I placed this code here because it might also be needed when adding/editing contacts from ManagedOrganization  page</remarks>
+    protected void  ErrorOutIfOrganizationContactRestrictionApplies(string relationshipType,string organizationType=null)
+    {
+        if(String.IsNullOrWhiteSpace(relationshipType))
+            return ;
+        var s = new Search(msOrganizationContactRestriction.CLASS_NAME); 
+        s.AddOutputColumn("MaximumNumberOfContacts");
+        s.AddOutputColumn("ErrorMessage");
+        s.Criteria.Add(Expr.Equals("IsActive", true));
+        s.Criteria.Add(Expr.IsNotBlank("MaximumNumberOfContacts"));
+        
+        s.Criteria.Add(Expr.Equals("RelationshipType", relationshipType));
+        if (!String.IsNullOrWhiteSpace(organizationType))
+        {
+            var or = new SearchOperationGroup()
+            {
+                GroupType = SearchOperationGroupType.Or,
+                FieldName = "OrganizationType"
+            };
+            or.Criteria.Add(Expr.IsBlank("OrganizationType"));
+            or.Criteria.Add(Expr.Equals("OrganizationType", organizationType));
+            s.AddCriteria(or);
+        }
+        
 
+        var r=ExecuteSearch(s, 0, 1);
+        if (r == null || r.Table.Rows.Count==0)
+            return;
+        var max = Convert.ToInt32(r.Table.Rows[0]["MaximumNumberOfContacts"]);
+        var errorMessage = String.Empty;
+        if (r.Table.Rows[0]["ErrorMessage"] != DBNull.Value)
+            errorMessage = Convert.ToString(r.Table.Rows[0]["ErrorMessage"]);
+        if (String.IsNullOrWhiteSpace(errorMessage))
+            errorMessage = "Organization Contact Restriction Violation.";
+        if (max == 0)
+            throw new ConciergeClientException(ConciergeErrorCode.GeneralException, errorMessage);
 
+        using (var api = GetConciegeAPIProxy())
+        {
+
+            //Get all unexpired relationships
+            var msql = "SELECT ID FROM {0} WHERE Type='{1}' AND (EndDate IS NULL OR EndDate > '{2}');";
+            msql = String.Format(msql, msRelationship.CLASS_NAME, relationshipType, DateTime.UtcNow.Date);
+            var rr = api.ExecuteMSQL(msql,0,null);
+            if (rr.ResultValue==null)
+                throw new ConciergeClientException(ConciergeErrorCode.GeneralException,rr.FirstErrorMessage);
+            var i = rr.ResultValue.SearchResult.Table.Rows.Count;
+                
+            if (i>=max)
+                throw new ConciergeClientException(ConciergeErrorCode.GeneralException, errorMessage);
+            
+        }
+    }
     /// <summary>
     /// Checks to make sure that this page is being access properly.
     /// </summary>

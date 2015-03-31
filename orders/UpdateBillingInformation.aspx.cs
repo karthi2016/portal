@@ -1,12 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-using System.Web.UI;
-using System.Web.UI.WebControls;
 using MemberSuite.SDK.Types;
 
-public partial class orders_UpdateBillingInformation : PortalPage
+public partial class orders_UpdateBillingInformation : CreditCardLogic
 {
     protected msAssociationDomainObject targetObject;
 
@@ -28,9 +24,9 @@ public partial class orders_UpdateBillingInformation : PortalPage
                     targetOrder.BillTo = targetOrder.ShipTo = targetObject.SafeGetValue<string>("Owner");
                     targetOrder.LineItems = new List<msOrderLineItem>();
                     targetOrder.LineItems.Add(new msOrderLineItem
-                        {
-                            Product = targetObject.SafeGetValue<string>(msMembership.FIELDS.Product)
-                        });
+                    {
+                        Product = targetObject.SafeGetValue<string>(msMembership.FIELDS.Product)
+                    });
 
                     methods = api.DetermineAllowableOrderPaymentMethods(targetOrder).ResultValue;
 
@@ -61,6 +57,9 @@ public partial class orders_UpdateBillingInformation : PortalPage
         methods.AllowBillMeLater = false;
         BillingInfoWidget.AllowableMethods = methods;
 
+        hfOrderBillToId.Value = ConciergeAPI.CurrentEntity.ID;
+
+        dvPriorityData.InnerHtml = GetPriorityPaymentsConfig(hfOrderBillToId.Value);
     }
 
     protected override void setupHyperLinks()

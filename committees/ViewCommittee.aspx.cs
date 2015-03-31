@@ -2,13 +2,10 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Web;
-using System.Web.UI;
-using System.Web.UI.WebControls;
+using MemberSuite.SDK.Constants;
 using MemberSuite.SDK.Searching;
 using MemberSuite.SDK.Searching.Operations;
 using MemberSuite.SDK.Types;
-using MemberSuite.SDK.Results;
 
 public partial class committee_ViewCommittee : PortalPage
 {
@@ -244,7 +241,7 @@ public partial class committee_ViewCommittee : PortalPage
         using (var api = GetServiceAPIProxy())
         {
             // let's send the welcome email
-            api.SendEmail("BuiltIn:OpenCommitteeWelcome", new List<string> { cm.SafeGetValue<string>("ID") }, null);
+            api.SendEmail(EmailTemplates.Committees.OpenCommitteeWelcome, new List<string> { cm.SafeGetValue<string>("ID") }, null);
         }
 
         QueueBannerMessage("You have successfully joined this committee.");

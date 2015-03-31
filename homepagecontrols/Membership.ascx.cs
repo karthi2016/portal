@@ -1,19 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web;
 using System.Data;
-using System.Web.UI;
-using System.Web.UI.WebControls;
 using MemberSuite.SDK.Concierge;
 using MemberSuite.SDK.Results;
 using MemberSuite.SDK.Searching;
 using MemberSuite.SDK.Searching.Operations;
 using MemberSuite.SDK.Types;
 using System.Text;
+
+
 public partial class homepagecontrols_Membership : HomePageUserControl
 {
     private readonly Dictionary<string, string> _exitingMembeships = new Dictionary<string, string>();
+
+    private readonly List<string> _existingMemOrgs = new List<string>();
+
     public override void GenerateSearchesToBeRun(List<Search> searchesToRun)
     {
         base.GenerateSearchesToBeRun(searchesToRun);
@@ -28,7 +30,10 @@ public partial class homepagecontrols_Membership : HomePageUserControl
         using (var proxy = ConciergeAPIProxyGenerator.GenerateProxy())
         {
             var s = new Search(msMembership.CLASS_NAME);
-            s.AddCriteria(Expr.Equals("MembershipOrganization.MembersCanRenewThroughThePortal", true));
+            var portalPermissions = new SearchOperationGroup {GroupType = SearchOperationGroupType.Or};
+            portalPermissions.Criteria.Add(Expr.Equals("MembershipOrganization.MembersCanJoinThroughThePortal", true));
+            portalPermissions.Criteria.Add(Expr.Equals("MembershipOrganization.MembersCanRenewThroughThePortal", true));
+            s.AddCriteria(portalPermissions);
             s.AddOutputColumn("MembershipOrganization");
             // MS-5444
             s.AddOutputColumn(renewalRangeColumn);
@@ -58,7 +63,7 @@ public partial class homepagecontrols_Membership : HomePageUserControl
 
                     // MS-5444 Exclude current membership organization from renewal list only if member's expiration date is not within a renewal range.
                     var suppressRenew = true;
-                    if (dr.Table.Columns.Contains(renewalRangeColumn) && dr[renewalRangeColumn] != DBNull.Value && 
+                    if (dr.Table.Columns.Contains(renewalRangeColumn) && dr[renewalRangeColumn] != DBNull.Value &&
                         dr.Table.Columns.Contains(expirationDateColumn) && dr[expirationDateColumn] != DBNull.Value)
                     {
                         var renewalRange = Convert.ToInt32(dr[renewalRangeColumn]);
@@ -68,8 +73,10 @@ public partial class homepagecontrols_Membership : HomePageUserControl
 
                     if (suppressRenew)
                         exclude.Add(id);
-                    
+
                     _exitingMembeships.Add(Convert.ToString(dr["ID"]), Convert.ToString(dr["Product.Name"]));
+
+                    _existingMemOrgs.Add(id);
                 }
             }
         }
@@ -206,9 +213,24 @@ public partial class homepagecontrols_Membership : HomePageUserControl
         dtSections.Merge(results.Single(x => x.ID == "SectionLeadership").Table);
 
 
-      //H.Z. Only those membership organizations that are eligibile for portal usage should be used for a join link.
-        var expression = string.Format("MembersCanJoinThroughThePortal=true");
-        var rows = results.Single(x => x.ID == "MembershipOrganization").Table.Select(expression);
+        //H.Z. Only those membership organizations that are eligibile for portal usage should be used for a join link.
+        // MS-6014 (Modified 12/31/2014) Select any membership organization where members can join through the portal or members can renew through the portal
+        ////var expression = string.Format("MembersCanJoinThroughThePortal=true OR MembersCanRenewThroughThePortal=true");
+        ////var rows = results.Single(x => x.ID == "MembershipOrganization").Table.Select(expression);
+        var rows = new List<DataRow>();
+        foreach (DataRow orgRow in results.Single(x => x.ID == "MembershipOrganization").Table.Rows)
+        {
+            bool hasMem =_existingMemOrgs.Any(r => r.Equals(Convert.ToString(orgRow["ID"]), StringComparison.InvariantCultureIgnoreCase));
+
+            // Only include if there is a Membership and Renew is allowed or there is no Membership and Join is allowed
+            if ((hasMem && orgRow[msMembershipOrganization.FIELDS.MembersCanRenewThroughThePortal] != DBNull.Value &&
+                 Convert.ToBoolean(orgRow[msMembershipOrganization.FIELDS.MembersCanRenewThroughThePortal])) ||
+                (!hasMem && orgRow[msMembershipOrganization.FIELDS.MembersCanJoinThroughThePortal] != DBNull.Value &&
+                 Convert.ToBoolean(orgRow[msMembershipOrganization.FIELDS.MembersCanJoinThroughThePortal])))
+            {
+                rows.Add(orgRow);
+            }
+        }
         if (rows.Any())
         {
             var t = rows.CopyToDataTable();

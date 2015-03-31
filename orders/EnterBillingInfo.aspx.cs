@@ -1,20 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web;
-using System.Web.UI;
-using System.Web.UI.WebControls;
 using MemberSuite.SDK.Searching;
 using MemberSuite.SDK.Searching.Operations;
 using MemberSuite.SDK.Types;
 
-public partial class orders_EnterBillingInfo : PortalPage 
+public partial class orders_EnterBillingInfo : CreditCardLogic
 {
 
     #region Fields
 
     private msOrder targetOrder;
-    private bool isTransient;
+    private bool IsTransient
+    {
+        get { return string.Equals(Request.QueryString["useTransient"], "true", StringComparison.CurrentCultureIgnoreCase); }
+    }
     private PreProcessedOrderPacket preProcessedOrderPacket;
 
 
@@ -30,13 +30,14 @@ public partial class orders_EnterBillingInfo : PortalPage
     /// each page that needs it.</remarks>
     protected override void InitializeTargetObject()
     {
+        hfOrderBillToId.Value = ConciergeAPI.CurrentEntity.ID;
+
+        dvPriorityData.InnerHtml = GetPriorityPaymentsConfig(hfOrderBillToId.Value);
+
         base.InitializeTargetObject();
 
-        if (string.Equals(Request.QueryString["useTransient"], "true", StringComparison.CurrentCultureIgnoreCase))
-        {
+        if (IsTransient)
             targetOrder = MultiStepWizards.PlaceAnOrder.TransientShoppingCart;
-            isTransient = true;
-        }
         else
             targetOrder = MultiStepWizards.PlaceAnOrder.ShoppingCart;
 
@@ -49,7 +50,7 @@ public partial class orders_EnterBillingInfo : PortalPage
 
         //MS-2823
         if (targetOrder.BillTo == null)
-            targetOrder.BillTo = ConciergeAPI.CurrentEntity.ID;
+            targetOrder.BillTo = hfOrderBillToId.Value;
 
         if (targetOrder.ShipTo == null)
             targetOrder.ShipTo = targetOrder.BillTo;
@@ -57,12 +58,8 @@ public partial class orders_EnterBillingInfo : PortalPage
 
         if (!IsPostBack)
         {
-
-
             using (var api = GetServiceAPIProxy())
                 BillingInfoWidget.AllowableMethods = api.DetermineAllowableOrderPaymentMethods(targetOrder).ResultValue;
-
-
 
             // let's set default payment info
             switch (targetOrder.PaymentMethod)
@@ -72,10 +69,7 @@ public partial class orders_EnterBillingInfo : PortalPage
 
                 case OrderPaymentMethod.CreditCard:
                     CreditCard cc = new CreditCard();
-                    cc.CardNumber = targetOrder.CreditCardNumber;
-                    if (targetOrder.CreditCardExpirationDate != null)
-                        cc.CardExpirationDate = targetOrder.CreditCardExpirationDate.Value;
-                    cc.CCVCode = targetOrder.CCVCode;
+                    // Do NOT keep the credit card information on the page unpon refreshes
                     cc.SavePaymentMethod = targetOrder.SavePaymentMethod;
                     cc.NameOnCard = targetOrder.SafeGetValue<string>("NameOnCreditCard");
                     BillingInfoWidget.SetPaymentInfo(cc);
@@ -124,7 +118,7 @@ public partial class orders_EnterBillingInfo : PortalPage
         var csi = MultiStepWizards.PlaceAnOrder.CrossSellItems;
         if (csi != null && csi.Count > 0)
             completeOrder.LineItems.AddRange(csi.FindAll(x => x.Quantity != 0)); // add any cross sell items
-            
+
         using (var api = GetConciegeAPIProxy())
         {
             preProcessedOrderPacket = api.PreProcessOrder(completeOrder).ResultValue;
@@ -133,10 +127,10 @@ public partial class orders_EnterBillingInfo : PortalPage
 
         // no billing, but we want to test Total, and not AmountDueNow
         // because even if nothing is due now we need to capture credit card info
-        if (preProcessedOrderPacket.Total  == 0 )    
-            GoTo("ConfirmOrder.aspx?useTransient=" + isTransient);
+        if (preProcessedOrderPacket.Total == 0)
+            GoTo("ConfirmOrder.aspx?useTransient=" + IsTransient);
 
-        
+
 
         lblAmountDue.Text = preProcessedOrderPacket.AmountDueNow.ToString("C");
         RegisterJavascriptConfirmationBox(lbCancel, "Are you sure you want to cancel this order?");
@@ -144,13 +138,13 @@ public partial class orders_EnterBillingInfo : PortalPage
 
 
     #endregion
-    
+
     protected void btnContinue_Click(object sender, EventArgs e)
     {
         if (!IsValid)
             return;
 
-        
+
         var ePayment = BillingInfoWidget.GetPaymentInfo();
 
 
@@ -162,7 +156,7 @@ public partial class orders_EnterBillingInfo : PortalPage
         switch (targetOrder.PaymentMethod)
         {
             case OrderPaymentMethod.CreditCard:
-               
+
                 CreditCard cc = ePayment as CreditCard;
                 if (cc == null)
                     throw new ApplicationException(
@@ -174,9 +168,9 @@ public partial class orders_EnterBillingInfo : PortalPage
                 break;
 
             case OrderPaymentMethod.ElectronicCheck:
-               
+
                 ElectronicCheck ec = ePayment as ElectronicCheck;
-                if ( ec == null )
+                if (ec == null)
                     throw new ApplicationException(
                         "Payment is of type electronic check, but no check  manifest provided");
 
@@ -204,13 +198,13 @@ public partial class orders_EnterBillingInfo : PortalPage
         targetOrder.BillingAddress = BillingInfoWidget.GetBillingAddress();
         targetOrder.PurchaseOrderNumber = BillingInfoWidget.GetReferenceNumber();
 
-        GoTo("ConfirmOrder.aspx?useTransient=" + isTransient);
+        GoTo("ConfirmOrder.aspx?useTransient=" + IsTransient);
 
     }
 
     protected void lbCancel_Click(object sender, EventArgs e)
     {
-        if (isTransient)
+        if (IsTransient)
         {
             MultiStepWizards.PlaceAnOrder.TransientShoppingCart = null;
             MultiStepWizards.PlaceAnOrder.CrossSellItems = null;
@@ -225,13 +219,13 @@ public partial class orders_EnterBillingInfo : PortalPage
     protected void btnApplyDiscountCode_Click(object sender, EventArgs e)
     {
         var order = targetOrder;
-        if (order == null) 
+        if (order == null)
             return;
 
         string discountCode = tbPromoCode.Text.ToUpper().Trim();
         tbPromoCode.Text = "";
-        
-        if (string.IsNullOrWhiteSpace(discountCode)) 
+
+        if (string.IsNullOrWhiteSpace(discountCode))
             return;
 
         var discountCodeID = retrieveIDForDiscountCode(discountCode);
@@ -240,7 +234,7 @@ public partial class orders_EnterBillingInfo : PortalPage
             DisplayBannerMessage(true, "Discount code '{0}' was not found.", discountCode);
             return;
         }
-        
+
         // put it both in the original order, and the cloned order
         if (order.DiscountCodes == null)
             order.DiscountCodes = new List<msOrderDiscountCode>();
@@ -255,7 +249,7 @@ public partial class orders_EnterBillingInfo : PortalPage
                 DisplayBannerMessage(true, "Error processing the order: {0}", string.Join(", ", preProcessedOrderPacket.Errors.Select(x => x.Message)));
                 return;
             }
-            
+
             // if the discount code was removed, it means it was invalid
             var cleanOrder = preProcessedOrderPacket.ResultValue.FinalizedOrder.ConvertTo<msOrder>();
             var applicable = cleanOrder.DiscountCodes != null && cleanOrder.DiscountCodes.Any(x => x.DiscountCode == discountCodeID);

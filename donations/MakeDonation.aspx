@@ -5,6 +5,13 @@
     TagPrefix="cc1" %>
 <%@ Register Src="../controls/CustomFieldSet.ascx" TagName="CustomFieldSet" TagPrefix="uc1" %>
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="Server">
+    <style type="text/css">
+        .none {
+            display: none;
+        }
+    </style>
+    <script type="text/javascript" src="/js/priorityPaymentsScript/jquery-2.1.3.min.js"></script>
+    <script type="text/javascript" src="/js/priorityPaymentsScript/membersuite.payment-processor.min.js"></script>
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="TopMenu" runat="Server">
 </asp:Content>
@@ -26,7 +33,7 @@
             <div class="sectionContent">
             <asp:Label ID="lblNoFunds" runat="server" ForeColor=Red Text="Unfortunately, there are no fundraising products available at this time. Please check back later to make a donation." />
 
-                <asp:RadioButtonList runat="server" ID="rblProducts" DataTextField="Name" AutoPostBack="true" DataValueField="ID" OnSelectedIndexChanged="rblProducts_SelectedIndexChanged" />
+                <asp:RadioButtonList runat="server" ID="rblProducts" DataTextField="Name" AutoPostBack="true" DataValueField="ID" OnSelectedIndexChanged="rblProducts_SelectedIndexChanged" CssClass="rbl-products"/>
                 <asp:RequiredFieldValidator ID="rfvProducts" runat="server" ControlToValidate="rblProducts" Display="None" ErrorMessage="Please specify where to donate." />
             </div>
         </div>
@@ -56,7 +63,7 @@
                         </td>
                         <td>
                             <h3><asp:Literal ID="lBillingAddress" runat="server">Billing Address</asp:Literal></h3>
-                            <cc1:AddressControl ID="acBillingAddress" CssClass="columnHeader" IsRequired="true" EnableValidation="False"
+                            <cc1:AddressControl ID="acBillingAddress" CssClass="columnHeader" IsRequired="true" EnableValidation="true"
                                 runat="server" />
                         </td>
                     </tr>
@@ -93,8 +100,7 @@
                             <table style="width: 500px">
                                 <tr>
                                     <td class="columnHeader">
-                                        <asp:Literal ID="lNameOnCard" runat="server">Name on Card: <span id="spnNameRequired" class="requiredField">*</span>
-                                        </asp:Literal>
+                                        <asp:Literal ID="lNameOnCard" runat="server">Name on Card: </asp:Literal><span id="spnNameRequired" class="requiredField" runat="server">*</span>
                                     </td>
                                     <td>
                                         <asp:TextBox ID="tbName" runat="server" autocomplete="off" />
@@ -104,19 +110,18 @@
                                 </tr>
                                 <tr>
                                     <td class="columnHeader">
-                                        <asp:Literal ID="lCreditCardNumber" runat="server">Credit Card Number: <span id="spnCreditCardRequired" class="requiredField">*</span>
-                                        </asp:Literal>
+                                        <asp:Literal ID="lCreditCardNumber" runat="server">Credit Card Number: </asp:Literal><span id="spnCreditCardRequired" class="requiredField" runat="server">*</span>
                                     </td>
                                     <td>
-                                        <asp:TextBox ID="tbCreditCardNumber" runat="server" autocomplete="off" />
+                                        <asp:TextBox ID="tbCreditCardNumber" runat="server" autocomplete="off" MaxLength="16" CssClass="cc-number"/>
+                                        <asp:TextBox TextMode="Password" runat="server" ID="hfVaultToken" CssClass="masked-cc-number none"/>
                                         <asp:RequiredFieldValidator ID="rfvCreditCardNumber" runat="server" ControlToValidate="tbCreditCardNumber"
                                             Display="None" ErrorMessage="You have not entered your credit card number." />
                                     </td>
                                 </tr>
                                 <tr>
                                     <td class="columnHeader">
-                                        <asp:Literal ID="lCreditCardCVV" runat="server">Credit Card Security Code (CVV): <span id="spnCVVRequired" class="requiredField">*</span>
-                                        </asp:Literal>
+                                        <asp:Literal ID="lCreditCardCVV" runat="server">Credit Card Security Code (CVV): </asp:Literal><span id="spnCVVRequired" class="requiredField" runat="server">*</span>
                                     </td>
                                     <td>
                                         <asp:TextBox ID="tbCVV" runat="server" autocomplete="off" />
@@ -126,15 +131,16 @@
                                 </tr>
                                 <tr>
                                     <td class="columnHeader">
-                                        <asp:Literal ID="lCreditCardExp" runat="server">Credit Card Expiration: <span id="spnExpirationRequired" class="requiredField">*</span>
-                                        </asp:Literal>
+                                        <asp:Literal ID="lCreditCardExp" runat="server">Credit Card Expiration: </asp:Literal><span id="spnExpirationRequired" class="requiredField" runat="server">*</span>
                                     </td>
                                     <td>
-                                        <cc1:MonthYearPicker ID="myExpiration" runat="server" />
+                                        <cc1:MonthYearPicker ID="myExpiration" runat="server" CssClass="monthYearPicker"/>                                        
                                     </td>
                                 </tr>
                             </table>
                         </div>
+                        <asp:HiddenField runat="server" ID="hfOrderBillToId"/>                        
+                        <div id="dvPriorityData" runat="server" class="pp-config" style="display:none;"></div>
                     </td>
                 </tr>
             </table>
@@ -146,13 +152,57 @@
     </Triggers>
     </asp:UpdatePanel>
             <div class="sectionContent">
-                <div align="center" style="padding-top: 20px">
-                    <asp:Button ID="btnContinue" OnClick="btnContinue_Click" Text="Donate" runat="server" Width="80" Height="50" />
+                <div id="divSaveContact" align="center" style="padding-top: 20px" runat="server">
+                    <asp:Button runat="server" OnClick="btnSaveContact_Click" Text="Save Contact"/>
+                </div>
+                <div id="divDonate" align="center" style="padding-top: 20px" runat="server" Visible="False">                    
+                    <asp:Button ID="btnContinue" OnClick="btnContinue_Click" Text="Donate" runat="server" Width="80" Height="50" CssClass="save-token none"/>
+                    <input onclick="javascript: requestToken()" type="button" value="Donate" />
+                            
                     <asp:Button ID="btnCancel" OnClick="btnCancel_Click" Text="Cancel" runat="server" CausesValidation="false" />
-                    <div class="clearBothNoSPC">
-                    </div>
+                    <div class="clearBothNoSPC"/>
                 </div>
         </div>
+      
 </asp:Content>
 <asp:Content ID="Content7" ContentPlaceHolderID="FooterContent" runat="Server">
+    <script type="text/javascript">
+        function requestToken() {
+            var config = JSON.parse($('.pp-config').text());
+            var isPP = config.IsPreferredConfigured;
+
+            var hasCCNum = $('[id$="tbCreditCardNumber"]').val() != '';
+            var saveBtnId = '.save-token';
+            var productsIsChecked = false;
+
+            $('.rbl-products input').each(function () {
+                if (productsIsChecked) return;
+                productsIsChecked = $(this).prop('checked');
+            });
+
+            if (!hasCCNum || !isPP || !productsIsChecked) {
+                $(saveBtnId).trigger('click');
+                return false;
+            };
+
+            var $cardNumberElem = $('.cc-number');
+            var $expiryMonthElem = $('.mypMonth');
+            var $expiryYearElem = $('.mypYear');
+            var id = $('[id$="hfOrderBillToId"').val();
+
+            var parms = {
+                ppConfig: config,
+                msConfig: {
+                    guid: id,
+                    $cardNumberElem: $cardNumberElem,
+                    $expiryMonthElem: $expiryMonthElem,
+                    $expiryYearElem: $expiryYearElem,
+                    saveBtnId: saveBtnId
+                }
+            }
+
+            membersuite.paymentProcessor.init(parms);
+            return false;
+        };
+    </script>
 </asp:Content>

@@ -1,14 +1,16 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-using System.Web.UI;
-using System.Web.UI.WebControls;
 using MemberSuite.SDK.Types;
 
-public partial class financial_AddCreditCard : PortalPage 
+public partial class financial_AddCreditCard : CreditCardLogic
 {
-    
+    protected override void InitializeTargetObject()
+    {
+        base.InitializeTargetObject();
+
+        hfOrderBillToId.Value = ConciergeAPI.CurrentEntity.ID;
+
+        dvPriorityData.InnerHtml = GetPriorityPaymentsConfig(hfOrderBillToId.Value);
+    }
 
     protected void btnSaveCard_Click(object sender, EventArgs e)
     {

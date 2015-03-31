@@ -1,12 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Configuration;
 using System.Data;
-using System.Linq;
-using System.Web;
-using System.Web.UI;
-using System.Web.UI.WebControls;
 using MemberSuite.SDK.Concierge;
+using MemberSuite.SDK.Constants;
 using MemberSuite.SDK.Results;
 using MemberSuite.SDK.Searching;
 using MemberSuite.SDK.Searching.Operations;
@@ -116,7 +112,7 @@ public partial class careercenter_ConfirmJobPosting : PortalPage
         {
                 
             //Send the confirmation e-mail
-            proxy.SendEmail("BuiltIn:JobPosted", new List<string> { targetJobPosting.ID },
+            proxy.SendEmail(EmailTemplates.CareerCenter.JobPosted, new List<string> { targetJobPosting.ID },
                             ConciergeAPI.CurrentUser.EmailAddress);
         }
 

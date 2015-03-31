@@ -1,16 +1,12 @@
 ﻿using System;
-using System.Activities.Expressions;
 using System.Collections.Generic;
-using System.Configuration;
 using System.Data;
-using System.Drawing;
-using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
-using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 using MemberSuite.SDK.Concierge;
+using MemberSuite.SDK.Constants;
 using MemberSuite.SDK.Manifests.Command;
 using MemberSuite.SDK.Results;
 using MemberSuite.SDK.Searching;
@@ -19,7 +15,6 @@ using MemberSuite.SDK.Types;
 using MemberSuite.SDK.Web.ControlManagers;
 using MemberSuite.SDK.Web.Controls;
 using Telerik.Web.UI;
-using DataKey = System.Web.UI.WebControls.DataKey;
 using Image = System.Drawing.Image;
 
 public partial class profile_CreateAccount_Complete : PortalPage
@@ -154,7 +149,7 @@ public partial class profile_CreateAccount_Complete : PortalPage
                 ControlToValidate = rad.ID,
                 Display = ValidatorDisplay.None,
                 CssClass = "requiredField",
-                ErrorMessage = " Please choose organization name."                
+                ErrorMessage = " Please choose organization name."
             };
 
         // MS-3517
@@ -163,8 +158,8 @@ public partial class profile_CreateAccount_Complete : PortalPage
         // RequiredFieldValidator will say okay, but we still need to make sure that SelectedValue is set.
         var cfv = new CustomValidator
         {
-            ID = "cfvddlOrganization",            
-            ClientIDMode = ClientIDMode.Static, 
+            ID = "cfvddlOrganization",
+            ClientIDMode = ClientIDMode.Static,
             ControlToValidate = rad.ID,
             Display = ValidatorDisplay.Dynamic,
             ErrorMessage = " Please choose organization name.",
@@ -195,7 +190,7 @@ public partial class profile_CreateAccount_Complete : PortalPage
 
             cfsIndividualCustomFields.Render();
 
-            
+
         }
 
         // important - custom fields need to know who their context is
@@ -213,7 +208,7 @@ public partial class profile_CreateAccount_Complete : PortalPage
     }
 
 
-	
+
     #endregion
 
     #region Data binding
@@ -226,7 +221,7 @@ public partial class profile_CreateAccount_Complete : PortalPage
 
         // now, the email
         tbIndividualEmail.Text = newUserRequest.EmailAddress;
-        
+
         // now, let's bind  phone number types
         if (individualPhoneNumberTypes.Count > 0)
         {
@@ -298,7 +293,7 @@ public partial class profile_CreateAccount_Complete : PortalPage
     // MS-5208
     private void EnsureAddressTypesInitialized()
     {
-        if (individualAddressTypes != null && organizationAddressTypes != null) 
+        if (individualAddressTypes != null && organizationAddressTypes != null)
             return;
 
         using (var proxy = ConciergeAPIProxyGenerator.GenerateProxy())
@@ -365,6 +360,24 @@ public partial class profile_CreateAccount_Complete : PortalPage
         rptOrganizationAddresses.DataSource = organizationAddressTypes;
         rptOrganizationAddresses.DataBind();
     }
+    private DataRow GetRelationshipType()
+    {
+        if (dtPortalSignupRelationshipTypes == null)
+            using (IConciergeAPIService proxy = ConciergeAPIProxyGenerator.GenerateProxy())
+            {
+                getPortalSignupRelationshipTypes(proxy);
+            }
+
+        if (dtPortalSignupRelationshipTypes != null)
+        {
+            var drRelationshipType = dtPortalSignupRelationshipTypes.Rows.Count == 1
+                ? dtPortalSignupRelationshipTypes.Rows[0]
+                : dtPortalSignupRelationshipTypes.Rows.Find(ddlPortalSignupRelationshipTypes.SelectedValue);
+
+            return drRelationshipType;
+        }
+        return null;
+    }
 
     private void unbindOrganizationRelationship()
     {
@@ -376,19 +389,22 @@ public partial class profile_CreateAccount_Complete : PortalPage
         {
             targetOrganizationRelationship = new msRelationship();
 
-            if(dtPortalSignupRelationshipTypes == null)
+            if (dtPortalSignupRelationshipTypes == null)
                 using (IConciergeAPIService proxy = ConciergeAPIProxyGenerator.GenerateProxy())
                 {
                     getPortalSignupRelationshipTypes(proxy);
                 }
+            var relatinshipType = GetRelationshipType();
 
-            if (dtPortalSignupRelationshipTypes != null)
+
+            if (relatinshipType != null)
             {
-                var drRelationshipType = dtPortalSignupRelationshipTypes.Rows.Count == 1 ? dtPortalSignupRelationshipTypes.Rows[0] :
-                    dtPortalSignupRelationshipTypes.Rows.Find(ddlPortalSignupRelationshipTypes.SelectedValue);
-                targetOrganizationRelationship.Type = drRelationshipType["ID"].ToString();
 
-                switch (drRelationshipType["LeftSideType"].ToString())
+
+
+                targetOrganizationRelationship.Type = relatinshipType["ID"].ToString();
+
+                switch (relatinshipType["LeftSideType"].ToString())
                 {
                     case msIndividual.CLASS_NAME:
                         targetOrganizationRelationship.LeftSide = targetIndividual.ID;
@@ -409,6 +425,8 @@ public partial class profile_CreateAccount_Complete : PortalPage
             MultiStepWizards.CreateAccount.TargetOrganizationRelationship = targetOrganizationRelationship;
         }
     }
+
+
 
     private bool unbindPortalUserAndIndividual()
     {
@@ -433,8 +451,8 @@ public partial class profile_CreateAccount_Complete : PortalPage
             targetIndividual["Image_Contents"] = getIndividualImageFile();
 
             //Set the session variable forcing any cached images to be refreshed from the MemberSuite Image content server
-            SessionManager.Set("ImageUrlUpper", !SessionManager.Get<bool>("ImageUrlUpper") );
-            
+            SessionManager.Set("ImageUrlUpper", !SessionManager.Get<bool>("ImageUrlUpper"));
+
         }
 
         // now, the email
@@ -501,7 +519,7 @@ public partial class profile_CreateAccount_Complete : PortalPage
 
         //Unbind selected opt out message categories
         targetIndividual.OptOuts = (from category in dlbMessageCategories.Destination.Items
-                                select category.Value).ToList();
+                                    select category.Value).ToList();
 
         // finally, the custom fields
         cfsIndividualCustomFields.Harvest();
@@ -738,7 +756,7 @@ public partial class profile_CreateAccount_Complete : PortalPage
 
         // Save the portal user
         targetPortalUser.Owner = targetIndividual.ID;
-        string password = (string) targetPortalUser["Password"];
+        string password = (string)targetPortalUser["Password"];
 
         saveResult = proxy.Save(targetPortalUser);
         if (!saveResult.Success)
@@ -752,10 +770,10 @@ public partial class profile_CreateAccount_Complete : PortalPage
         targetPortalUser["Password"] = password;
 
         proxy.ResetPassword(targetPortalUser["ID"].ToString(), password);
-        
-        
+
+
         //Send the welcome email
-        proxy.SendEmail("BuiltIn:Welcome", new List<string> { targetIndividual.ID }, null);
+        proxy.SendEmail(EmailTemplates.CRM.Welcome, new List<string> { targetIndividual.ID }, null);
     }
 
     protected void saveOrganization(IConciergeAPIService proxy)
@@ -781,7 +799,7 @@ public partial class profile_CreateAccount_Complete : PortalPage
 
         liOrganization.Visible = MultiStepWizards.CreateAccount.TargetOrganization != null;
         litOrganization.Text = string.Format("Organization <b>{0}</b>", targetOrganization.Name);
-        
+
         var org =
             (from object c in tdOrganization.Controls where c.GetType().Name == typeof(RadComboBox).Name select c)
                 .Cast<RadComboBox>().FirstOrDefault();
@@ -815,8 +833,16 @@ public partial class profile_CreateAccount_Complete : PortalPage
         }
     }
 
-    protected void saveAndGoHome()
+    private void saveAndGoHome()
     {
+
+
+
+        var type = GetRelationshipType();
+        if (type != null && MultiStepWizards.CreateAccount.TargetOrganization!=null)
+            ErrorOutIfOrganizationContactRestrictionApplies(type["ID"].ToString(), MultiStepWizards.CreateAccount.TargetOrganization.Type);
+
+
         //Set the password using the association credentials
         using (IConciergeAPIService proxy = ConciergeAPIProxyGenerator.GenerateProxy())
         {
@@ -824,13 +850,13 @@ public partial class profile_CreateAccount_Complete : PortalPage
 
             if (MultiStepWizards.CreateAccount.TargetOrganization != null)
             {
-                if(rbNotListed.Checked) saveOrganization(proxy);
+                if (rbNotListed.Checked) saveOrganization(proxy);
 
                 unbindOrganizationRelationship();
 
-            	if (targetOrganizationRelationship != null)
-                	saveOrganizationRelationship(proxy);
-			}
+                if (targetOrganizationRelationship != null)
+                    saveOrganizationRelationship(proxy);
+            }
         }
 
         MultiStepWizards.CreateAccount.TargetIndividual = null;
@@ -884,7 +910,7 @@ public partial class profile_CreateAccount_Complete : PortalPage
                     new SearchOutputColumn { Name = "Name" },
                     new SearchOutputColumn { Name = "_Preferred_Address_City" },
                     new SearchOutputColumn { Name = "_Preferred_Address_State" }
-                }); 
+                });
 
             var duplicateResult = proxy.FindPotentialDuplicates(mso, null, duplicateSearch, 0, null).ResultValue;
             if (duplicateResult.TotalRowCount > 0)
@@ -936,13 +962,17 @@ public partial class profile_CreateAccount_Complete : PortalPage
                     MultiStepWizards.CreateAccount.TargetOrganization = null;
                     saveAndGoHome();
 
-                    return;                    
+                    return;
                 }
-
-                var org = (from object c in tdOrganization.Controls
+                RadComboBox org = null;
+                if (rbHaveOrg.Checked)
+                {
+                    org = (from object c in tdOrganization.Controls
                            where c.GetType().Name == typeof(RadComboBox).Name
                            select c).Cast<RadComboBox>().FirstOrDefault();
+                }
 
+                
                 if (rbNoAffiliation.Checked)
                     MultiStepWizards.CreateAccount.TargetOrganization = null;
 
@@ -953,11 +983,11 @@ public partial class profile_CreateAccount_Complete : PortalPage
                 }
 
                 if (rbNoAffiliation.Checked || (org != null && !string.IsNullOrWhiteSpace(org.SelectedValue)))
-                    saveAndGoHome();                
+                    saveAndGoHome();
 
                 setConfirmationText();
 
-				// MS-5208. Going forward to organization part. Bind Organization's addresses repeater.                    
+                // MS-5208. Going forward to organization part. Bind Organization's addresses repeater.                    
                 BindOrganizationAddresses();
 
                 break;
@@ -972,7 +1002,7 @@ public partial class profile_CreateAccount_Complete : PortalPage
                 var isDuplicateOrganization = CheckDuplicateOrganization(targetOrganization.Name);
                 if (!isDuplicateOrganization)
                 {
-                    wizCreateAccount.ActiveStepIndex = 3;                    
+                    wizCreateAccount.ActiveStepIndex = 3;
                 }
                 break;
 
@@ -1026,7 +1056,7 @@ public partial class profile_CreateAccount_Complete : PortalPage
                 Literal lPhoneNumberRequired = (Literal)e.Row.FindControl("lPhoneNumberRequired");
                 RequiredFieldValidator rfvPhoneNumber = (RequiredFieldValidator)e.Row.FindControl("rfvPhoneNumber");
 
-                
+
 
                 bool requiredInPortal = pt.SafeGetValue<bool>("RequiredInPortal");
                 lPhoneNumberRequired.Visible = requiredInPortal;
@@ -1093,7 +1123,7 @@ public partial class profile_CreateAccount_Complete : PortalPage
                  * start row tag (<tr>)and an end row tag (</tr>)
                  */
 
-            
+
                 if (e.Item.ItemIndex != 0 && (e.Item.ItemIndex + 1) % 3 == 0)
                     lNewRowTag.Text = "</TR><TR>";
 
@@ -1146,7 +1176,7 @@ public partial class profile_CreateAccount_Complete : PortalPage
                 Literal lPhoneNumberRequired = (Literal)e.Row.FindControl("lPhoneNumberRequired");
                 RequiredFieldValidator rfvPhoneNumber = (RequiredFieldValidator)e.Row.FindControl("rfvPhoneNumber");
 
-                
+
 
                 bool requiredInPortal = pt.SafeGetValue<bool>("RequiredInPortal");
                 lPhoneNumberRequired.Visible = requiredInPortal;
@@ -1200,7 +1230,7 @@ public partial class profile_CreateAccount_Complete : PortalPage
                 Literal lNewRowTag = (Literal)e.Item.FindControl("lOrganizationNewRowTag");
                 HiddenField hfAddressCode = (HiddenField)e.Item.FindControl("hfOrganizationAddressCode");
 
-               
+
                 /* We need to extract the adress from the underlying MemberSuiteObject
                  * address are flattened, and they are in the format of <Code>_Address
                  * where <Code> is the API Code of the address type*/

@@ -25,7 +25,7 @@ public class HomePageUserControl : UserControl
 
     protected virtual void InitializeWidget()
     {
-         
+
     }
 
     /// <summary>
@@ -58,11 +58,12 @@ public class HomePageUserControl : UserControl
     /// <param name="results">The results.</param>
     public virtual void DeliverSearchResults(List<SearchResult> results)
     {
-
-        drMainRecord = results.Single(x => x.ID == "Main").Table.Rows[0];
+        results.RemoveAll(a => a == null);
+        if (results.Single(x => x.ID == "Main").Table.Rows.Count > 0)
+            drMainRecord = results.Single(x => x.ID == "Main").Table.Rows[0];
     }
 
-    public virtual void GenerateFormLinks(List<PortalFormInfo> formsToDisplay )
+    public virtual void GenerateFormLinks(List<PortalFormInfo> formsToDisplay)
     {
         var phForms = FindControl("divForms") as HtmlGenericControl;
         if (phForms == null) return;
@@ -74,13 +75,17 @@ public class HomePageUserControl : UserControl
         foreach (var f in formsToDisplay)
         {
 
-            if (f.CanCreate && f.CreateLink != null)
-
+            if (f.CanCreate)
+            {
+                // MS-5957 (Modified 12/11/2014) If the portal form allows the user to create a form instance, then
+                // the default label for the link should be "Create {PortalForm Name}"
+                var createLink = f.CreateLink ?? string.Format("Create {0}", f.FormName);
                 ul.Controls.Add(new HyperLink
-                                         {
-                                             Text = string.Format("<LI>{0}</LI>", f.CreateLink),
-                                             NavigateUrl = "/forms/CreateFormInstance.aspx?contextID=" + f.FormID
-                                         });
+                {
+                    Text = string.Format("<LI>{0}</LI>", createLink),
+                    NavigateUrl = "/forms/CreateFormInstance.aspx?contextID=" + f.FormID
+                });
+            }
 
             if (f.CanView && f.ManageLink != null)
                 ul.Controls.Add(new HyperLink
@@ -133,7 +138,9 @@ public class HomePageUserControl : UserControl
             return false;
 
         //Check the membership indicates membership benefits
-        if (!drMainRecord.Field<bool>("Membership.ReceivesMemberBenefits"))
+        // MS-6070 (Modified 1/15/2015) Modified to account for a null 'Membership.ReceivesMemberBenefits' value
+        var receivesMemberBenefits = drMainRecord.Field<bool?>("Membership.ReceivesMemberBenefits");
+        if (receivesMemberBenefits == null || !Convert.ToBoolean(receivesMemberBenefits))
             return false;
 
         //At this point if the termination date is null the member should be able to see the restricted directory
@@ -146,5 +153,5 @@ public class HomePageUserControl : UserControl
         return terminationDate > DateTime.Now;
     }
 
-    
+
 }

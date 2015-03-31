@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-using System.Web.UI;
 using System.Web.UI.WebControls;
 using MemberSuite.SDK.Concierge;
+using MemberSuite.SDK.Constants;
 using MemberSuite.SDK.Searching;
 using MemberSuite.SDK.Searching.Operations;
 using MemberSuite.SDK.Types;
@@ -269,7 +267,7 @@ public partial class events_SubmitAbstract :  PortalPage
             var result = api.Save(ab);
 
             // and send the email
-            api.SendEmail("BuiltIn:AbstractSubmission", new List<string> { result.ResultValue.SafeGetValue<string>("ID") },
+            api.SendEmail(EmailTemplates.Events.AbstractSubmission, new List<string> { result.ResultValue.SafeGetValue<string>("ID") },
                   null );
 
             QueueBannerMessage(string.Format("Abstract '{0}' submitted successfully.", ab.Name));

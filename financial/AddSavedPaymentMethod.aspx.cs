@@ -1,12 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-using System.Web.UI;
-using System.Web.UI.WebControls;
 using MemberSuite.SDK.Types;
 
-public partial class financial_AddSavedPaymentMethod : PortalPage
+public partial class financial_AddSavedPaymentMethod : CreditCardLogic
 {
 
     protected msAssociationDomainObject targetObject;
@@ -31,6 +26,9 @@ public partial class financial_AddSavedPaymentMethod : PortalPage
                     throw new NotSupportedException("Unable to update a record of type " + targetObject.ClassType);
             }
 
+        hfOrderBillToId.Value = targetObject.SafeGetValue<string>(msGift.FIELDS.Donor);
+
+        dvPriorityData.InnerHtml = GetPriorityPaymentsConfig(hfOrderBillToId.Value);
     }
 
     protected override void InitializePage()
@@ -66,16 +64,16 @@ public partial class financial_AddSavedPaymentMethod : PortalPage
         {
             case OrderPaymentMethod.CreditCard:
                 spi = CreateNewObject<msSavedCreditCard>();
-                ((msSavedCreditCard) spi).Card = (CreditCard) ePayment;
+                ((msSavedCreditCard)spi).Card = (CreditCard)ePayment;
                 break;
 
             case OrderPaymentMethod.ElectronicCheck:
                 spi = CreateNewObject<msSavedElectronicCheck>();
-                ((msSavedElectronicCheck) spi).Check = (ElectronicCheck) ePayment;
+                ((msSavedElectronicCheck)spi).Check = (ElectronicCheck)ePayment;
                 break;
 
             case OrderPaymentMethod.SavedPaymentMethod:
-                string savedPaymentMethodID = ((SavedPaymentInfo) ePayment).SavedPaymentMethodID;
+                string savedPaymentMethodID = ((SavedPaymentInfo)ePayment).SavedPaymentMethodID;
 
                 msSavedPaymentMethod existingMethod = LoadObjectFromAPI<msSavedPaymentMethod>(savedPaymentMethodID);
                 spi = existingMethod.Clone().ConvertTo<msSavedPaymentMethod>();
@@ -94,7 +92,7 @@ public partial class financial_AddSavedPaymentMethod : PortalPage
         switch (targetObject.ClassType)
         {
             case msGift.CLASS_NAME:
-                
+
                 spi.Type = SavedPaymentMethodType.Gift;
 
                 targetObject[msGift.FIELDS.DateOfInstallmentSuspension] = null; // clear the suspension

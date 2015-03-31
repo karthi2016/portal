@@ -1,8 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Web;
+using MemberSuite.SDK.Concierge;
+using MemberSuite.SDK.Results;
 using MemberSuite.SDK.Searching;
 using MemberSuite.SDK.Searching.Operations;
 using MemberSuite.SDK.Types;
@@ -41,5 +40,27 @@ public static class MembershipLogic
 
         sOrganizationalLayerMembership.AddSortColumn("Chapter.Name");
         return sOrganizationalLayerMembership;
+    }
+    // This addition to the MembershipLogic class assumes that all associations, at minimum,
+    // define an active membership as having ReceivesMemberBenefits == true and the membership
+    // is either null or in the future.
+    public static bool IsActiveMember(string entityId)
+    {
+        if (string.IsNullOrWhiteSpace(entityId))
+            return false;
+
+        var search = new Search(msMembership.CLASS_NAME);
+        search.AddCriteria(Expr.Equals(msMembership.FIELDS.Owner, entityId));
+        search.AddCriteria(Expr.Equals(msMembership.FIELDS.ReceivesMemberBenefits, true));        
+        var sog = new SearchOperationGroup {GroupType = SearchOperationGroupType.Or};
+        sog.Criteria.Add(Expr.IsBlank(msMembership.FIELDS.TerminationDate));
+        sog.Criteria.Add(Expr.IsGreaterThan(msMembership.FIELDS.TerminationDate, DateTime.Today.Date));
+        search.AddCriteria(sog);
+
+        ConciergeResult<SearchResult> result;
+        using (var api = ConciergeAPIProxyGenerator.GenerateProxy())
+            result = api.ExecuteSearch(search, 0, null);
+
+        return (result != null && result.ResultValue != null && result.ResultValue.TotalRowCount > 0);
     }
 }

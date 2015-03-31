@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web;
-using System.Web.UI;
-using System.Web.UI.WebControls;
 using MemberSuite.SDK.Constants;
 using MemberSuite.SDK.Manifests.Command;
 using MemberSuite.SDK.Manifests.Command.Views;
@@ -156,6 +153,7 @@ public partial class events_Register_RegistrationForm : PortalPage
             fieldMetadata.PortalAccessibility = PortalAccessibility.Full;
             fieldMetadata.Name = Formats.GetSafeFieldName(targetRegistrationField.Name);
             fieldMetadata.IsRequired = fieldMetadata.IsRequiredInPortal = targetRegistrationField.IsRequiredInPortal.HasValue && targetRegistrationField.IsRequiredInPortal.Value;
+            fieldMetadata.LookupTableID = targetRegistrationField.LookupTableID;    // MS-6019 (Modified 1/9/2015) Need to account for lookup tables
             result.Fields.Add(fieldMetadata);
         }
         return result;

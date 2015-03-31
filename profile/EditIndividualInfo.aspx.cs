@@ -1,15 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Configuration;
-using System.Drawing;
-using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
-using System.Web;
-using System.Web.UI;
 using System.Web.UI.WebControls;
 using MemberSuite.SDK.Concierge;
-using MemberSuite.SDK.Searching;
+using MemberSuite.SDK.Constants;
 using MemberSuite.SDK.Types;
 using MemberSuite.SDK.Web.Controls;
 using Telerik.Web.UI;
@@ -390,7 +385,7 @@ public partial class profile_EditIndividualInfo : PortalPage
             //Send the update confirmation email
             using (IConciergeAPIService proxy = GetConciegeAPIProxy())
             {
-                proxy.SendEmail("BuiltIn:UserInformationUpdate", new List<string> { targetObject.ID }, null);
+                proxy.SendEmail(EmailTemplates.CRM.UserInformationUpdate, new List<string> { targetObject.ID }, null);
             }
         }
 

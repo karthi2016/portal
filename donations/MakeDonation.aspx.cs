@@ -1,11 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Globalization;
 using System.Linq;
-using System.Web;
-using System.Web.UI;
-using System.Web.UI.WebControls;
+using System.Web.Script.Serialization;
 using MemberSuite.SDK.Concierge;
 using MemberSuite.SDK.Results;
 using MemberSuite.SDK.Searching;
@@ -14,7 +11,7 @@ using MemberSuite.SDK.Types;
 using MemberSuite.SDK.Utilities;
 using MemberSuite.SDK.WCF;
 
-public partial class donations_MakeDonation : PortalPage
+public partial class donations_MakeDonation : CreditCardLogic
 {
     #region Fields
 
@@ -64,8 +61,34 @@ public partial class donations_MakeDonation : PortalPage
         targetOrder = new msOrder();
 
         if (ConciergeAPI.CurrentEntity != null)
+        {
             targetIndividual = ConciergeAPI.CurrentEntity.ConvertTo<msIndividual>();
-  
+
+            divSaveContact.Visible = false;
+            divDonate.Visible = true;
+
+            divPayment.Visible = true;
+            rfvProducts.Enabled = true;
+            spnNameRequired.Visible = rfvCCNameOnCard.Enabled = true;
+            spnCreditCardRequired.Visible = rfvCreditCardNumber.Enabled = true;
+            spnCVVRequired.Visible = rfvCardSecurity.Enabled = true;
+            spnExpirationRequired.Visible = true;
+
+            hfOrderBillToId.Value = targetIndividual.ID;
+
+            dvPriorityData.InnerHtml = GetPriorityPaymentsConfig(hfOrderBillToId.Value);
+        }
+        else
+        {
+            divPayment.Visible = false;
+            rfvProducts.Enabled = false;
+            spnNameRequired.Visible = rfvCCNameOnCard.Enabled = false;
+            spnCreditCardRequired.Visible = rfvCreditCardNumber.Enabled = false;
+            spnCVVRequired.Visible = rfvCardSecurity.Enabled = false;
+            spnExpirationRequired.Visible = false;
+        }
+
+        acBillingAddress.Host = this;
     }
 
     /// <summary>
@@ -78,8 +101,9 @@ public partial class donations_MakeDonation : PortalPage
     {
         base.InitializePage();
 
-        if(targetIndividual != null)
+        if (targetIndividual != null)
             bindObjectToPage();
+
 
         // set the anti-dupe key
         ViewState["AntiDupeKey"] = Guid.NewGuid().ToString();
@@ -87,15 +111,15 @@ public partial class donations_MakeDonation : PortalPage
 
     protected void searchForProducts(IConciergeAPIService serviceProxy)
     {
-        Search sDonationProducts = new Search{Type=msProduct.CLASS_NAME};
+        Search sDonationProducts = new Search { Type = msProduct.CLASS_NAME };
         sDonationProducts.AddOutputColumn("ID");
         sDonationProducts.AddOutputColumn("Name");
         sDonationProducts.AddOutputColumn("Price");
         sDonationProducts.AddCriteria(Expr.Equals("ProductType", "Fundraising"));
-        sDonationProducts.AddCriteria(Expr.Equals("SellOnline",true));
+        sDonationProducts.AddCriteria(Expr.Equals("SellOnline", true));
 
         SearchResult srDonationProducts = ExecuteSearch(serviceProxy, sDonationProducts, 0, null);
-        srDonationProducts.Table.PrimaryKey = new[]{srDonationProducts.Table.Columns["ID"]};
+        srDonationProducts.Table.PrimaryKey = new[] { srDonationProducts.Table.Columns["ID"] };
         dvProducts = new DataView(srDonationProducts.Table);
     }
 
@@ -112,7 +136,6 @@ public partial class donations_MakeDonation : PortalPage
         tbLastName.Text = targetIndividual.LastName;
         tbEmailAddress.Text = targetIndividual.EmailAddress;
         acBillingAddress.Address = getBillingAddress();
-        
     }
 
     protected void unbindIndividual(msIndividual individual)
@@ -120,6 +143,8 @@ public partial class donations_MakeDonation : PortalPage
         individual.FirstName = tbFirstName.Text;
         individual.LastName = tbLastName.Text;
         individual.EmailAddress = tbEmailAddress.Text;
+        if (ConciergeAPI.CurrentEntity == null)
+            individual["Home_Address"] = acBillingAddress.Address;
     }
 
     protected void bindAmount(string productID)
@@ -132,29 +157,27 @@ public partial class donations_MakeDonation : PortalPage
         rbAmount500.Checked = amount == 500m;
         rbAmountOther.Checked = !(rbAmount25.Checked || rbAmount100.Checked || rbAmount500.Checked);
 
-        tbAmountOther.Text = rbAmountOther.Checked ? string.Format("{0:0.00}",amount) : null;
+        tbAmountOther.Text = rbAmountOther.Checked ? string.Format("{0:0.00}", amount) : null;
     }
 
     protected void unbindOrder()
     {
         var lineItem = new msOrderLineItem
-                           {
-                               Product = rblProducts.SelectedValue,
-                               Quantity = 1,
-                               OrderLineItemID = Guid.NewGuid().ToString(),
-                               PriceOverride = true
-                           };
+        {
+            Product = rblProducts.SelectedValue,
+            Quantity = 1,
+            OrderLineItemID = Guid.NewGuid().ToString(),
+            PriceOverride = true
+        };
 
         targetOrder.Total = lineItem.Total = unbindAmountToDonate();
-        targetOrder.BillTo = targetOrder.ShipTo = targetIndividual.ID;
+        hfOrderBillToId.Value = targetOrder.BillTo = targetOrder.ShipTo = targetIndividual.ID;
         targetOrder.BillingEmailAddress = tbEmailAddress.Text;
         targetOrder.BillingAddress = targetOrder.ShippingAddress = acBillingAddress.Address;
         targetOrder.LineItems = new List<msOrderLineItem>
                                     {
                                         lineItem
-                                    };
-
-        
+                                    };        
     }
 
     protected decimal unbindAmountToDonate()
@@ -194,7 +217,7 @@ public partial class donations_MakeDonation : PortalPage
     protected void findOrCreateIndividual(IConciergeAPIService serviceProxy)
     {
         //First try to locate an individual by e-mail
-        Search sIndividualByEmail = new Search {Type = msIndividual.CLASS_NAME};
+        Search sIndividualByEmail = new Search { Type = msIndividual.CLASS_NAME };
         sIndividualByEmail.AddOutputColumn("ID");
 
         SearchOperationGroup emailFilter = new SearchOperationGroup();
@@ -221,6 +244,8 @@ public partial class donations_MakeDonation : PortalPage
             var saveResult = serviceProxy.Save(targetIndividual);
             targetIndividual = saveResult.ResultValue.ConvertTo<msIndividual>();
         }
+
+        ConciergeAPI.CurrentEntity = targetIndividual;
     }
 
     protected msAuditLog processOrder(IConciergeAPIService api)
@@ -243,8 +268,8 @@ public partial class donations_MakeDonation : PortalPage
         cleanOrder.BillingAddress = acBillingAddress.Address;
         cleanOrder.BillingEmailAddress = tbEmailAddress.Text;
 
-        string antiDupeKey = (string) ViewState["AntiDupeKey"];
-        var trackingKey = api.ProcessOrder(cleanOrder, antiDupeKey ).ResultValue ;
+        string antiDupeKey = (string)ViewState["AntiDupeKey"];
+        var trackingKey = api.ProcessOrder(cleanOrder, antiDupeKey).ResultValue;
 
         // let's wait
         return OrderUtilities.WaitForOrderToComplete(api, trackingKey);
@@ -256,7 +281,7 @@ public partial class donations_MakeDonation : PortalPage
     {
         if (targetIndividual == null)
             return null;
-        
+
         msEntityAddress entityAddress =
             targetIndividual.Addresses.Where(x => x.Type == targetIndividual.PreferredAddressType).
                 FirstOrDefault();
@@ -293,18 +318,34 @@ public partial class donations_MakeDonation : PortalPage
         }
     }
 
+    protected void btnSaveContact_Click(object sender, EventArgs e)
+    {
+        using (IConciergeAPIService proxy = ConciergeAPIProxyGenerator.GenerateProxy())
+        {
+            findOrCreateIndividual(proxy);
+        }
+
+        if (targetIndividual == null)
+            QueueBannerError("Unable to save contact info");
+
+        Refresh();
+    }
+
     protected void btnContinue_Click(object sender, EventArgs e)
     {
         if (!IsValid)
+        {
+            Refresh();
             return;
+        }
 
-        if(targetIndividual == null)
+        if (targetIndividual == null)
             using (IConciergeAPIService proxy = ConciergeAPIProxyGenerator.GenerateProxy())
             {
                 findOrCreateIndividual(proxy);
             }
 
-        if(targetIndividual == null)
+        if (targetIndividual == null)
         {
             QueueBannerError("Unable to find/create individual");
             Refresh();
@@ -324,8 +365,8 @@ public partial class donations_MakeDonation : PortalPage
         using (IConciergeAPIService proxy = ConciergeAPIProxyGenerator.GenerateProxy())
         {
             var log = processOrder(proxy);
-            
-            if (log == null )
+
+            if (log == null)
                 GoTo("/orders/OrderQueued.aspx");
 
             if (log.Type == AuditLogType.OrderFailure)
@@ -333,7 +374,7 @@ public partial class donations_MakeDonation : PortalPage
 
             QueueBannerMessage(string.Format("Your donation was processed successfully.",
                                              targetOrder.LocalID));
-            GoTo(string.Format("~/donations/DonationComplete.aspx?contextID={0}", log.AffectedRecord_ID ));
+            GoTo(string.Format("~/donations/DonationComplete.aspx?contextID={0}", log.AffectedRecord_ID));
         }
     }
 

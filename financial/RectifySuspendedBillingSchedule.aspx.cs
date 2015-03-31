@@ -1,19 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Linq;
-using System.Web;
-using System.Web.UI;
-using System.Web.UI.WebControls;
 using MemberSuite.SDK.Searching;
 using MemberSuite.SDK.Searching.Operations;
 using MemberSuite.SDK.Types;
 
-public partial class financial_RectifySuspendedBillingSchedule : PortalPage
+public partial class financial_RectifySuspendedBillingSchedule : CreditCardLogic
 {
 
     protected DataRow targetSchedule;
-  
+
     protected msOrder targetOrder;
 
     protected override void InitializeTargetObject()
@@ -47,6 +42,10 @@ public partial class financial_RectifySuspendedBillingSchedule : PortalPage
         if (targetOrder == null)
             GoToMissingRecordPage();
 
+        hfOrderBillToId.Value = ConciergeAPI.CurrentEntity.ID;
+
+        dvPriorityData.InnerHtml = GetPriorityPaymentsConfig(hfOrderBillToId.Value);
+
         using (var api = GetServiceAPIProxy())
         {
             var methods = api.DetermineAllowableOrderPaymentMethods(targetOrder).ResultValue;
@@ -56,7 +55,7 @@ public partial class financial_RectifySuspendedBillingSchedule : PortalPage
 
             BillingInfoWidget.AllowableMethods = methods;
         }
-        
+
 
 
     }
@@ -73,14 +72,14 @@ public partial class financial_RectifySuspendedBillingSchedule : PortalPage
     }
     protected void btnCancel_Click(object sender, EventArgs e)
     {
-        Response.Redirect("ViewInstallmentPlan.aspx?contextID=" + ContextID );
+        Response.Redirect("ViewInstallmentPlan.aspx?contextID=" + ContextID);
     }
     protected void btnUpdatePaymentInfo_Click(object sender, EventArgs e)
     {
         if (!IsValid)
             return;
 
-        string orderID = Convert.ToString( targetSchedule["Order"] );
+        string orderID = Convert.ToString(targetSchedule["Order"]);
         string orderLocalID = GetSearchResult(targetSchedule, "Order.LocalID", null);
 
         var paymentManifest = BillingInfoWidget.GetPaymentInfo();
@@ -89,8 +88,8 @@ public partial class financial_RectifySuspendedBillingSchedule : PortalPage
         {
             api.UpdateBillingInfo(orderID, paymentManifest);
             QueueBannerMessage(string.Format("Order #{0} updated successfully.", orderLocalID));
-            
+
         }
-        Response.Redirect("/financial/ViewInstallmentPlan.aspx?contextID=" + ContextID );
+        Response.Redirect("/financial/ViewInstallmentPlan.aspx?contextID=" + ContextID);
     }
 }

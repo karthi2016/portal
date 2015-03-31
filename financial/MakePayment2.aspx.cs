@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web;
-using System.Web.UI;
-using System.Web.UI.WebControls;
+using MemberSuite.SDK.Constants;
 using MemberSuite.SDK.Types;
 using MemberSuite.SDK.WCF;
 
-public partial class financial_MakePayment2 : PortalPage
+public partial class financial_MakePayment2 : CreditCardLogic
 {
     #region Fields
 
@@ -29,16 +27,15 @@ public partial class financial_MakePayment2 : PortalPage
         base.InitializeTargetObject();
 
         targetPayment = MultiStepWizards.MakePayment.Payment;
-        
-        
+
+        hfOrderBillToId.Value = ConciergeAPI.CurrentEntity.ID;
+
+        dvPriorityData.InnerHtml = GetPriorityPaymentsConfig(hfOrderBillToId.Value);
+
         if (!IsPostBack)
         {
-
-
             using (var api = GetServiceAPIProxy())
                 BillingInfoWidget.AllowableMethods = api.DetermineAllowableInvoicePaymentMethods(targetPayment).ResultValue;
-
-          
         }
     }
 
@@ -52,7 +49,7 @@ public partial class financial_MakePayment2 : PortalPage
     {
         base.InitializePage();
 
-        
+
 
         lblAmountDue.Text = targetPayment.Total.ToString("C");
         RegisterJavascriptConfirmationBox(lbCancel, "Are you sure you want to cancel this payment?");
@@ -62,7 +59,7 @@ public partial class financial_MakePayment2 : PortalPage
 
 
     #endregion
-    
+
 
     protected void btnContinue_Click(object sender, EventArgs e)
     {
@@ -99,7 +96,7 @@ public partial class financial_MakePayment2 : PortalPage
         {
             if (targetPayment.Total > 0)
             {
-                
+
                 PaymentProcessorResponse resp = api.ProcessCreditCardPayment(targetPayment, payment, antiDupeKey).ResultValue;
 
                 if (!resp.Success)
@@ -118,7 +115,7 @@ public partial class financial_MakePayment2 : PortalPage
 
 
             // now, send a confirmation email
-            api.SendEmail("BuiltIn:Payment", new List<string> { targetPayment.ID }, ConciergeAPI.CurrentUser.EmailAddress);
+            api.SendEmail(EmailTemplates.Financial.Payment, new List<string> { targetPayment.ID }, ConciergeAPI.CurrentUser.EmailAddress);
         }
     }
 

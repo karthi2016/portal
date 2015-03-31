@@ -2,9 +2,8 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Web;
-using System.Web.UI;
 using System.Web.UI.WebControls;
+using MemberSuite.SDK.Constants;
 using MemberSuite.SDK.Results;
 using MemberSuite.SDK.Searching;
 using MemberSuite.SDK.Searching.Operations;
@@ -105,7 +104,7 @@ public partial class financial_RequestRefund : PortalPage
             targetRefund = api.ProcessRefund(targetRefund).ResultValue.ConvertTo<msRefund>();
 
             // now, send a confirmation email
-            api.SendEmail("BuiltIn:RefundRequest", new List<string> { targetRefund.ID }, ConciergeAPI.CurrentUser.EmailAddress);
+            api.SendEmail(EmailTemplates.Financial.RefundRequest, new List<string> { targetRefund.ID }, ConciergeAPI.CurrentUser.EmailAddress);
         }
     }
 

@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Web;
 using System.Web.UI;
 using System.Web.UI.HtmlControls;
 using System.Web.UI.WebControls;
@@ -144,10 +143,10 @@ public partial class controls_CustomFieldSet : System.Web.UI.UserControl, IContr
 
             // first, render the left side
 
-            if (section.LeftControls.Count > i)
+            if (leftControls.Count > i)
                 renderControl(tableRow, leftControls[i]);
 
-            if (section.RightControls.Count > i)
+            if (rightControls.Count > i)
                 renderControl(tableRow, rightControls[i]);
 
             //return new ControlGroupInstructions(manager.RowSpan - 1, createNewRow); 
@@ -338,7 +337,9 @@ public partial class controls_CustomFieldSet : System.Web.UI.UserControl, IContr
         if (Metadata == null)
             return null;
 
-        return Metadata.Fields.Find(x => x.Name == meta.DataSourceExpression);
+        // MS-6019 (Modified 1/9/2015) Sometimes the DataSourceExpression on the ControlMetadata does not match the name of any field.
+        // It is worth checking whether the Name on the ControlMetadata matches any of the fields as well.
+        return Metadata.Fields.Find(x => x.Name == meta.DataSourceExpression) ?? Metadata.Fields.Find(x => x.Name == meta.Name);
     }
 
     /// <summary>

@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Linq;
-using System.Web;
-using System.Web.UI;
 using System.Web.UI.HtmlControls;
 using System.Web.UI.WebControls;
 using MemberSuite.SDK.Concierge;
+using MemberSuite.SDK.Constants;
 using MemberSuite.SDK.Results;
 using MemberSuite.SDK.Searching;
 using MemberSuite.SDK.Searching.Operations;
@@ -181,7 +179,7 @@ public partial class discussions_ViewPostsPendingApproval : DiscussionsPage
                 using (IConciergeAPIService proxy = GetConciegeAPIProxy())
                 {
                     if (!string.IsNullOrWhiteSpace(discussionPost.PostedBy))
-                        proxy.SendEmail("BuiltIn:DiscussionPostApproval", new List<string> {discussionPost.ID}, null);
+                        proxy.SendEmail(EmailTemplates.Discussions.DiscussionPostApproval, new List<string> {discussionPost.ID}, null);
                     proxy.SendEmailsToSubscribedEntities(discussionPost.ID);
                 }
                 QueueBannerMessage("The selected post has been approved");
@@ -194,7 +192,7 @@ public partial class discussions_ViewPostsPendingApproval : DiscussionsPage
                 {
                     using (IConciergeAPIService proxy = GetConciegeAPIProxy())
                     {
-                        proxy.SendEmail("BuiltIn:DiscussionPostRejection", new List<string> {discussionPost.ID}, null);
+                        proxy.SendEmail(EmailTemplates.Discussions.DiscussionPostRejection, new List<string> {discussionPost.ID}, null);
                     }
                 }
                 QueueBannerMessage("The selected post has been rejected");

@@ -69,12 +69,13 @@ public partial class forms_ManageFormInstances : PortalPage
     {
         base.InitializePage();
 
-        if (targetFormManifest.CanCreate)
-        {
-            hlCreateInstance.Visible = true;
-            hlCreateInstance.Text = string.Format("<LI>{0}</LI>", targetFormManifest.CreateLink);
-            hlCreateInstance.NavigateUrl += targetForm.ID;
-        }
+        if (!targetFormManifest.CanCreate) return;
+        // MS-5957 (Modified 12/11/2014) If the portal form allows the user to create a form instance, then
+        // the default label for the link should be "Create {PortalForm Name}"
+        var createLink = targetFormManifest.CreateLink ?? string.Format("Create {0}", targetFormManifest.FormName);
+        hlCreateInstance.Visible = true;
+        hlCreateInstance.Text = string.Format("<LI>{0}</LI>", createLink);
+        hlCreateInstance.NavigateUrl += targetForm.ID;
     }
 
     protected void rgMainDataGrid_NeedDataSource(object sender, GridNeedDataSourceEventArgs e)

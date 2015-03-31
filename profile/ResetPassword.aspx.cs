@@ -6,6 +6,7 @@ using System.Web.UI;
 using System.Web.UI.WebControls;
 using MemberSuite.SDK.Results;
 using MemberSuite.SDK.WCF;
+using Spring.Globalization.Formatters;
 
 public partial class profile_ResetPassword : PortalPage
 {
@@ -31,7 +32,11 @@ public partial class profile_ResetPassword : PortalPage
     {
         get
         {
-            return Request.QueryString["t"];
+            // MS-6037 (Modified 1/7/2015) Apparently using Request.QueryString["t"] removes the special character '+' and replaces it with a space.            
+            var passwordHash = Request.QueryString["t"];
+            if (!string.IsNullOrWhiteSpace(passwordHash))
+                passwordHash = passwordHash.Replace(" ", "+");
+            return passwordHash;
         }
     }
 
