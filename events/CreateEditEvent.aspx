@@ -219,12 +219,6 @@
                     <td>
                         <asp:TextBox runat="server" ID="tbRegistrationUrl" />
                     </td>
-                    <td class="columnHeader">
-                         <asp:Literal ID="lLateRegistration" runat="server">Late Registration:</asp:Literal>
-                    </td>
-                    <td>
-                        <telerik:RadDateTimePicker runat="server" ID="dtpLateRegistration" />
-                    </td>
                 </tr>
             </table>
         </div>

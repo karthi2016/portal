@@ -138,9 +138,9 @@ public partial class onlinestorefront_ViewMerchandiseDetails : PortalPage
 
     protected void loadDataFromConcierge(IConciergeAPIService proxy)
     {
-        List<Search> searches = new List<Search>();
+        var searches = new List<Search>();
 
-        Search sMerchandise = new Search(msMerchandise.CLASS_NAME) { ID = msMerchandise.CLASS_NAME };
+        var sMerchandise = new Search(msMerchandise.CLASS_NAME) { ID = msMerchandise.CLASS_NAME };
         sMerchandise.AddOutputColumn("ID");
         sMerchandise.AddOutputColumn("Name");
         sMerchandise.AddOutputColumn("Image");
@@ -153,8 +153,8 @@ public partial class onlinestorefront_ViewMerchandiseDetails : PortalPage
 
         searches.Add(sMerchandise);
 
-        //Category Search
-        Search sCategories = new Search { Type = msProductCategory.CLASS_NAME, ID = msProductCategory.CLASS_NAME };
+        // Category Search
+        var sCategories = new Search { Type = msProductCategory.CLASS_NAME, ID = msProductCategory.CLASS_NAME };
         sCategories.AddOutputColumn("ID");
         sCategories.AddOutputColumn("Name");
         sCategories.AddCriteria(Expr.Equals("ProductType", "Merchandise"));
@@ -163,7 +163,7 @@ public partial class onlinestorefront_ViewMerchandiseDetails : PortalPage
 
         searches.Add(sCategories);
 
-        List<SearchResult> searchResults = ExecuteSearches(proxy, searches, 0, null);
+        var searchResults = APIExtensions.GetMultipleSearchResults(searches, 0, null);
 
         if (searchResults == null || searchResults.Count < 2 || searchResults[0] == null || searchResults[0].Table == null || searchResults[0].Table.Rows.Count != 1)
         {

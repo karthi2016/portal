@@ -19,7 +19,7 @@ public static class CommitteeLogic
         s.AddCriteria(Expr.Equals(msCommitteeMembership.FIELDS.Member, individualID));
         s.AddCriteria(Expr.Equals(msCommitteeMembership.FIELDS.GrantPortalAdministratorPrivileges, true));
 
-        return proxy.ExecuteSearch(s, 0, 1).ResultValue.TotalRowCount > 0;
+        return proxy.GetSearchResult(s, 0, 1).TotalRowCount > 0;
             
     }
 
@@ -28,9 +28,9 @@ public static class CommitteeLogic
         Search s = new Search(msCommitteeMembership.CLASS_NAME);
         s.AddCriteria(Expr.Equals(msCommitteeMembership.FIELDS.Committee, committeeID));
         s.AddCriteria(Expr.Equals(msCommitteeMembership.FIELDS.Member, individualID));
-        
 
-        return proxy.ExecuteSearch(s, 0, 1).ResultValue.TotalRowCount > 0;
+
+        return proxy.GetSearchResult(s, 0, 1).TotalRowCount > 0;
 
     }
 }

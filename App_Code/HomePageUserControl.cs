@@ -58,9 +58,16 @@ public class HomePageUserControl : UserControl
     /// <param name="results">The results.</param>
     public virtual void DeliverSearchResults(List<SearchResult> results)
     {
-        results.RemoveAll(a => a == null);
-        if (results.Single(x => x.ID == "Main").Table.Rows.Count > 0)
-            drMainRecord = results.Single(x => x.ID == "Main").Table.Rows[0];
+        if (results == null)
+        {
+            return;
+        }
+
+        var mainResults = results.FirstOrDefault(x => x.ID == "Main");
+        if (mainResults != null)
+        {
+            drMainRecord = mainResults.Table.Rows[0];
+        }
     }
 
     public virtual void GenerateFormLinks(List<PortalFormInfo> formsToDisplay)

@@ -36,12 +36,12 @@ public partial class continuingeducation_ViewCertification : PortalPage
     {
         CustomFieldSet1.MemberSuiteObject = targetCertification ;
 
-        var pageLayout = GetAppropriatePageLayout(targetCertification);
+        var pageLayout = targetCertification.GetAppropriatePageLayout();
         if (pageLayout == null || pageLayout.Metadata == null || pageLayout.Metadata.IsEmpty())
             return;
 
         // setup the metadata
-        CustomFieldSet1.Metadata = proxy.DescribeObject(targetCertification.ClassType ).ResultValue;
+        CustomFieldSet1.Metadata = targetCertification.DescribeObject();
         CustomFieldSet1.PageLayout = pageLayout.Metadata;
 
         CustomFieldSet1.AddReferenceNamesToTargetObject(proxy);
@@ -55,7 +55,7 @@ public partial class continuingeducation_ViewCertification : PortalPage
 
     protected override bool CheckSecurity()
     {
-        if (targetCertification != null && targetCertification.Certificant != ConciergeAPI.CurrentEntity.ID)
+        if (targetCertification != null && targetCertification.Owner != ConciergeAPI.CurrentEntity.ID)
             return false;
 
         return base.CheckSecurity();
@@ -77,6 +77,8 @@ public partial class continuingeducation_ViewCertification : PortalPage
         setupCEURequirements();
         setupRecommendations();
         setupExamRequirements();
+
+        PageTitleExtension.Text = programName;
     }
 
     private void setupExamRequirements()
@@ -87,7 +89,7 @@ public partial class continuingeducation_ViewCertification : PortalPage
         s.AddOutputColumn("Passed");
         s.AddSortColumn("Type.Name");
 
-        var dt = ExecuteSearch(s, 0, null).Table;
+        var dt = APIExtensions.GetSearchResult(s, 0, null).Table;
 
         if (dt.Rows.Count == 0) return;
 
@@ -104,7 +106,7 @@ public partial class continuingeducation_ViewCertification : PortalPage
         s.AddOutputColumn("EmailAddress");
         s.AddOutputColumn("Status");
 
-        var dt = ExecuteSearch(s, 0, null).Table;
+        var dt = APIExtensions.GetSearchResult(s, 0, null).Table;
 
         if (dt.Rows.Count == 0) return;
 
@@ -123,7 +125,7 @@ public partial class continuingeducation_ViewCertification : PortalPage
         s.AddOutputColumn("QuantityNeeded");
         s.AddSortColumn("Type.Name");
         
-        var dt = ExecuteSearch(s, 0, null).Table;
+        var dt = APIExtensions.GetSearchResult(s, 0, null).Table;
 
         if ( dt.Rows.Count  == 0 ) return;
          
@@ -160,7 +162,7 @@ public partial class continuingeducation_ViewCertification : PortalPage
             case "Resend":
                 string id = Convert.ToString(e.CommandArgument);
                 using (var api = GetServiceAPIProxy())
-                    api.SendEmail(EmailTemplates.Certifications.CertificationRecommendation, new List<string> {id}, null);
+                    api.SendTransactionalEmail(EmailTemplates.Certifications.CertificationRecommendation, id, null);
 
                 var rec = LoadObjectFromAPI<msCertificationRecommendation>(id);
                 QueueBannerMessage("An recommendation submission request has successfully been sent to " + rec.EmailAddress);

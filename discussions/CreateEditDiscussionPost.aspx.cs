@@ -35,7 +35,7 @@ public partial class discussions_CreateEditDiscussionPost : DiscussionsPage
     {
         base.InitializeTargetObject();
 
-        MemberSuiteObject targetObject = LoadObjectFromAPI(ContextID);
+        var targetObject = APIExtensions.LoadObjectFromAPI(ContextID);
 
         if (targetObject == null)
         {
@@ -89,6 +89,11 @@ public partial class discussions_CreateEditDiscussionPost : DiscussionsPage
         }
 
         chkSubscribe.Checked = !editMode || drSubscription != null;
+
+        if (editMode)
+            CustomTitle.Text = string.Format("{0}: Edit Post", targetDiscussionTopic.Name);
+        else
+            CustomTitle.Text = string.Format("{0}: New Post", targetDiscussionTopic.Name);
 
     }
 

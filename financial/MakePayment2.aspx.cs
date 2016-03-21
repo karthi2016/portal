@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Web.UI.WebControls;
+using MemberSuite.SDK.Concierge;
 using MemberSuite.SDK.Constants;
 using MemberSuite.SDK.Types;
-using MemberSuite.SDK.WCF;
 
 public partial class financial_MakePayment2 : CreditCardLogic
 {
@@ -13,6 +14,7 @@ public partial class financial_MakePayment2 : CreditCardLogic
     protected ElectronicPaymentManifest paymentInfo;
 
     #endregion
+
     #region Initialization
 
     /// <summary>
@@ -49,6 +51,8 @@ public partial class financial_MakePayment2 : CreditCardLogic
     {
         base.InitializePage();
 
+        if (targetPayment == null)
+            GoToMissingRecordPage();
 
 
         lblAmountDue.Text = targetPayment.Total.ToString("C");
@@ -60,26 +64,34 @@ public partial class financial_MakePayment2 : CreditCardLogic
 
     #endregion
 
-
     protected void btnContinue_Click(object sender, EventArgs e)
     {
         if (!IsValid)
+        {
+            var tbCardNumber = BillingInfoWidget.FindControl("tbCardNumber") as TextBox;
+            if (tbCardNumber != null)
+                tbCardNumber.Text = string.Empty;
             return;
+        }
 
         var payment = BillingInfoWidget.GetPaymentInfo();
         targetPayment.PaymentMethod = payment.PaymentMethod;
+
         processPayment(payment);
+
         MultiStepWizards.MakePayment.Clear();
+
+        // Clear any cached Membership checks since a payment could trigger a Membership Update.
+        MembershipLogic.ClearMemberCaches();
+
         QueueBannerMessage(string.Format("Your payment for {0:C} has been processed.", targetPayment.Total));
 
         GoHome();
-
     }
 
     protected void processPayment(ElectronicPaymentManifest payment)
     {
-
-        decimal sumOfItems = targetPayment.LineItems.Sum(x => x.Amount);
+        decimal sumOfItems = targetPayment.LineItems.Sum(x => x.Total);
         decimal overpayment = targetPayment.Total - sumOfItems;
 
         // add the overpayment
@@ -96,8 +108,10 @@ public partial class financial_MakePayment2 : CreditCardLogic
         {
             if (targetPayment.Total > 0)
             {
-
-                PaymentProcessorResponse resp = api.ProcessCreditCardPayment(targetPayment, payment, antiDupeKey).ResultValue;
+                var r = api.ProcessPayment(targetPayment, payment , null );
+                if (!r.Success)
+                    throw new ConciergeClientException(MemberSuite.SDK.Concierge.ConciergeErrorCode.GeneralException, r.FirstErrorMessage);
+                PaymentProcessorResponse resp = r.ResultValue;
 
                 if (!resp.Success)
                     // ok, we're throwing an exception 
@@ -105,17 +119,17 @@ public partial class financial_MakePayment2 : CreditCardLogic
                         MemberSuite.SDK.Concierge.ConciergeErrorCode.CreditCardAuthorizationFailed,
                         "Unable to process payment: [{0}] - {1}", resp.GatewayResponseReasonCode, resp.GatewayResponseReasonText);
 
-                targetPayment = LoadObjectFromAPI(resp.PaymentID).ConvertTo<msPayment>();
+                targetPayment = LoadObjectFromAPI<msPayment>(resp.PaymentID);
             }
             else
             {
-                targetPayment.PaymentMethod = PaymentMethod.CustomerCredit;
-                targetPayment = api.RecordPayment(targetPayment).ResultValue.ConvertTo<msPayment>();
+                throw new NotSupportedException();
+                
             }
 
 
             // now, send a confirmation email
-            api.SendEmail(EmailTemplates.Financial.Payment, new List<string> { targetPayment.ID }, ConciergeAPI.CurrentUser.EmailAddress);
+            api.SendTransactionalEmail(EmailTemplates.Financial.Payment, targetPayment.ID , ConciergeAPI.CurrentUser.EmailAddress);
         }
     }
 

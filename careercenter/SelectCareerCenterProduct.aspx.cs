@@ -126,7 +126,7 @@ public partial class careercenter_SelectCareerCenterProduct : PortalPage
 
         sCareerCenterProducts.AddSortColumn("Name");
 
-        SearchResult srCareerCenterProducts = ExecuteSearch(sCareerCenterProducts, 0, null);
+        SearchResult srCareerCenterProducts = APIExtensions.GetSearchResult(sCareerCenterProducts, 0, null);
         dtCareerCenterProducts = srCareerCenterProducts.Table;
 
         //Now describe the products for the logged-in entitiy - this will apply any membership discounts
@@ -142,7 +142,7 @@ public partial class careercenter_SelectCareerCenterProduct : PortalPage
     {
         foreach (var productInfo in careerCenterProducts)
         {
-            productInfo.ProductName = string.Format("{0} - <font color=green>{1}</font>", productInfo.ProductName,
+            productInfo.ProductName = string.Format("{0} - <span class=\"hlteMon\">{1}</span>", productInfo.ProductName,
                                             productInfo.DisplayPriceAs ?? productInfo.Price.ToString("C"));
             if (productInfo.IsSoldOut)
                 productInfo.ProductName += " SOLD OUT";

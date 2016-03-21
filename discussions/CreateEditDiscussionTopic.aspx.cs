@@ -19,7 +19,7 @@ public partial class discussions_CreateEditDiscussionTopic : DiscussionsPage
     {
         base.InitializeTargetObject();
 
-        MemberSuiteObject targetObject = LoadObjectFromAPI(ContextID);
+        var targetObject = APIExtensions.LoadObjectFromAPI(ContextID);
 
         if(targetObject == null)
         {
@@ -65,6 +65,11 @@ public partial class discussions_CreateEditDiscussionTopic : DiscussionsPage
         bind();
 
         chkSubscribe.Checked = !editMode || drSubscription != null;
+
+        if (editMode)
+            CustomTitle.Text = string.Format("{0}: Edit Topic", targetForum.Name);
+        else
+            CustomTitle.Text = string.Format("{0}: New Topic", targetForum.Name);
     }
 
     protected override bool CheckSecurity()

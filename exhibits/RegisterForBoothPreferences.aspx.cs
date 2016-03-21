@@ -65,6 +65,8 @@ public partial class exhibits_RegisterForBoothPreferences : PortalPage
         rptChoices.DataBind();
 
         RegisterJavascriptConfirmationBox(btnSave, "Please review your selections, as your record will be saved immediately. Press OK to save.");
+
+        CustomTitle.Text = string.Format("{0} Registration", targetShow.Name);
     }
 
     private int GetNumberOfChoices()

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Drawing;
 using System.Linq;
 using System.Web;
 using System.Web.UI;
@@ -17,7 +18,6 @@ public partial class events_Register_CreateRegistration : PortalPage
 
     protected msOrder targetOrder;
     protected msEvent targetEvent;
-    protected msEntity targetEntity;
     protected msRegistrationFee targetRegistrationFee;
     protected ProductInfo describedRegistrationFee;
     protected List<msSessionTimeSlot> timeslots;
@@ -26,6 +26,11 @@ public partial class events_Register_CreateRegistration : PortalPage
     protected msChapter targetChapter;
     protected msSection targetSection;
     protected msOrganizationalLayer targetOrganizationalLayer;
+
+    protected string registrantId;
+
+    protected msEventRegistration targetRegistration;
+    protected DataTable currentSessions;
 
     #endregion
 
@@ -42,15 +47,33 @@ public partial class events_Register_CreateRegistration : PortalPage
     {
         base.InitializeTargetObject();
 
-        targetEvent = LoadObjectFromAPI(ContextID).ConvertTo<msEvent>();
-        if (targetEvent == null)
+        var target = APIExtensions.LoadObjectFromAPI(ContextID);
+        if (target == null)
         {
             GoToMissingRecordPage();
             return;
         }
 
+        // If we are starting with a Registration, go to that setup process
+        if (target.ClassType == msEventRegistration.CLASS_NAME)
+        {
+            targetRegistration = target.ConvertTo<msEventRegistration>();
+            LoadExistingRegistration();
+            return;
+        }
+
+        // If this is not a Registration or an Event, then get out of here
+        if (target.ClassType != msEvent.CLASS_NAME)
+        {
+            GoToMissingRecordPage();
+            return;
+        }
+
+        targetEvent = target.ConvertTo<msEvent>();
+
         targetOrder = MultiStepWizards.RegisterForEvent.Order;
         targetRegistrationFee = MultiStepWizards.RegisterForEvent.RegistrationFee;
+        MultiStepWizards.RegisterForEvent.IsSessionSwap = false;
 
         if (targetOrder == null || string.IsNullOrWhiteSpace(targetOrder.BillTo) || string.IsNullOrWhiteSpace(targetOrder.ShipTo) || targetRegistrationFee == null)
         {
@@ -58,15 +81,8 @@ public partial class events_Register_CreateRegistration : PortalPage
             return;
         }
 
-        using (var proxy = GetServiceAPIProxy())
-        {
-            describedRegistrationFee =
-                proxy.DescribeProducts(ConciergeAPI.CurrentEntity.ID, new List<string>() { targetRegistrationFee.ID }).
-                    ResultValue[0];
-        }
-
-        targetEntity = LoadObjectFromAPI<msEntity>(targetOrder.BillTo);
-        if (targetEntity == null)
+        registrantId = targetOrder.BillTo;
+        if (string.IsNullOrEmpty(registrantId))
         {
             GoToMissingRecordPage();
             return;
@@ -94,15 +110,33 @@ public partial class events_Register_CreateRegistration : PortalPage
 
         if (targetOrganizationalLayer != null)
             setOwnerBackLinks(targetOrganizationalLayer.ID, targetOrganizationalLayer.Name, "~/organizationallayers/ViewOrganizationalLayer.aspx", "~/organizationallayers/ManageOrganizationalLayerEvents.aspx");
-
-
+        
         setManifest();
         setTimeSlots();
-        setGuestRegistrationFees();
-        setMerchandise();
 
-        lblRegistrant.Text = targetEntity.Name;
-        lblFee.Text = string.Format("{0} - <font color=green>{1}</font>", targetRegistrationFee.Name, string.IsNullOrWhiteSpace(describedRegistrationFee.DisplayPriceAs) ? describedRegistrationFee.Price.ToString("C") : describedRegistrationFee.DisplayPriceAs);
+        lblFee.Text = targetRegistrationFee.Name;
+
+        if (targetRegistration == null)
+        {
+            setGuestRegistrationFees();
+            setMerchandise();
+
+            using (var proxy = GetServiceAPIProxy())
+            {
+                describedRegistrationFee =
+                    proxy.DescribeProducts(registrantId, new List<string>() { targetRegistrationFee.ID }).
+                        ResultValue[0];
+            }
+
+            lblFee.Text = string.Format(" - <span class=\"hlteMon\">{0}</span>",
+                string.IsNullOrWhiteSpace(describedRegistrationFee.DisplayPriceAs)
+                    ? describedRegistrationFee.Price.ToString("C")
+                    : describedRegistrationFee.DisplayPriceAs);
+        }
+        else
+        {
+            SetupExistingRegistrationEdit();
+        }
 
         // if we have nothing, move on 
         if (!pnlGuests.Visible && !pnlMerchandise.Visible && !pnlSessions.Visible)
@@ -114,7 +148,6 @@ public partial class events_Register_CreateRegistration : PortalPage
         }
 
         initializeGroupRegistration();
-
     }
 
     protected override bool CheckSecurity()
@@ -125,7 +158,17 @@ public partial class events_Register_CreateRegistration : PortalPage
         if (ConciergeAPI.HasBackgroundConsoleUser)
             return true;
 
-        if (ConciergeAPI.CurrentEntity.ID == targetEntity.ID)
+        if (targetRegistration != null)
+        {
+            return targetEvent.VisibleInPortal && (
+                targetRegistration.Owner == ConciergeAPI.CurrentEntity.ID
+                || (targetChapter != null && canManageEvents(targetChapter.Leaders))
+                || (targetSection != null && canManageEvents(targetSection.Leaders))
+                || (targetOrganizationalLayer != null && canManageEvents(targetOrganizationalLayer.Leaders))
+                );
+        }
+
+        if (ConciergeAPI.CurrentEntity.ID == targetOrder.BillTo)
             return targetEvent.VisibleInPortal;
 
         if (targetChapter != null)
@@ -138,10 +181,10 @@ public partial class events_Register_CreateRegistration : PortalPage
             return targetEvent.VisibleInPortal && canManageEvents(targetOrganizationalLayer.Leaders);
 
         var mode = Request.QueryString["mode"];
-        if (mode == "group" && ConciergeAPI.CurrentEntity.ID != targetEntity.ID)
+        if (mode == "group" && ConciergeAPI.CurrentEntity.ID != targetOrder.BillTo)
             return targetEvent.VisibleInPortal;
 
-        //Default to false for now because currently only leaders can create events in the portal
+        // Default to false for now because currently only leaders can create events in the portal
         return false;
     }
 
@@ -176,7 +219,7 @@ public partial class events_Register_CreateRegistration : PortalPage
             sTimeSlots.AddSortColumn("Name");
 
 
-            foreach (DataRow drResult in api.ExecuteSearch(sTimeSlots, 0, null).ResultValue.Table.Rows)
+            foreach (DataRow drResult in api.GetSearchResult(sTimeSlots, 0, null).Table.Rows)
                 timeslots.Add(MemberSuiteObject.FromDataRow(drResult).ConvertTo<msSessionTimeSlot>());
         }
 
@@ -227,7 +270,7 @@ public partial class events_Register_CreateRegistration : PortalPage
     {
         using (var api = GetServiceAPIProxy())
         {
-            manifest = api.GetEventManifest(targetEvent.ID, targetEntity.ID, targetRegistrationFee.ID).ResultValue;
+            manifest = api.GetEventManifest(targetEvent.ID, registrantId, targetRegistrationFee.ID).ResultValue;
 
             // Now, let's clean up the fees so the event name doesn't show 
             foreach (var session in manifest.Sessions)
@@ -282,7 +325,7 @@ public partial class events_Register_CreateRegistration : PortalPage
                 if (ddlFee == null || String.IsNullOrEmpty(ddlFee.SelectedValue))
                     continue;   // for instance, this might be a "None selected" row
 
-                decimal quantity = 0;
+                var quantity = 0;
                 CheckBox cbRegister = (CheckBox)row.FindControl("cbRegister");
                 TextBox tbQuantity = (TextBox)row.FindControl("tbQuantity");
                 RadioButton rbRegister = (RadioButton)row.FindControl("rbRegister");
@@ -292,7 +335,7 @@ public partial class events_Register_CreateRegistration : PortalPage
                 else if (rbRegister.Visible && rbRegister.Checked)
                     quantity = 1;
                 else if (tbQuantity.Visible)
-                    quantity = decimal.Parse(tbQuantity.Text);  // we know this is valid cuz of the validator
+                    quantity = int.Parse(tbQuantity.Text);  // we know this is valid cuz of the validator
 
                 if (quantity <= 0) continue;
 
@@ -317,7 +360,7 @@ public partial class events_Register_CreateRegistration : PortalPage
             if (String.IsNullOrEmpty(tbQuantity.Text))
                 continue;
 
-            decimal qty = decimal.Parse(tbQuantity.Text);
+            var qty = decimal.Parse(tbQuantity.Text);
             if (qty <= 0) continue;
 
             // we need to add each item on it's own line, so it can have it's own demographics
@@ -341,7 +384,7 @@ public partial class events_Register_CreateRegistration : PortalPage
             if (String.IsNullOrEmpty(tbQuantity.Text))
                 continue;
 
-            decimal qty = decimal.Parse(tbQuantity.Text);
+            var qty = int.Parse(tbQuantity.Text);
             if (qty <= 0) continue;
 
             msOrderLineItem li = new msOrderLineItem
@@ -361,6 +404,11 @@ public partial class events_Register_CreateRegistration : PortalPage
 
     protected void btnCancel_Click(object sender, EventArgs e)
     {
+        if (targetRegistration != null)
+        {
+            GoTo(ReturnToEventURL());
+        }
+
         MultiStepWizards.RegisterForEvent.Order = null;
         MultiStepWizards.RegisterForEvent.RegistrationFee = null;
         MultiStepWizards.RegisterForEvent.AdditionalLineItems = null;
@@ -414,8 +462,12 @@ public partial class events_Register_CreateRegistration : PortalPage
         pnlGroupRegistration.Visible = true;
         lblGroup.Text = group.Name;
 
+        registrantId = MultiStepWizards.GroupRegistration.RegistrantID;
 
+        var individual = GetServiceAPIProxy().GetName(registrantId).ResultValue;
+        lblRegistrant.Text = individual;
     }
+
     protected void gvSessions_RowDataBound(object sender, GridViewRowEventArgs e)
     {
         EventManifestSession session = (EventManifestSession)e.Row.DataItem;
@@ -457,13 +509,9 @@ public partial class events_Register_CreateRegistration : PortalPage
                         // use checkboxes
                         cbRegister.Visible = true;
                         rbRegister.Visible = false;
-
-
                     }
                     else
                     {
-
-
                         rbRegister.Visible = true;
                         rbRegister.Checked = session.SessionID == null; // select the "do not register" option by default
                         string groupName = Formats.GetSafeFieldName(session.TimeSlotID);
@@ -531,6 +579,82 @@ public partial class events_Register_CreateRegistration : PortalPage
                     lblPrice.Visible = true;
                     lblPrice.Text = "INELIGIBLE";
                 }
+
+                // If this is a Registration Edit, reactivate the selected Sessions and select them
+                if (targetRegistration != null)
+                {
+                    bool highlightRow = false;
+                    if (session.SessionID == null)
+                    {
+                        // For "No Selection" uncheck if there is a selected session
+                        var sessionList = ((GridView) sender).DataSource as List<EventManifestSession>;
+                        foreach (var sessionManifest in sessionList)
+                        {
+                            var sessionReg = currentSessions.Select("Event = '" + sessionManifest.SessionID + "'");
+                            if (sessionReg.Length > 0)
+                            {
+                                rbRegister.Checked = false;
+                                break;
+                            }
+                        }
+
+                        // If we leave selected, highlight it
+                        highlightRow = rbRegister.Checked;
+                    }
+                    else
+                    {
+                        var sessionReg = currentSessions.Select("Event = '" + session.SessionID + "'");
+                        if (sessionReg.Length > 0)
+                        {
+                            // Hide the Fee \ Price info
+                            lblPrice.Visible = true;
+                            var price = sessionReg[0]["Price"] as decimal?;
+                            if (price.HasValue)
+                            {
+                                lblPrice.Text = string.Format("{0:C}", price.Value);
+                            }
+
+                            // Make sure that the line has a Product ID
+                            ddlFee.Visible = false;
+                            if (ddlFee.Items.Count == 0)
+                            {
+                                ddlFee.Items.Add(Convert.ToString(sessionReg[0]["Fee"]));
+                            }
+
+                            // Make sure row is enabled
+                            e.Row.Enabled = true;
+
+                            // Select this row
+                            if (session.RegistrationMode == EventRegistrationMode.Ticketed)
+                            {
+                                tbQuantity.Text = sessionReg.Length.ToString();
+                            }
+                            else if (session.TimeSlotID == null || (timeSlot != null && timeSlot.AllowMultipleSessions))
+                            {
+                                cbRegister.Checked = true;
+                            }
+                            else
+                            {
+                                rbRegister.Checked = true;
+                            }
+
+                            // Hightlight the row
+                            highlightRow = true;
+                        }
+                    }
+
+                    if (highlightRow)
+                    {
+                        e.Row.CssClass = "hlte";
+
+                        var altStyle = ((GridView) sender).AlternatingRowStyle.CssClass;
+                        if (!string.IsNullOrEmpty(altStyle) && e.Row.RowIndex % 2 == 1)
+                        {
+                            e.Row.CssClass += " " + altStyle;
+                        }
+                    }
+                }
+
                 break;
         }
     }
@@ -615,4 +739,193 @@ public partial class events_Register_CreateRegistration : PortalPage
     }
 
     #endregion
+
+    private void LoadExistingRegistration()
+    {
+        targetEvent = LoadObjectFromAPI<msEvent>(targetRegistration.Event);
+        targetRegistrationFee = LoadObjectFromAPI<msRegistrationFee>(targetRegistration.Fee);
+        registrantId = targetRegistration.Owner;
+
+        if (targetEvent == null || targetRegistrationFee == null || string.IsNullOrEmpty(registrantId))
+        {
+            GoToMissingRecordPage();
+        }
+
+        if (targetRegistrationFee.IsGuestRegistration)
+        {
+            QueueBannerError("Cannot set sessions on Guest Registration.");
+            GoTo(ReturnToEventURL());
+        }
+
+        var sessionSearch = new Search { Type = msSessionRegistration.CLASS_NAME };
+        sessionSearch.AddOutputColumn("Event");
+        sessionSearch.AddOutputColumn("Fee");
+        sessionSearch.AddOutputColumn("Event.RegistrationMode");
+        sessionSearch.AddOutputColumn("OrderLineItemID");
+        sessionSearch.AddCriteria(Expr.Equals("Owner", registrantId));
+        sessionSearch.AddCriteria(Expr.Equals("Event.ParentEvent", targetEvent.ID));
+        sessionSearch.AddCriteria(Expr.IsBlank("CancellationDate"));
+
+        var sessionResult = APIExtensions.GetSearchResult(sessionSearch, 0, null);
+        currentSessions = sessionResult.Table;
+
+        currentSessions.Columns.Add(new DataColumn("Price", typeof (decimal)));
+
+        var orderLineItemIDs = currentSessions.Rows.Cast<DataRow>()
+            .Select(currentSession => Convert.ToString(currentSession["OrderLineItemID"]))
+            .Where(itemId => !string.IsNullOrEmpty(itemId)).ToList();
+
+        if (orderLineItemIDs.Count > 0)
+        {
+            var orderLineItemSearch = new Search { Type = msOrderLineItem.CLASS_NAME };
+            orderLineItemSearch.AddOutputColumn("OrderLineItemID");
+            orderLineItemSearch.AddOutputColumn("Total");
+            orderLineItemSearch.AddCriteria(Expr.IsOneOfTheFollowing("OrderLineItemID", orderLineItemIDs));
+            orderLineItemSearch.AddSortColumn("ID");
+
+            var orderLineItemResult = APIExtensions.GetSearchResult(orderLineItemSearch, 0, null);
+            if (orderLineItemResult != null)
+            {
+                foreach (DataRow dr in orderLineItemResult.Table.Rows)
+                {
+                    var sessionRow = currentSessions.Select(string.Format("OrderLineItemID = '{0}'", dr["OrderLineItemID"]));
+                    if (sessionRow.Length > 0)
+                    {
+                        sessionRow[0]["Price"] = dr["Total"];
+                    }
+                }
+            }
+        }
+
+        loadEventOwners();
+    }
+
+    private void SetupExistingRegistrationEdit()
+    {
+        pnlGuests.Visible = false;
+        pnlMerchandise.Visible = false;
+        pnlGuests.Visible = false;
+
+        btnSave.Visible = true;
+
+        btnBack.Visible = false;
+        btnContinue.Visible = false;
+    }
+
+    protected void btnSave_Click(object sender, EventArgs e)
+    {
+        unbindControls();
+
+        var sessionsToCancel = new List<string>();
+        var orderWithNewSessions = new msOrder
+        {
+            BillTo = targetRegistration.Owner,
+            ShipTo = targetRegistration.Owner,
+        };
+
+        orderWithNewSessions.LineItems.AddRange(MultiStepWizards.RegisterForEvent.AdditionalLineItems);
+
+        var ticketedSessions = new Dictionary<string, int>();
+        foreach (DataRow dr in currentSessions.Rows)
+        {
+            var curSessionId = Convert.ToString(dr["Fee"]);
+
+            if (Convert.ToString(dr["Event.RegistrationMode"]) == EventRegistrationMode.Ticketed.ToString())
+            {
+                if (ticketedSessions.ContainsKey(curSessionId))
+                {
+                    ticketedSessions[curSessionId]++;
+                }
+                else
+                {
+                    ticketedSessions.Add(curSessionId, 1);
+                }
+
+                continue;
+            }
+
+            var item =
+                orderWithNewSessions.LineItems.FirstOrDefault(
+                    i => i.Product.Equals(curSessionId, StringComparison.OrdinalIgnoreCase));
+            if (item == null)
+            {
+                // this session not in new selections, so need to have it removed
+                sessionsToCancel.Add(Convert.ToString(dr["ID"]));
+            }
+            else
+            {
+                // if it was found, then does not need to be in the Order for Sessions to add
+                orderWithNewSessions.LineItems.Remove(item);
+            }
+        }
+
+        foreach (var ticketedSession in ticketedSessions)
+        {
+            var item =
+                orderWithNewSessions.LineItems.FirstOrDefault(
+                    i => i.Product.Equals(ticketedSession.Key, StringComparison.OrdinalIgnoreCase));
+
+            var newQty = item == null ? 0 : item.Quantity;
+
+            if (newQty >= ticketedSession.Value)
+            {
+                // We are adding Sessions, so adjust the Qty to match the difference only
+                if (item != null)
+                {
+                    item.Quantity = (newQty - ticketedSession.Value);
+                }
+            }
+            else
+            {
+                if (item != null)
+                {
+                    orderWithNewSessions.LineItems.Remove(item);
+                }
+
+                // We need to delete some of the existing Sessions
+                var sessionList = currentSessions.Select(string.Format("Fee = '{0}'", ticketedSession.Key));
+                for (var i = 0; i < (ticketedSession.Value - newQty); i++)
+                {
+                    sessionsToCancel.Add(Convert.ToString(sessionList[i]["ID"]));
+                }
+            }
+        }
+
+        if (orderWithNewSessions.LineItems.Count > 0)
+        {
+            // Order contains items that may need to be processed
+            MultiStepWizards.RegisterForEvent.AdditionalLineItems = orderWithNewSessions.LineItems;
+            orderWithNewSessions.LineItems = new List<msOrderLineItem>();
+            MultiStepWizards.RegisterForEvent.Order = orderWithNewSessions;
+            MultiStepWizards.RegisterForEvent.RegistrationFee = targetRegistrationFee;
+            MultiStepWizards.RegisterForEvent.IsSessionSwap = true;
+            MultiStepWizards.RegisterForEvent.SwapRegistrationID = targetRegistration.ID;
+            MultiStepWizards.RegisterForEvent.SessionsToCancel = sessionsToCancel;
+
+            GoTo(string.Format("~/events/Register_RegistrationForm.aspx?contextID={0}", targetRegistration.ID));
+        }
+        else
+        {
+            // No Order Items to process, so just run the swap
+            using (var api = GetConciegeAPIProxy())
+            {
+                var swapResult = api.SwapSessions(targetRegistration.ID, sessionsToCancel, orderWithNewSessions);
+                if (!swapResult.Success)
+                {
+                    QueueBannerError(swapResult.FirstErrorMessage);
+                }
+                else
+                {
+                    QueueBannerMessage("Session updates complete.");
+                }
+
+                GoTo(ReturnToEventURL());
+            }
+        }
+    }
+
+    private string ReturnToEventURL()
+    {
+        return string.Format("~/events/ViewEvent.aspx?contextID={0}", targetRegistration.Event);
+    }
 }

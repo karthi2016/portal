@@ -39,6 +39,13 @@ public partial class organizationalLayers_ManageOrganizationalLayerEvents : Port
     PortalConfiguration.OrganizationalLayerTypes.Rows.Find(targetOrganizationalLayer.Type);
     }
 
+    protected override void InitializePage()
+    {
+        base.InitializePage();
+
+        PageTitleExtension.Text = string.Format("{0} Events", GetSearchResult(drTargetOrganizationalLayerType, "Name", null));
+    }
+
     protected override bool CheckSecurity()
     {
         if (!base.CheckSecurity()) return false;
@@ -74,7 +81,7 @@ public partial class organizationalLayers_ManageOrganizationalLayerEvents : Port
         s.AddSortColumn("StartDate");
         s.AddSortColumn("EndDate");
         s.AddSortColumn("Name");
-        var searchResult = ExecuteSearch(s, 0, null);
+        var searchResult = APIExtensions.GetSearchResult(s, 0, null);
 
         dvEvents = new DataView(searchResult.Table);
     }

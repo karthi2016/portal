@@ -13,15 +13,7 @@
             <td>
                 <asp:Label ID="lblOutstandingBalance" runat="server" />
             </td>
-        </tr>
-        <tr id="Widget_MyAccount_CreditBalance_Row" runat="Server">
-            <td class="columnHeader">
-                <asp:Literal ID="Widget_MyAccount_CreditBalance" runat="Server">Credit Balance:</asp:Literal>
-            </td>
-            <td>
-                <asp:Label ID="lblCreditBalance" runat="server" />
-            </td>
-        </tr>
+        </tr>        
         <tr id="Widget_MyAccount_LastPayment_Row" runat="Server">
             <td class="columnHeader">
                 <asp:Literal ID="Widget_MyAccount_LastPayment" runat="Server">Last Payment:</asp:Literal>
@@ -39,8 +31,7 @@
              ><li>Manage Saved Payment Options</li></asp:HyperLink>
                 <asp:HyperLink ID="hlManageInstallmentPlans" runat="server" NavigateUrl="~/financial/ManageInstallmentPlans.aspx"
              ><li>Manage Installment Plans</li></asp:HyperLink>
-        <asp:HyperLink ID="hlRequestRefund" NavigateUrl="~/financial/RequestRefund.aspx"
-            Visible="false" runat="server"><li>Request a Refund</li></asp:HyperLink>
+        
         <asp:HyperLink ID="hlViewAccountHistory" NavigateUrl="~/financial/AccountHistory.aspx"
             runat="server"><li>View Account History</li></asp:HyperLink>
     </ul>

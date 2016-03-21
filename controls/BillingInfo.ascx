@@ -13,7 +13,7 @@
         <asp:Repeater ID="rptSavedPaymentOptions" runat="server" OnItemDataBound="rptSavedPaymentOptions_OnItemDataBound">
             <ItemTemplate>
                 <asp:RadioButton ID="rbSavedPaymentMethod" GroupName="PaymentType" runat="server"
-                    onchange='updatePaymentPanels("savedpayment");' />
+                    onchange='updatePaymentPanels("savedpayment");' onClick='updatePaymentPanels("savedpayment");' />
                 <asp:HiddenField ID="hfPaymentMethodID" runat="server" />
                 <br />
             </ItemTemplate>
@@ -26,7 +26,7 @@
     <div id="divNewCreditCard" runat="server">
         <h3>
             <asp:RadioButton ID="rbNewCard" runat="server" Text="Pay With a New Credit/Debit Card"
-                GroupName="PaymentType" onchange='updatePaymentPanels("newcreditcard");' />
+                GroupName="PaymentType" onchange='updatePaymentPanels("newcreditcard");' onClick="updatePaymentPanels('newcreditcard');"/>
         </h3>
         <div id="divNewCreditCardPanel" runat="server" style="border: 1px solid #C0C0C0;
             padding: 5px; margin-bottom: 20px; display: none; width: 450px">
@@ -39,7 +39,7 @@
                         Card Number: <span class="requiredField">*</span>
                     </td>
                     <td>
-                        <asp:TextBox ID="tbCardNumber" CssClass="inputText" runat="server" autocomplete="off" />
+                        <asp:TextBox ID="tbCardNumber" CssClass="inputText  cc-number" runat="server" autocomplete="off" />
                         <asp:RequiredFieldValidator ID="rfvCreditCardNumber" runat="server" ControlToValidate="tbCardNumber"
                             Enabled="false" Display="None" ErrorMessage="You have not entered a credit card number."
                             EnableClientScript="false" />
@@ -83,8 +83,8 @@
     </div>
     <div id="divNewChecking" runat="server">
         <h3>
-            <asp:RadioButton ID="rbNewChecking" runat="server" Text="Pay With Your Checking Account"
-                GroupName="PaymentType" onchange='updatePaymentPanels("newchecking");' /></h3>
+            <asp:RadioButton ID="rbNewChecking" runat="server" Text="Pay With Your Bank Account"
+                GroupName="PaymentType" onchange='updatePaymentPanels("newchecking");'  onclick='updatePaymentPanels("newchecking");'/></h3>
         <div id="divNewCheckingPanel" runat="server" style="border: 1px solid #C0C0C0; padding: 5px;
             display: none; margin-bottom: 20px; width: 450px">
             <img src="/images/check_example.gif" />
@@ -99,7 +99,7 @@
                 </tr>
                 <tr>
                     <td style="width: 50px">
-                        <asp:TextBox ID="tbRoutingNumber" runat="server" autocomplete="off" />
+                        <asp:TextBox ID="tbRoutingNumber" runat="server" CssClass="inputText rtn-number" autocomplete="off" />
                         <asp:RegularExpressionValidator ID="revRoutingNumber" ValidationExpression="^((0[0-9])|(1[0-2])|(2[1-9])|(3[0-2])|(6[1-9])|(7[0-2])|80)([0-9]{7})$"
                             ControlToValidate="tbRoutingNumber" Display="None" ErrorMessage="Please enter a valid nine digit routing number"
                             EnableClientScript="false" Enabled="false" runat="server" />
@@ -107,13 +107,14 @@
                             Display="None" ErrorMessage="You have not entered a routing number." EnableClientScript="false" />
                     </td>
                     <td>
-                        <asp:TextBox ID="tbBankAccountNumber" runat="server" autocomplete="off" />
+                        <asp:TextBox ID="tbBankAccountNumber" runat="server" CssClass="inputText ba-number" autocomplete="off" />
                         <asp:RequiredFieldValidator ID="rfvBankAccountNumber" runat="server" ControlToValidate="tbBankAccountNumber"
                             Display="None" ErrorMessage="You have not entered a bank account number." EnableClientScript="false" />
                     </td>
                 </tr>
                 <tr>
                     <td style="width: 50px">
+                        Bank Account Type <span class="requiredField">*</span>
                     </td>
                     <td>
                         Confirm Bank Account Number <span class="requiredField">*</span>
@@ -121,9 +122,13 @@
                 </tr>
                 <tr>
                     <td style="width: 50px">
+                        <asp:DropDownList runat="server" ID="rblBankAccountType" CssClass="ba-type">
+                            <asp:ListItem Text="Checking" Value="checking" Selected="True" />
+                            <asp:ListItem Text="Savings" Value="savings" />
+                        </asp:DropDownList>                        
                     </td>
                     <td>
-                        <asp:TextBox ID="tbBankAccountNumberConfirm" runat="server" autocomplete="off" />
+                        <asp:TextBox ID="tbBankAccountNumberConfirm" runat="server" CssClass="inputText ba-number-confirm" autocomplete="off" />                       
                         <asp:CompareValidator ID="cvAccountNumber" ControlToValidate="tbBankAccountNumberConfirm"
                             ControlToCompare="tbBankAccountNumber" Display="None" ErrorMessage="The second bank account number you entered for confirmation does not match the first."
                             EnableClientScript="false" Enabled="false" runat="server" />
@@ -141,7 +146,7 @@
     <div id="divPayrollDeduction" runat="server">
         <h3>
             <asp:RadioButton ID="rbPayrollDeduction" runat="server" Text="Pay With Payroll Deduction"
-                GroupName="PaymentType" onchange='updatePaymentPanels("payrolldeduction");' /></h3>
+                GroupName="PaymentType" onchange='updatePaymentPanels("payrolldeduction");' onclick="updatePaymentPanels('payrolldeduction');" /></h3>
         <div id="divPayrollDeductionPanel" runat="server" style="border: 1px solid #C0C0C0;
             padding: 5px; margin-bottom: 20px; display: none; width: 450px">
             <asp:Literal ID="lPayrollDeductionWaiver" runat="server">
@@ -187,7 +192,7 @@ no further deduction shall be made.
                 <ItemTemplate>
                     <tr style="vertical-align: top; margin-top: 20px">
                         <td style="width: 30px">
-                            <asp:RadioButton ID="rbAddress" runat="server" onchange="updateBillingAddress();" />
+                            <asp:RadioButton ID="rbAddress" runat="server" onchange="updateBillingAddress();" onclick="updateBillingAddress();" />
                         </td>
                         <td>
                             <asp:Literal ID="lAddress" runat="server" />
@@ -197,13 +202,13 @@ no further deduction shall be made.
             </asp:Repeater>
             <tr style="vertical-align: top; margin-top: 20px">
                 <td style="width: 30px">
-                    <asp:RadioButton ID="rbNewBillingAddress" GroupName="BillingAddress" onchange="updateBillingAddress();"
+                    <asp:RadioButton ID="rbNewBillingAddress" GroupName="BillingAddress" onchange="updateBillingAddress();" onclick="updateBillingAddress();"
                         runat="server" />
                 </td>
                 <td>
                     Enter a new address:
                     <div id="newBillingAddress" runat="server" style="display: none">
-                        <cc1:AddressControl ID="acBillingAddress" IsRequired="false" EnableValidation="False"
+                        <cc1:AddressControl ID="acBillingAddress" IsRequired="false" EnableValidation="True"
                             runat="server" />
                     </div>
                 </td>
@@ -246,7 +251,11 @@ no further deduction shall be made.
             if (divBillMeLaterPanel != null) divBillMeLaterPanel.style.display = 'none';
             if (divPayrollDeductionPanel != null) divPayrollDeductionPanel.style.display = 'none';
             if (divBillingAddress != null) divBillingAddress.style.display = 'none';
-
+            $('.cc-number').val('');
+            $('.ba-number').val('');
+            $('.ba-number-confirm').val('');
+            $('.rtn-number').val('');
+            // alert(currentPanel);
             switch (currentPanel) {
                 case 'newcreditcard':
                     divNewCreditCardPanel.style.display = '';
@@ -290,15 +299,14 @@ no further deduction shall be made.
         }
         jQuery(document).ready(function ($) {
             var rbNewCard = document.getElementById('<%= rbNewCard.ClientID %>');
-            $("#divWithGridViewOrRepeater input:radio").attr("name", rbNewCard.name);
+            if(rbNewCard) $("#divWithGridViewOrRepeater input:radio").attr("name", rbNewCard.name);
 
             var rbNewBillingAddress = document.getElementById('<%= rbNewBillingAddress.ClientID %>');
-            $("#billingAddresses input:radio").attr("name", rbNewBillingAddress.name);
+            if (rbNewBillingAddress) $("#billingAddresses input:radio").attr("name", rbNewBillingAddress.name);
 
             updatePaymentPanels();
             updateBillingAddress();
-        });   
+        });
 
-     
     </script>
 </telerik:RadCodeBlock>

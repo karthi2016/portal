@@ -92,6 +92,8 @@ public partial class competitions_ViewCompetitionEntry : PortalPage
 
         hlBackToJudging.NavigateUrl = string.Format("JudgeEntries.aspx?contextID={0}&roundID={1}",
                                                     Request.QueryString["teamID"], targetCompetitionEntry.JudgingRound);
+
+        PageTitleExtension.Text = targetCompetition.Name;
     }
 
     #endregion
@@ -100,10 +102,10 @@ public partial class competitions_ViewCompetitionEntry : PortalPage
 
     protected void loadDataFromConcierge()
     {
-        List<Search> searches = new List<Search>();
+        var searches = new List<Search>();
         
-        //Competition Entry with expanded reference fields
-        Search sCompetitionEntry = new Search(msCompetitionEntry.CLASS_NAME)
+        // Competition Entry with expanded reference fields
+        var sCompetitionEntry = new Search(msCompetitionEntry.CLASS_NAME)
                                        {
                                            ID = msCompetitionEntry.CLASS_NAME
                                        };
@@ -120,8 +122,8 @@ public partial class competitions_ViewCompetitionEntry : PortalPage
 
         searches.Add(sCompetitionEntry);
 
-        //Scores
-        Search sScoreCards = new Search(msScoreCard.CLASS_NAME)
+        // Scores
+        var sScoreCards = new Search(msScoreCard.CLASS_NAME)
                                  {
                                      ID = msScoreCard.CLASS_NAME
                                  };
@@ -133,16 +135,16 @@ public partial class competitions_ViewCompetitionEntry : PortalPage
 
         searches.Add(sScoreCards);
 
-        List<SearchResult> searchResults = ExecuteSearches(searches, 0, null);
+        var searchResults = APIExtensions.GetMultipleSearchResults(searches, 0, null);
 
-        SearchResult srCompetitionEntries = searchResults.Single(x => x.ID == msCompetitionEntry.CLASS_NAME);
+        var srCompetitionEntries = searchResults.Single(x => x.ID == msCompetitionEntry.CLASS_NAME);
         if (srCompetitionEntries.Table != null && srCompetitionEntries.Table.Rows.Count > 0)
             drCompetitionEntry = srCompetitionEntries.Table.Rows[0];
 
-        //Calculate average and total scores
+        // Calculate average and total scores
         totalScore = averageScore = 0;
 
-        SearchResult srScoreCards = searchResults.Single(x => x.ID == msScoreCard.CLASS_NAME);
+        var srScoreCards = searchResults.Single(x => x.ID == msScoreCard.CLASS_NAME);
         if(srScoreCards.Table != null)
         {
             foreach (DataRow drScoreCard in srScoreCards.Table.Rows)

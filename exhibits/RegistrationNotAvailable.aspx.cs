@@ -28,5 +28,7 @@ public partial class exhibits_RegistrationNotAvailable : PortalPage
         base.InitializePage();
         lblExhibitorName.Text = string.Format("#{0} - {1}",
             targetEntity.LocalID, targetEntity.Name);
+
+        CustomTitle.Text = string.Format("{0}", targetShow.Name);
     }
 }

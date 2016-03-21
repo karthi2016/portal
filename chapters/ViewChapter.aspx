@@ -11,8 +11,7 @@
 <asp:Content ID="Content3" ContentPlaceHolderID="BreadcrumbBar" runat="Server">
 </asp:Content>
 <asp:Content ID="Content4" ContentPlaceHolderID="PageTitle" runat="Server">
-    <%=GetSearchResult( drTargetChapter, "Name", null ) %>
-    Chapter
+    <asp:Literal runat="server" ID="CustomTitle"></asp:Literal>
 </asp:Content>
 <asp:Content ID="Content5" ContentPlaceHolderID="TopRightContent" runat="Server">
 </asp:Content>

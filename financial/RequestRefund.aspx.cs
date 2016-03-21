@@ -46,6 +46,14 @@ public partial class financial_RequestRefund : PortalPage
         targetRefund.Date = DateTime.UtcNow;
     }
 
+    protected override void InitializePage()
+    {
+        base.InitializePage();
+
+        if (CurrentEntity.ID != targetEntity.ID)
+            PageTitleExtension.Text = string.Format("for {0}", targetEntity.Name);
+    }
+
     #endregion
 
     #region Data Binding
@@ -89,7 +97,7 @@ public partial class financial_RequestRefund : PortalPage
         sCredits.AddCriteria(Expr.Equals("BillTo.ID", targetEntity.ID));
         sCredits.AddCriteria(Expr.IsGreaterThan("AmountAvailable", 0));
 
-        SearchResult srCredits = ExecuteSearch(sCredits, 0, null);
+        SearchResult srCredits = APIExtensions.GetSearchResult(sCredits, 0, null);
         dvCredits = new DataView(srCredits.Table);
 
         object objAvailable = srCredits.Table.Compute("SUM(AmountAvailable)", null);

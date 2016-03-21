@@ -74,6 +74,8 @@ public partial class events_ManageGroupRegistration : PortalPage
 
             lblGroupRegStatus.Text = string.Format("Open until {0:d}", dt);
         }
+
+        CustomTitle.Text = string.Format("{0} Group Registration - {1}", targetEvent.Name, targetOrganization.Name);
     }
 
     private void initializeRegistrations()
@@ -88,7 +90,7 @@ public partial class events_ManageGroupRegistration : PortalPage
         s.AddOutputColumn("Owner.LocalID");
         s.AddOutputColumn(msRegistrationBase.FIELDS.CancellationDate);
 
-        var dt = ExecuteSearch(s, 0, null).Table;
+        var dt = APIExtensions.GetSearchResult(s, 0, null).Table;
         dt.Columns.Add("Status");
 
         foreach (DataRow dr in dt.Rows)

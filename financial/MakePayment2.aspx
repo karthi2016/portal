@@ -9,8 +9,16 @@
             display: none;
         }
     </style>
-    <script type="text/javascript" src="/js/priorityPaymentsScript/jquery-2.1.3.min.js"></script>
-    <script type="text/javascript" src="/js/priorityPaymentsScript/membersuite.payment-processor.min.js"></script>
+    
+    <script type="text/javascript" src="/js/priorityPaymentsScript/payment-processor-jquery.js"></script>
+    
+    <script type="text/javascript" src="/js/priorityPaymentsScript/membersuite.payment-processor.API.js"></script>
+    <script type="text/javascript" src="/js/priorityPaymentsScript/priorityPayment.logger.js"></script>
+    <script type="text/javascript" src="/js/priorityPaymentsScript/cardType-util.js"></script>
+    <script type="text/javascript" src="/js/priorityPaymentsScript/priorityPayment.ajaxAPI.js"></script>
+    <script type="text/javascript" src="/js/priorityPaymentsScript/membersuite.payment-processor-1.0.js"></script>
+    
+<%--    <script type="text/javascript" src="/js/priorityPaymentsScript/membersuite.payment-processor.min.js"></script>--%>
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="TopMenu" runat="Server">
 </asp:Content>
@@ -43,7 +51,7 @@
     <hr style="width: 100%" />
     <div style="text-align: center">
         <asp:Button ID="btnContinue" runat="server" Text="Process Payment" OnClick="btnContinue_Click" CssClass="save-token none"/>
-        <input onclick="javascript: requestToken()" type="button" value="Process Payment" />
+        <input onclick="javascript: requestToken();" type="button" value="Process Payment" />
         or
         <asp:LinkButton ID="lbCancel" runat="server" Text="Cancel This Payment" OnClick="lbCancel_Click" />
     </div>
@@ -68,16 +76,23 @@
             };
 
             var hasCCNum = $('[id$="tbCardNumber"]').val() != '';
+            var hasBANum = $('[id$="tbBankAccountNumber]').val() != '';
 
-            if (!hasCCNum || !isPP) {
+            if (!(hasCCNum || hasBANum) || !isPP) {
                 $(saveBtnId).trigger('click');
                 return false;
             };
 
-            var $cardNumberElem = $('.cc-number');
-            var $expiryMonthElem = $('.mypMonth');
-            var $expiryYearElem = $('.mypYear');
-            var id = $('[id$="hfOrderBillToId"').val();
+            if (!config.State) {
+                config.State = 'No State/Province';
+            }
+
+            var id = $('[id$="hfOrderBillToId"]').val();
+
+            if (hasCCNum) {
+                var $cardNumberElem = $('.cc-number');
+                var $expiryMonthElem = $('.mypMonth');
+                var $expiryYearElem = $('.mypYear');
 
             var parms = {
                 ppConfig: config,
@@ -90,7 +105,34 @@
                 }
             }
 
-            membersuite.paymentProcessor.init(parms);
+                membersuite.paymentProcessor.init(parms);
+            } else if (hasBANum) {
+                var $bankAccElement = $('.ba-number');
+                var $bankAccElementConfirm = $('.ba-number-confirm');
+                var $rtnNumElement = $('.rtn-number');
+                var $bankAccTypeElement = $('.ba-type');
+
+                if ($bankAccElementConfirm.length > 0 && ($bankAccElement.val() != $bankAccElementConfirm.val())) {
+                    $(saveBtnId).trigger('click');
+
+                    return false;
+                }
+
+                var parms = {
+                    ppConfig: config,
+                    msConfig: {
+                        guid: id,
+                        $bankAccElement: $bankAccElement,
+                        $rtnNumElement: $rtnNumElement,
+                        $bankAccTypeElement: $bankAccTypeElement,
+                        $bankAccElementConfirm: $bankAccElementConfirm,
+                        saveBtnId: saveBtnId                        
+                    }
+                }
+
+                membersuite.paymentProcessor.init(parms);
+            }
+
             return false;
         };
     </script>

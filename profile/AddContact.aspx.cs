@@ -47,6 +47,11 @@ public partial class profile_AddContact : PortalPage
         base.InitializeTargetObject();
 
         targetOrganization = string.IsNullOrWhiteSpace(ContextID) ? ConciergeAPI.CurrentEntity.ConvertTo<msOrganization>() : LoadObjectFromAPI<msOrganization>(ContextID);
+
+        if (targetOrganization == null || targetOrganization.ClassType != msOrganization.CLASS_NAME)
+        {
+            GoToMissingRecordPage();
+        }
     }
 
     /// <summary>
@@ -68,6 +73,8 @@ public partial class profile_AddContact : PortalPage
             ddlRelationshipType.DataSource = dvRelationshipTypes;
             ddlRelationshipType.DataBind();
         }
+
+        PageTitleExtension.Text = targetOrganization.Name;
     }
 
     /// <summary>
@@ -119,7 +126,7 @@ public partial class profile_AddContact : PortalPage
         sRelationshipTypes.AddSortColumn("DisplayOrder");
         sRelationshipTypes.AddSortColumn("Name");
 
-        SearchResult srRelationshipTypes = ExecuteSearch(sRelationshipTypes, 0, null);
+        SearchResult srRelationshipTypes = APIExtensions.GetSearchResult(sRelationshipTypes, 0, null);
         dvRelationshipTypes = new DataView(srRelationshipTypes.Table);
     }
 
@@ -143,7 +150,7 @@ public partial class profile_AddContact : PortalPage
         sIndividual.AddSortColumn("LastName");
         sIndividual.AddSortColumn("FirstName");
 
-        SearchResult srIndividual = ExecuteSearch(sIndividual, 0, null);
+        SearchResult srIndividual = APIExtensions.GetSearchResult(sIndividual, 0, null);
 
         if (srIndividual.Table.Rows.Count > 0)
          return LoadObjectFromAPI<msIndividual>(srIndividual.Table.Rows[0]["ID"].ToString());
@@ -171,7 +178,7 @@ public partial class profile_AddContact : PortalPage
         sRelationship.AddCriteria(Expr.Equals("IsActive", true));
         sRelationship.AddSortColumn("ID");
 
-        SearchResult srRelationship = ExecuteSearch(sRelationship, 0, null);
+        SearchResult srRelationship = APIExtensions.GetSearchResult(sRelationship, 0, null);
 
         return srRelationship.TotalRowCount > 0;
     }
@@ -202,25 +209,20 @@ public partial class profile_AddContact : PortalPage
 
                 targetIndividual = unbindAndSearch(targetEmailAddress);
 
-                // check restriction
-                using (var api = GetServiceAPIProxy())
+                try
                 {
-                    var restriction =
-                        api.GetApplicableOrganizationContactRestriction(targetOrganization.ID, targetRelationshipType.ID)
-                           .ResultValue;
-
-                    if (restriction != null && restrictionHasBeenViolated(restriction.ConvertTo<msOrganizationContactRestriction>()))
-                    {
-
-                        cvContactRestriction.ErrorMessage = restriction.SafeGetValue<string>("ErrorMessage") ??
-                                                            "Unable to add contact - a restriction is in place: " +
-                                                            restriction["Name"];
-                        
-                        cvContactRestriction.IsValid = false;
-                        e.Cancel = true;
-                        return;
-                    }
+                    CRMLogic.ErrorOutIfOrganizationContactRestrictionApplies(
+                        targetOrganization.ID,
+                        targetRelationshipType.ID);
                 }
+                catch (Exception ex)
+                {
+                    cvContactRestriction.ErrorMessage = ex.Message;
+                    cvContactRestriction.IsValid = false;
+                    e.Cancel = true;
+                    return;
+                }
+
                 if(targetIndividual != null)
                 {
                     if(activeRelationshipExists(targetOrganization, targetIndividual, targetRelationshipType))
@@ -232,9 +234,6 @@ public partial class profile_AddContact : PortalPage
                         e.Cancel = true;
                         return;
                     }
-
-                  
-
 
                     MultiStepWizards.AddContact.Individual = targetIndividual;
                     wizAddContact.ActiveStepIndex = 2;
@@ -294,15 +293,6 @@ public partial class profile_AddContact : PortalPage
             string.Format("{0}?contextID{1}", nextUrl, ContextID);
 
         GoTo(nextUrl, string.Format("{0} has been successfully linked to {1}.", targetIndividual.Name, targetOrganization.Name));
-    }
-
-    private bool restrictionHasBeenViolated(msOrganizationContactRestriction restrictionToCheck)
-    {
-        return CRMLogic.HasOrganizationContactRetrictionBeenViolated(restrictionToCheck, targetOrganization,
-                                                                     targetIndividual);
-
-
-
     }
 
     #endregion

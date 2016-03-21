@@ -88,6 +88,9 @@ public partial class events_BrowseEvents : PortalPage
             rptEvents.Visible = false;
             lNoUpcomingEvents.Visible = true;
         }
+
+        if (targetCategory != null)
+            PageTitleExtension.Text = string.Format(" - {0}", targetCategory.Name);
     }
 
     private List<msEventCategory> _getCategoryListFor(List<string> distinctCategories)
@@ -167,7 +170,7 @@ public partial class events_BrowseEvents : PortalPage
         // it's not over
         s.AddCriteria(Expr.IsGreaterThan("EndDate", DateTime.Now));
 
-        var searchResult = ExecuteSearch(s, 0, null);
+        var searchResult = APIExtensions.GetSearchResult(s, 0, null);
         var dt = searchResult.Table;
 
         // now, let's pull upcoming exhibit shows that are NOT tied to an event
@@ -199,7 +202,7 @@ public partial class events_BrowseEvents : PortalPage
                 else
                     se.AddCriteria(Expr.IsBlank("Category"));
 
-            var shows = ExecuteSearch(se, 0, null).Table;
+            var shows = APIExtensions.GetSearchResult(se, 0, null).Table;
             
             foreach (DataRow dr in shows.Rows) // this ONLY works because the columns are the same!
                 dt.ImportRow(dr);
@@ -214,7 +217,7 @@ public partial class events_BrowseEvents : PortalPage
             Search sInvitees = new Search("EventInvitee");
             sInvitees.AddOutputColumn("Event");
             sInvitees.AddCriteria(Expr.Equals("Invitee", ConciergeAPI.CurrentEntity.ID));
-            dtInvitations = ExecuteSearch(sInvitees, 0, null).Table;
+            dtInvitations = APIExtensions.GetSearchResult(sInvitees, 0, null).Table;
         }
 
 

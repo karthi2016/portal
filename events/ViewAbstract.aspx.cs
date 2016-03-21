@@ -33,7 +33,7 @@ public partial class events_ViewAbstract : PortalPage
     {
         base.InitializeTargetObject();
 
-        //Have to get the actual MemberSuiteObject for the custom fields
+        // Have to get the actual MemberSuiteObject for the custom fields
         targetAbstract = LoadObjectFromAPI<msAbstract>(ContextID);
 
         if(targetAbstract == null)
@@ -43,17 +43,17 @@ public partial class events_ViewAbstract : PortalPage
         }
         
        
-        Search s = new Search(msAbstract.CLASS_NAME);
+        var s = new Search(msAbstract.CLASS_NAME);
         s.AddCriteria(Expr.Equals("ID", ContextID));
         s.AddOutputColumn("Event.Name");
         s.AddOutputColumn("Status.Name");
 
-        Search s2 = new Search("AbstractSessionTrack");
+        var s2 = new Search("AbstractSessionTrack");
         s2.AddCriteria(Expr.Equals("Abstract", ContextID));
         s2.AddOutputColumn("SessionTrack.Name");
         s2.AddSortColumn("SessionTrack.Name");
 
-        var results = ExecuteSearches( new List<Search>{ s, s2 }, 0, 1);
+        var results = APIExtensions.GetMultipleSearchResults(new List<Search> { s, s2 }, 0, 1);
         if (results[0].TotalRowCount == 0) GoToMissingRecordPage();
 
         targetAbstractRow = results[0].Table.Rows[0];
@@ -74,6 +74,8 @@ public partial class events_ViewAbstract : PortalPage
         base.InitializePage();
 
         setupTracks();
+
+        CustomTitle.Text = string.Format("{0}", targetAbstract.Name);
     }
 
     protected override bool CheckSecurity()
@@ -91,7 +93,7 @@ public partial class events_ViewAbstract : PortalPage
     {
         cfsAbstractCustomFields.MemberSuiteObject = targetAbstract;
 
-        var pageLayout = GetAppropriatePageLayout(targetAbstract);
+        var pageLayout = targetAbstract.GetAppropriatePageLayout();
         divAdditionalInfo.Visible =
             !(pageLayout == null || pageLayout.Metadata == null || pageLayout.Metadata.IsEmpty());
 
@@ -99,7 +101,7 @@ public partial class events_ViewAbstract : PortalPage
             return;
 
         // setup the metadata
-        cfsAbstractCustomFields.Metadata = proxy.DescribeObject(msAbstract.CLASS_NAME).ResultValue;
+        cfsAbstractCustomFields.Metadata = targetAbstract.DescribeObject();
         cfsAbstractCustomFields.PageLayout = pageLayout.Metadata;
 
         cfsAbstractCustomFields.AddReferenceNamesToTargetObject(proxy);

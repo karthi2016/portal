@@ -16,6 +16,13 @@ public partial class profile_ChangePassword : PortalPage
             return false;
         }
     }
+    protected string NextUrl
+    {
+        get
+        {
+            return Request.QueryString["n"];
+        }
+    }
 
     #endregion
 
@@ -39,7 +46,15 @@ public partial class profile_ChangePassword : PortalPage
 
         ConciergeAPI.CurrentUser.MustChangePassword = false;
 
-        GoHome("Your password has been changed successfully.");
+        QueueBannerMessage("Your password has been changed successfully.");
+
+        // allow us to bypass multiple identity check by explicitly redirecting to "/" from Profile Widget
+        if (string.IsNullOrWhiteSpace(NextUrl))
+        {
+            CRMLogic.CheckToSeeIfMultipleIdentitiesAreAccessible();
+        }
+
+        GoTo(!string.IsNullOrWhiteSpace(NextUrl) ? NextUrl : "/");
     }
 
     protected void cvPasswordValidator_Validate(object source, ServerValidateEventArgs args)

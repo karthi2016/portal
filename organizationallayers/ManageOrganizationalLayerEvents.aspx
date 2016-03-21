@@ -9,7 +9,7 @@
 <a href="/organizationalLayers/ViewOrganizationalLayer.aspx?contextID=<%=targetOrganizationalLayer.ID %>"><%=targetOrganizationalLayer.Name%> ></a>
 </asp:Content>
 <asp:Content ID="Content4" ContentPlaceHolderID="PageTitle" runat="Server">
-    Manage <%=GetSearchResult( drTargetOrganizationalLayerType, "Name", null ) %> Events
+    Manage <asp:Literal runat="server" ID="PageTitleExtension"></asp:Literal>
 </asp:Content>
 <asp:Content ID="Content5" ContentPlaceHolderID="TopRightContent" runat="Server">
 </asp:Content>

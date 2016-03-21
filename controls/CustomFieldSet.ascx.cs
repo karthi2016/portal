@@ -113,9 +113,6 @@ public partial class controls_CustomFieldSet : System.Web.UI.UserControl, IContr
     }
     private void _renderControls(ViewMetadata.ControlSection section, PlaceHolder container)
     {
-        HtmlTable ht = new HtmlTable();
-        container.Controls.Add(ht);
-
         if (section.LeftControls == null) section.LeftControls = new List<ControlMetadata>();
         if (section.RightControls == null) section.RightControls = new List<ControlMetadata>();
 
@@ -129,6 +126,9 @@ public partial class controls_CustomFieldSet : System.Web.UI.UserControl, IContr
         rightControls.RemoveAll(x => !x.Enabled);
 
         int maxRows = leftControls.Count > rightControls.Count ? leftControls.Count : rightControls.Count;
+        var ht = new HtmlTable();
+        if (maxRows > 0)
+            container.Controls.Add(ht);
 
         for (int i = 0; i <= maxRows; i++)
         {
@@ -179,20 +179,16 @@ public partial class controls_CustomFieldSet : System.Web.UI.UserControl, IContr
         }
         if (fieldMeta == null && control.DisplayType == null) return;
 
-        if (fieldMeta != null)
-            if (EditMode)
-            {
-                if (fieldMeta.PortalAccessibility != PortalAccessibility.Full) return; // we can't show it
-            }
-            else
-            {
-                if (fieldMeta.PortalAccessibility == PortalAccessibility.None) return; // we can't;
-            }
+        if (fieldMeta != null && fieldMeta.PortalAccessibility == PortalAccessibility.None)
+        {
+            // Cannot display at all
+            return;
+        }
 
         if (fieldMeta == null)
             manager = ControlManagerResolver.Resolve(control.DisplayType.Value);
         else
-            manager = EditMode ? ControlManagerResolver.Resolve(fieldMeta.DisplayType) : new LabelControlManager(SuppressNullLabelReplacement);
+            manager = EditMode && fieldMeta.PortalAccessibility == PortalAccessibility.Full ? ControlManagerResolver.Resolve(fieldMeta.DisplayType) : new LabelControlManager(SuppressNullLabelReplacement);
 
         manager.IsInPortal = true;
         manager.Initialize(this, control);

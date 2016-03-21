@@ -24,7 +24,7 @@ public partial class discussions_ViewPostsPendingApproval : DiscussionsPage
     {
         base.InitializeTargetObject();
 
-        MemberSuiteObject targetObject = LoadObjectFromAPI(ContextID);
+        var targetObject = APIExtensions.LoadObjectFromAPI(ContextID);
 
         if (targetObject == null)
         {
@@ -117,7 +117,7 @@ public partial class discussions_ViewPostsPendingApproval : DiscussionsPage
         sDiscussionPosts.AddSortColumn("CreatedDate", true);
         sDiscussionPosts.AddSortColumn("Name");
 
-        SearchResult srDiscussionPosts = ExecuteSearch(proxy, sDiscussionPosts, PageStart, PAGE_SIZE);
+        SearchResult srDiscussionPosts = proxy.GetSearchResult(sDiscussionPosts, PageStart, PAGE_SIZE);
         dtPostsPendingApproval = srDiscussionPosts.Table;
 
         for (int i = 0; i < dtPostsPendingApproval.Columns.Count; i++)
@@ -179,7 +179,7 @@ public partial class discussions_ViewPostsPendingApproval : DiscussionsPage
                 using (IConciergeAPIService proxy = GetConciegeAPIProxy())
                 {
                     if (!string.IsNullOrWhiteSpace(discussionPost.PostedBy))
-                        proxy.SendEmail(EmailTemplates.Discussions.DiscussionPostApproval, new List<string> {discussionPost.ID}, null);
+                        proxy.SendTransactionalEmail(EmailTemplates.Discussions.DiscussionPostApproval,  discussionPost.ID, null);
                     proxy.SendEmailsToSubscribedEntities(discussionPost.ID);
                 }
                 QueueBannerMessage("The selected post has been approved");
@@ -192,7 +192,7 @@ public partial class discussions_ViewPostsPendingApproval : DiscussionsPage
                 {
                     using (IConciergeAPIService proxy = GetConciegeAPIProxy())
                     {
-                        proxy.SendEmail(EmailTemplates.Discussions.DiscussionPostRejection, new List<string> {discussionPost.ID}, null);
+                        proxy.SendTransactionalEmail(EmailTemplates.Discussions.DiscussionPostRejection,   discussionPost.ID , null);
                     }
                 }
                 QueueBannerMessage("The selected post has been rejected");

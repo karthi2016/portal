@@ -44,7 +44,7 @@ public partial class donations_ViewGift : PortalPage
         s.AddOutputColumn("MasterGift.ID");
 
         s.AddOutputColumn("Date");
-        s.AddOutputColumn("Amount");
+        s.AddOutputColumn("Total");
         s.AddOutputColumn("PaymentMethod");
         s.AddOutputColumn("Fund.Name");
         s.AddOutputColumn("SavedPaymentMethod.Name");
@@ -55,7 +55,7 @@ public partial class donations_ViewGift : PortalPage
         s.AddOutputColumn("BalanceDue");
         s.AddOutputColumn("DateOfInstallmentSuspension");
 
-        dr = ExecuteSearch(s, 0, 1).Table.Rows[0];
+        dr = APIExtensions.GetSearchResult(s, 0, 1).Table.Rows[0];
 
         pnlRecurring.Visible = dr["NextTransactionDue"] != DBNull.Value;
         pnlInstallmentHistory.Visible = targetGift.Installments != null && targetGift.Installments.Count > 0;
@@ -84,6 +84,8 @@ public partial class donations_ViewGift : PortalPage
 
         hlUpdatePaymentMethod2.NavigateUrl = hlUpdatePaymentMethod.NavigateUrl = string.Format("/orders/updatebillinginformation.aspx?contextID={0}&returnURL={1}",
                                                            ContextID, HttpUtility.UrlEncode( Request.Url.ToString()));
+
+        PageTitleExtension.Text = targetGift.Name;
     }
 
     protected void rgInstallments_OnNeedDataSource(object sender, GridNeedDataSourceEventArgs e)

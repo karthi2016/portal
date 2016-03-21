@@ -63,6 +63,8 @@ public partial class organizationalLayers_EditOrganizationalLayerInfo : PortalPa
         reDescription.NewLineBr = false;
 #pragma warning restore 0618
         bindObjectToPage();
+
+        PageTitleExtension.Text = string.Format("{0} Information", GetSearchResult(drTargetOrganizationalLayerType, "Name", null));
     }
 
     protected override bool CheckSecurity()
@@ -89,7 +91,7 @@ public partial class organizationalLayers_EditOrganizationalLayerInfo : PortalPa
         // important - custom fields need to know who their context is
         cfsOrganizationalLayerFields.MemberSuiteObject = targetOrganizationalLayer;
 
-        var pageLayout = GetAppropriatePageLayout(targetOrganizationalLayer);
+        var pageLayout = targetOrganizationalLayer.GetAppropriatePageLayout();
         if (pageLayout == null || pageLayout.Metadata == null || pageLayout.Metadata.IsEmpty())
         {
             divOtherInformation.Visible = false;
@@ -97,7 +99,7 @@ public partial class organizationalLayers_EditOrganizationalLayerInfo : PortalPa
         }
 
         // setup the metadata
-        cfsOrganizationalLayerFields.Metadata = proxy.DescribeObject(msOrganizationalLayer.CLASS_NAME).ResultValue;
+        cfsOrganizationalLayerFields.Metadata = targetOrganizationalLayer.DescribeObject();
         cfsOrganizationalLayerFields.PageLayout = pageLayout.Metadata;
 
         cfsOrganizationalLayerFields.Render();

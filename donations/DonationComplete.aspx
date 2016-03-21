@@ -8,17 +8,15 @@
 <asp:Content ID="Content3" ContentPlaceHolderID="BreadcrumbBar" runat="Server">
 </asp:Content>
 <asp:Content ID="Content4" ContentPlaceHolderID="PageTitle" runat="Server">
-    Donation #<%=targetOrder.LocalID %>
-    Completed Successfully
+    Donation #<asp:Literal runat="server" ID="PageTitleExtension"></asp:Literal>
 </asp:Content>
 <asp:Content ID="Content5" ContentPlaceHolderID="TopRightContent" runat="Server">
 </asp:Content>
 <asp:Content ID="Content6" ContentPlaceHolderID="PageContent" runat="Server">
     Donation #<%=targetOrder.LocalID%>
     has been processed successfully. Thank you for your support!
-    <%
-        if (!string.IsNullOrWhiteSpace(targetOrder.BillingEmailAddress))%>
-    A confirmation email has been sent to <%=targetOrder.BillingEmailAddress%>.
+    
+    A confirmation email has been sent to your email account.
     <asp:Literal ID="PageText" runat="server"/>
 
     <div class="section" style="margin-top: 10px" id="divTasks" runat="server">

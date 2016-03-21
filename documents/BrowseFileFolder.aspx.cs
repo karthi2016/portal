@@ -6,7 +6,6 @@ using System.Web.UI;
 using System.Web.UI.WebControls;
 using MemberSuite.SDK.Concierge;
 using MemberSuite.SDK.Types;
-using MemberSuite.SDK.WCF;
 
 public partial class documents_BrowseFileFolder :  PortalPage 
 {

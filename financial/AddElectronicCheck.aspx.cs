@@ -6,8 +6,17 @@ using System.Web.UI;
 using System.Web.UI.WebControls;
 using MemberSuite.SDK.Types;
 
-public partial class financial_AddElectronicCheck : PortalPage 
+public partial class financial_AddElectronicCheck : CreditCardLogic
 {
+    protected override void InitializeTargetObject()
+    {
+        base.InitializeTargetObject();
+
+        hfOrderBillToId.Value = ConciergeAPI.CurrentEntity.ID;
+
+        dvPriorityData.InnerHtml = GetPriorityPaymentsConfig(hfOrderBillToId.Value);
+    }
+
     protected void btnSaveCard_Click(object sender, EventArgs e)
     {
         if (!IsValid)

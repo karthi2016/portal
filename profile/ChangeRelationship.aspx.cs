@@ -58,8 +58,8 @@ public partial class profile_ChangeRelationship : PortalPage
             return;
         }
 
-        leftSide = LoadObjectFromAPI(targetRelationship.LeftSide);
-        rightSide = LoadObjectFromAPI(targetRelationship.RightSide);
+        leftSide = APIExtensions.LoadObjectFromAPI(targetRelationship.LeftSide);
+        rightSide = APIExtensions.LoadObjectFromAPI(targetRelationship.RightSide);
     }
 
     /// <summary>
@@ -78,6 +78,8 @@ public partial class profile_ChangeRelationship : PortalPage
         ddlRelationshipType.DataBind();
 
         BindRelationship();
+
+        PageTitleExtension.Text = string.Format("{0} and {1}", leftSide["Name"], rightSide["Name"]);
     }
 
     #endregion
@@ -92,7 +94,7 @@ public partial class profile_ChangeRelationship : PortalPage
         sRelationshipTypes.AddOutputColumn("LeftSideType");
         sRelationshipTypes.AddOutputColumn("RightSideType");
 
-        SearchOperationGroup individualGroup = new SearchOperationGroup
+        var individualGroup = new SearchOperationGroup
         {
             FieldName = "LeftSideType",
             GroupType = SearchOperationGroupType.Or
@@ -100,7 +102,7 @@ public partial class profile_ChangeRelationship : PortalPage
         individualGroup.Criteria.Add(Expr.Equals("LeftSideType", msIndividual.CLASS_NAME));
         individualGroup.Criteria.Add(Expr.Equals("RightSideType", msIndividual.CLASS_NAME));
 
-        SearchOperationGroup organizationGroup = new SearchOperationGroup
+        var organizationGroup = new SearchOperationGroup
         {
             FieldName = "RightSideType",
             GroupType = SearchOperationGroupType.Or
@@ -108,13 +110,21 @@ public partial class profile_ChangeRelationship : PortalPage
         organizationGroup.Criteria.Add(Expr.Equals("LeftSideType", msOrganization.CLASS_NAME));
         organizationGroup.Criteria.Add(Expr.Equals("RightSideType", msOrganization.CLASS_NAME));
 
+        var statusGroup = new SearchOperationGroup
+        {
+            GroupType = SearchOperationGroupType.Or
+        };
+        statusGroup.Criteria.Add(Expr.Equals("ID", targetRelationship.Type));
+        statusGroup.Criteria.Add(Expr.Equals("IsActive", true));
+
         sRelationshipTypes.AddCriteria(individualGroup);
         sRelationshipTypes.AddCriteria(organizationGroup);
+        sRelationshipTypes.AddCriteria(statusGroup);
 
         sRelationshipTypes.AddSortColumn("DisplayOrder");
         sRelationshipTypes.AddSortColumn("Name");
 
-        SearchResult srRelationshipTypes = ExecuteSearch(sRelationshipTypes, 0, null);
+        SearchResult srRelationshipTypes = APIExtensions.GetSearchResult(sRelationshipTypes, 0, null);
         dvRelationshipTypes = new DataView(srRelationshipTypes.Table);
     }
 
@@ -137,6 +147,21 @@ public partial class profile_ChangeRelationship : PortalPage
 
     protected void UnbindRelationship()
     {
+        // Test to ensure this change does not violate Org Contact Restrictions
+        var orgId = leftSide.ClassType == msOrganization.CLASS_NAME
+            ? leftSide.SafeGetValue<string>("ID")
+            : rightSide.SafeGetValue<string>("ID");
+
+        
+        var indId = leftSide.ClassType == msIndividual.CLASS_NAME
+            ? leftSide.SafeGetValue<string>("ID")
+            : rightSide.SafeGetValue<string>("ID");
+
+        CRMLogic.ErrorOutIfOrganizationContactRestrictionApplies(
+            orgId,
+            ddlRelationshipType.SelectedValue,
+            indId);
+
         targetRelationship.Type = ddlRelationshipType.SelectedValue;
         targetRelationship.StartDate = dtpStartDate.SelectedDate;
         targetRelationship.EndDate = dtpEndDate.SelectedDate;

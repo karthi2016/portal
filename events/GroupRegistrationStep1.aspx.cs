@@ -56,6 +56,8 @@ public partial class events_GroupRegistrationStep1 : PortalPage
         base.InitializePage();
         initializeContacts();
         initializeRoles();
+
+        PageTitleExtension.Text = targetOrganization.Name;
     }
 
     private void initializeRoles()
@@ -72,7 +74,7 @@ public partial class events_GroupRegistrationStep1 : PortalPage
         sRelationshipTypes.AddCriteria(Expr.Equals("IsActive", true ));
 
         sRelationshipTypes.AddSortColumn("RightSideName");
-        lbRoles.DataSource = ExecuteSearch(sRelationshipTypes, 0, null).Table ;
+        lbRoles.DataSource = APIExtensions.GetSearchResult(sRelationshipTypes, 0, null).Table ;
         lbRoles.DataTextField = "RightSideName";
         lbRoles.DataValueField = "ID";
         lbRoles.DataBind();
@@ -92,7 +94,7 @@ public partial class events_GroupRegistrationStep1 : PortalPage
         sRelationships.AddOutputColumn("RightSide_Individual.EmailAddress");
         sRelationships.AddSortColumn("RightSide_Individual.Name");
 
-        var dt = ExecuteSearch(sRelationships, 0, null).Table;
+        var dt = APIExtensions.GetSearchResult(sRelationships, 0, null).Table;
 
         Hashtable htContacts = new Hashtable();
         foreach (DataRow dr in dt.Rows)

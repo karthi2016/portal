@@ -50,6 +50,7 @@ public partial class exhibits_RegisterForShow : PortalPage
         rblEntity.DataSource = relatedOrganizations;
         rblEntity.DataBind();
 
+        CustomTitle.Text = string.Format("{0} Registration", targetShow.Name);
     }
 
     private void initiateRegistration(string entityID)
@@ -62,7 +63,7 @@ public partial class exhibits_RegisterForShow : PortalPage
             s.AddCriteria(Expr.Equals(msExhibitor.FIELDS.Show, targetShow.ID));
             s.AddCriteria(Expr.Equals(msExhibitor.FIELDS.Customer, entityID));
 
-            if (api.ExecuteSearch(s, 0, 1).ResultValue.TotalRowCount > 0)
+            if (api.GetSearchResult(s, 0, 1).TotalRowCount > 0)
             {
                 QueueBannerError("Unable to continue - an exhibitor record is already present for " +
                                  api.GetName(entityID).ResultValue);

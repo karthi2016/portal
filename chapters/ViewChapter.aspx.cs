@@ -45,6 +45,7 @@ public partial class chapters_ViewChapter : PortalPage
             GoToMissingRecordPage();
             return;
         }
+
     } 
 
     private void setupChapterLeaderOptions()
@@ -109,7 +110,7 @@ public partial class chapters_ViewChapter : PortalPage
     {
         cfsChapterFields.MemberSuiteObject = targetChapter;
 
-        var pageLayout = GetAppropriatePageLayout(targetChapter);
+        var pageLayout = targetChapter.GetAppropriatePageLayout();
         if (pageLayout == null || pageLayout.Metadata == null || pageLayout.Metadata.IsEmpty())
         {
             divOtherInformation.Visible = false;
@@ -117,13 +118,12 @@ public partial class chapters_ViewChapter : PortalPage
         }
 
         // setup the metadata
-        cfsChapterFields.Metadata = proxy.DescribeObject(msChapter.CLASS_NAME).ResultValue;
+        cfsChapterFields.Metadata = targetChapter.DescribeObject();
         cfsChapterFields.PageLayout = pageLayout.Metadata;
 
         cfsChapterFields.AddReferenceNamesToTargetObject(proxy);
 
         cfsChapterFields.Render();
-
     }
 
     #endregion
@@ -132,10 +132,10 @@ public partial class chapters_ViewChapter : PortalPage
 
     protected void loadDataFromConcierge()
     {
-        List<Search> searches = new List<Search>();
+        var searches = new List<Search>();
 
         // Search for the chapter to get aggregate information
-        Search sChapter = new Search { Type = msChapter.CLASS_NAME, ID = msChapter.CLASS_NAME };
+        var sChapter = new Search { Type = msChapter.CLASS_NAME, ID = msChapter.CLASS_NAME };
         sChapter.AddOutputColumn("ActiveMemberCount");
         sChapter.AddOutputColumn("TotalMemberCount");
         sChapter.AddOutputColumn("LocalID");
@@ -147,8 +147,8 @@ public partial class chapters_ViewChapter : PortalPage
         sChapter.AddCriteria(Expr.Equals("ID", ContextID));
         searches.Add(sChapter);
 
-        //Search for related committees
-        Search sChapterCommittees = new Search { Type = msCommittee.CLASS_NAME, ID = msCommittee.CLASS_NAME };
+        // Search for related committees
+        var sChapterCommittees = new Search { Type = msCommittee.CLASS_NAME, ID = msCommittee.CLASS_NAME };
         sChapterCommittees.AddOutputColumn("ID");
         sChapterCommittees.AddOutputColumn("Name");
         sChapterCommittees.AddOutputColumn("CurrentMemberCount");
@@ -156,8 +156,8 @@ public partial class chapters_ViewChapter : PortalPage
         sChapterCommittees.AddCriteria(Expr.Equals("ShowInPortal", true));
         searches.Add(sChapterCommittees);
 
-        //Search for related events
-        Search sChapterEvents = new Search { Type = msEvent.CLASS_NAME, ID = msEvent.CLASS_NAME };
+        // Search for related events
+        var sChapterEvents = new Search { Type = msEvent.CLASS_NAME, ID = msEvent.CLASS_NAME };
 
         sChapterEvents.AddOutputColumn("ID");
         sChapterEvents.AddOutputColumn("Name");
@@ -173,7 +173,7 @@ public partial class chapters_ViewChapter : PortalPage
         //Search for the linked organization
         if(!string.IsNullOrWhiteSpace(targetChapter.LinkedOrganization))
         {
-            Search sLinkedOrganizaition = new Search(msOrganization.CLASS_NAME) {ID = msOrganization.CLASS_NAME};
+            var sLinkedOrganizaition = new Search(msOrganization.CLASS_NAME) {ID = msOrganization.CLASS_NAME};
             sLinkedOrganizaition.AddOutputColumn("ID");
             sLinkedOrganizaition.AddOutputColumn("Name");
             sLinkedOrganizaition.AddOutputColumn("Invoices_OpenInvoiceBalance");
@@ -186,21 +186,21 @@ public partial class chapters_ViewChapter : PortalPage
             searches.Add(sLinkedOrganizaition);
         }
 
-        Search sLeader = GetChapterLeaderSearch(targetChapter.ID);
+        var sLeader = GetChapterLeaderSearch(targetChapter.ID);
         searches.Add(sLeader);
 
-        var searchResults = ExecuteSearches(searches, 0, null);
+        var searchResults = APIExtensions.GetMultipleSearchResults(searches, 0, null);
         if (searchResults.Single(x => x.ID == msChapter.CLASS_NAME).TotalRowCount == 0) GoToMissingRecordPage();
 
         drTargetChapter = searchResults.Single(x => x.ID == msChapter.CLASS_NAME).Table.Rows[0];
         dvChapterCommittees = new DataView(searchResults.Single(x => x.ID == msCommittee.CLASS_NAME).Table);
         dvChapterEvents = new DataView(searchResults.Single(x => x.ID == msEvent.CLASS_NAME).Table);
 
-        SearchResult srLinkedOrganization = searchResults.FirstOrDefault(x => x.ID == msOrganization.CLASS_NAME);
+        var srLinkedOrganization = searchResults.FirstOrDefault(x => x.ID == msOrganization.CLASS_NAME);
         if (srLinkedOrganization != null)
             drLinkedOrganization = srLinkedOrganization.Table.Rows[0];
 
-        SearchResult srLeader = searchResults.Single(x => x.ID == "ChapterLeader");
+        var srLeader = searchResults.Single(x => x.ID == "ChapterLeader");
         if (srLeader != null)
             leader = ConvertLeaderSearchResult(srLeader);
     }
@@ -243,6 +243,8 @@ public partial class chapters_ViewChapter : PortalPage
 
         hlDiscussionBoard.Visible = IsModuleActive("Discussions");
         hlDiscussionBoard.NavigateUrl += ContextID;
+
+        CustomTitle.Text = string.Format("{0} Chapter", GetSearchResult(drTargetChapter, "Name", null));
     }
 
     protected void blLeaderTasks_Click(object sender, BulletedListEventArgs e)

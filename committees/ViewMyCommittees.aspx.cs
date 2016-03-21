@@ -40,7 +40,7 @@ public partial class committees_ViewMyCommittees : PortalPage
         s.AddCriteria(Expr.Equals("Committee.ShowInPortal", true));
         s.AddSortColumn("Committee.Name");
 
-        var searchResult =  ExecuteSearch(s, 0, null);
+        var searchResult =  APIExtensions.GetSearchResult(s, 0, null);
         //Create a data view from the search results filtering on just current memberships
         dvCurrentCommitteeMemberships = new DataView(searchResult.Table);
         dvCurrentCommitteeMemberships.RowFilter = "IsCurrent=1";

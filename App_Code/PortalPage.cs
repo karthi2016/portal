@@ -4,10 +4,12 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Configuration;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.ServiceModel;
 using System.ServiceModel.Security;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Web;
 using System.Web.UI;
@@ -23,7 +25,6 @@ using MemberSuite.SDK.Searching;
 using MemberSuite.SDK.Searching.Operations;
 using MemberSuite.SDK.Types;
 using MemberSuite.SDK.Utilities;
-using MemberSuite.SDK.WCF;
 using MemberSuite.SDK.Web;
 using MemberSuite.SDK.Web.ControlManagers;
 using MemberSuite.SDK.Web.Controls;
@@ -35,12 +36,25 @@ using Image = System.Web.UI.WebControls.Image;
 /// </summary>
 public abstract class PortalPage : Page, IControlHost
 {
+    private List<msPortalControlPropertyOverride> pageOverrides;
+
+    protected List<msPortalControlPropertyOverride> PageOverrides
+    {
+        get
+        {
+            if (pageOverrides == null)
+            {
+                pageOverrides = PortalConfiguration.Current.ControlOverrides.FindAll(x => x.PageName.Equals(Request.Url.LocalPath, StringComparison.InvariantCultureIgnoreCase));
+            }
+
+            return pageOverrides;
+        }
+    }
+
     public PortalPage()
     {
         PreInit += new EventHandler(PortalPage_PreInit);
     }
-
-   
 
     protected virtual int PAGE_SIZE
     {
@@ -54,66 +68,8 @@ public abstract class PortalPage : Page, IControlHost
         // it's important that this is the first thing that the page does. Every subsequent API call
         // will depend on it. Many pages do not require a login (such as the Login screen, the view event screen,
         // etc - and so it's imperative that this is set
-        
     }
-    /// <summary>
-    /// MS-5424 -System is not respecting organization contact restrictions
-    /// </summary>
-    /// <param name="relationshipType"></param>
-    /// <param name="organizationType"></param>
-    /// <remarks>I placed this code here because it might also be needed when adding/editing contacts from ManagedOrganization  page</remarks>
-    protected void  ErrorOutIfOrganizationContactRestrictionApplies(string relationshipType,string organizationType=null)
-    {
-        if(String.IsNullOrWhiteSpace(relationshipType))
-            return ;
-        var s = new Search(msOrganizationContactRestriction.CLASS_NAME); 
-        s.AddOutputColumn("MaximumNumberOfContacts");
-        s.AddOutputColumn("ErrorMessage");
-        s.Criteria.Add(Expr.Equals("IsActive", true));
-        s.Criteria.Add(Expr.IsNotBlank("MaximumNumberOfContacts"));
-        
-        s.Criteria.Add(Expr.Equals("RelationshipType", relationshipType));
-        if (!String.IsNullOrWhiteSpace(organizationType))
-        {
-            var or = new SearchOperationGroup()
-            {
-                GroupType = SearchOperationGroupType.Or,
-                FieldName = "OrganizationType"
-            };
-            or.Criteria.Add(Expr.IsBlank("OrganizationType"));
-            or.Criteria.Add(Expr.Equals("OrganizationType", organizationType));
-            s.AddCriteria(or);
-        }
-        
 
-        var r=ExecuteSearch(s, 0, 1);
-        if (r == null || r.Table.Rows.Count==0)
-            return;
-        var max = Convert.ToInt32(r.Table.Rows[0]["MaximumNumberOfContacts"]);
-        var errorMessage = String.Empty;
-        if (r.Table.Rows[0]["ErrorMessage"] != DBNull.Value)
-            errorMessage = Convert.ToString(r.Table.Rows[0]["ErrorMessage"]);
-        if (String.IsNullOrWhiteSpace(errorMessage))
-            errorMessage = "Organization Contact Restriction Violation.";
-        if (max == 0)
-            throw new ConciergeClientException(ConciergeErrorCode.GeneralException, errorMessage);
-
-        using (var api = GetConciegeAPIProxy())
-        {
-
-            //Get all unexpired relationships
-            var msql = "SELECT ID FROM {0} WHERE Type='{1}' AND (EndDate IS NULL OR EndDate > '{2}');";
-            msql = String.Format(msql, msRelationship.CLASS_NAME, relationshipType, DateTime.UtcNow.Date);
-            var rr = api.ExecuteMSQL(msql,0,null);
-            if (rr.ResultValue==null)
-                throw new ConciergeClientException(ConciergeErrorCode.GeneralException,rr.FirstErrorMessage);
-            var i = rr.ResultValue.SearchResult.Table.Rows.Count;
-                
-            if (i>=max)
-                throw new ConciergeClientException(ConciergeErrorCode.GeneralException, errorMessage);
-            
-        }
-    }
     /// <summary>
     /// Checks to make sure that this page is being access properly.
     /// </summary>
@@ -141,8 +97,6 @@ public abstract class PortalPage : Page, IControlHost
         {
             ControlContext.CurrentAssociationID = PortalConfiguration.Current.AssociationID;
             ControlContext.CurrentAssociationKey = PortalConfiguration.Current.PartitionKey;
-
-         
         }
 
         InitializeTargetObject();
@@ -153,7 +107,6 @@ public abstract class PortalPage : Page, IControlHost
         if (!IsPostBack)
         {
             InitializePage();
-
         }
 
         // set the custom fields - must happen in Page_Load so that the target object is defined (it may have a page layout specific to a type value)
@@ -164,12 +117,25 @@ public abstract class PortalPage : Page, IControlHost
 
         // finally, apply the page overrides
         if (!IsPostBack)
+        {
             setupControlPropertyOverrides();
+        }
+
+        if (Master != null)
+        {
+            var master = Master as PortalMaster;
+            if (master == null && Master.Master != null)
+            {
+                master = Master.Master as PortalMaster;
+            }
+
+            if (master != null)
+            {
+                master.AddCustomOverrideEligibleControls += AddCustomOverrideEligibleControls;
+            }
+        }
     }
-
- 
-     
-
+    
     void PortalPage_PreInit(object sender, EventArgs e)
     {
         SetupAddressControl();
@@ -221,21 +187,18 @@ public abstract class PortalPage : Page, IControlHost
         GoTo("/");
     }
 
-    
     /// <summary>
-     /// Initializes the page.
-     /// </summary>
-     /// <remarks>This method runs on the first load of the page, and does NOT
-     /// run on postbacks. If you want to run a method on PostBacks, override the
-     /// Page_Load event</remarks>
+    /// Initializes the page.
+    /// </summary>
+    /// <remarks>This method runs on the first load of the page, and does NOT
+    /// run on postbacks. If you want to run a method on PostBacks, override the
+    /// Page_Load event</remarks>
     protected virtual  void InitializePage()
     {
         PageStart = (SelectedPage - 1) * PAGE_SIZE;
 
         setupHyperLinks();
         dequeueBannerMessageIfPresent();
-        
-
     }
 
     private void setupControlPropertyOverrides()
@@ -244,14 +207,13 @@ public abstract class PortalPage : Page, IControlHost
             PortalConfiguration.Current.ControlOverrides == null)
             return;
 
-        var overrides = PortalConfiguration.Current.ControlOverrides.FindAll(x => x.PageName == Request.Url.LocalPath);
-        if (overrides.Count == 0)
+        if (PageOverrides.Count == 0)
             // no overrides
             return;
 
         Control refControl = this.Master;
         Control pageTitle = null;
-       if (Master == null)
+        if (Master == null)
             refControl = Page;
         else if (Master.Master == null)
         {
@@ -262,58 +224,39 @@ public abstract class PortalPage : Page, IControlHost
         {
             refControl = Master.Master.FindControl("PageContent");
             pageTitle = Master.Master.FindControl("PageTitle");
+
+            // Check if the PageTitle content is wrapping another PageTitle (happens for the DataPage Master Page)
+            var childControl = pageTitle.FindControl("PageTitle") as ContentPlaceHolder;
+            if (childControl != null)
+                pageTitle = childControl;
         }
 
+        var relatedControls = _recursiveFind(refControl, PageOverrides);
 
-        foreach (var o in overrides)
+        foreach (var o in PageOverrides)
         {
-            Control c = _recursiveFind( refControl, o.ControlName) ;
+            Control c = null;
+            if (relatedControls.ContainsKey(o.ControlName))
+            {
+                c = relatedControls[o.ControlName];
+            }
 
             if (c == null && pageTitle != null ) // one last ditch effort - try the page title
                 c = pageTitle.FindControl(o.ControlName);
 
-            if (c == null)
-                continue;
-
-            var pi = c.GetType().GetProperty(o.PropertyName);
-            if (pi == null)
-                continue;
-
-            try
-            {
-                object val = o.Value ;
-                if (pi.PropertyType == typeof(bool)) // try to cast
-                    val = Convert.ToBoolean(o.Value);
-
-                if (pi.PropertyType == typeof(int))
-                    val = Convert.ToInt32(o.Value);
-
-                if (pi.PropertyType == typeof(long))
-                    val = Convert.ToInt64(o.Value);
-
-                if (pi.PropertyType.IsEnum)
-                    val = Enum.Parse(pi.PropertyType, o.Value);
-                    
-
-                    pi.SetValue(c, val , null);
-            }
-            catch
-            {
-            }
+            applyOverride(c, o);
         }
 
-        var pto = overrides.Find(x => x.ControlName == "__PageTitle");
-        if (pto != null && Master != null) // ok, there's a title
+        var pto = PageOverrides.Find(x => x.ControlName == "__PageTitle");
+        if (pto != null && pageTitle != null) // ok, there's a title
         {
             LiteralControl lc = null;
-            var pt = Master.FindControl("PageTitle");
-            if (pt != null)
-                foreach (var c in pt.Controls)
-                    if (c is LiteralControl) // grab it
-                    {
-                        lc = (LiteralControl) c;
-                        break;
-                    }
+            foreach (var c in pageTitle.Controls)
+                if (c is LiteralControl) // grab it
+                {
+                    lc = (LiteralControl)c;
+                    break;
+                }
 
             if (lc != null)
             {
@@ -323,22 +266,86 @@ public abstract class PortalPage : Page, IControlHost
         }
     }
 
-    private Control _recursiveFind(Control refControl, string controlName)
+    /// <summary>
+    /// Apply overrides to a control manually in case needed before the end of Page_Load.
+    /// </summary>
+    /// <param name="c"></param>
+    protected virtual void ApplyControlOverrides(Control c)
     {
-        if (refControl == null || String.IsNullOrWhiteSpace(controlName)) return null;
-
-        Control c = refControl.FindControl(controlName);
-        if (c != null && c.ID == controlName) // found it - MS-5264: RadioButtonList and others will ALWAYS return itself when FindControl is called 
-            return c;
-
-        foreach (Control cc in refControl.Controls)
+        foreach (var o in PageOverrides.Where(o => o.ControlName == c.ID))
         {
-            c = _recursiveFind(cc, controlName);
-            if (c != null)
-                return c;
+            applyOverride(c, o);
+        }
+    }
+
+    private void applyOverride(Control c, msPortalControlPropertyOverride o)
+    {
+        if (c == null)
+            return;
+
+        var pi = c.GetType().GetProperty(o.PropertyName);
+        if (pi == null)
+            return;
+
+        try
+        {
+            object val = o.Value;
+            if (pi.PropertyType == typeof (bool)) // try to cast
+                val = Convert.ToBoolean(o.Value);
+
+            if (pi.PropertyType == typeof (int))
+                val = Convert.ToInt32(o.Value);
+
+            if (pi.PropertyType == typeof (long))
+                val = Convert.ToInt64(o.Value);
+
+            if (pi.PropertyType == typeof (Unit))
+                val = Unit.Parse(o.Value);
+
+            if (pi.PropertyType.IsEnum)
+                val = Enum.Parse(pi.PropertyType, o.Value);
+
+            pi.SetValue(c, val, null);
+        }
+        catch
+        {
+        }
+    }
+
+    private Dictionary<string, Control> _recursiveFind(Control rootControl, List<msPortalControlPropertyOverride> overrideList)
+    {
+        var controlList = new Dictionary<string, Control>();
+        var overrideNames = overrideList.Select(o => o.ControlName).ToList();
+
+        if (rootControl != null && overrideList.Count > 0)
+        {
+            _recursiveFind(rootControl, overrideNames, controlList);
         }
 
-        return null;
+        return controlList;
+    }
+
+    private void _recursiveFind(Control parentControl, List<string> overrideNames, Dictionary<string, Control> controlList)
+    {
+        // If this control is one of the ones to override, add it to the Dictionary
+        if (overrideNames.Contains(parentControl.ID))
+        {
+            if (!controlList.ContainsKey(parentControl.ID))
+            {
+                controlList.Add(parentControl.ID, parentControl);
+            }
+        }
+
+        // If the Dictionary lenth is the same as the Overrides list, we have found all of our controls
+        //if (controlList.Count >= overrideNames.Count) - this fails because some overrides are custom (like __PageTitle)
+        //{
+        //    return;
+        //}
+
+        foreach (Control cc in parentControl.Controls)
+        {
+            _recursiveFind(cc, overrideNames, controlList);
+        }
     }
 
 
@@ -549,63 +556,41 @@ public abstract class PortalPage : Page, IControlHost
     /// <param name="msg">The MSG.</param>
     public void DisplayBannerMessage(bool isError, string msg)
     {
-        if ( Master == null ) return;
+        if (Master == null) return;
+
+        var master = Master;
+        if (master.Master != null)
+        {
+            master = master.Master;
+        }
 
         // let's pull the message from the
-        Panel pnl = Master.FindControl("pnlMessage") as Panel;
-        Literal lMessage = Master.FindControl("lMessage") as Literal;
+        var pnl = master.FindControl("pnlMessage") as Panel;
+        var lMessage = master.FindControl("lMessage") as Literal;
 
-        if (pnl == null || lMessage == null) return;    // we should be able to find it, but we can't
+        if (pnl == null || lMessage == null) return; // we should be able to find it, but we can't
 
         pnl.Visible = true;
         lMessage.Text = msg;
         if (isError)
             pnl.BackColor = Color.Red;
-        
-        SessionManager.Set<object>("BannerMessage", null ); // remove it from the queue
+
+        SessionManager.Set<object>("BannerMessage", null); // remove it from the queue
     }
 
     #endregion
 
     #region API Helpers
-
-    protected T LoadObjectFromAPI<T>(IConciergeAPIService proxy, string id) where T : msAggregate
-    {
-        if (id == null) return null;
-        return LoadObjectFromAPI(id).ConvertTo<T>();
-    }
-
+    
+    // Leaving here to prevent mass updates to pages calling this
     protected T LoadObjectFromAPI<T>(string id) where T:msAggregate 
     {
-        if (id == null) return null;
-        return LoadObjectFromAPI(id).ConvertTo<T>();
-    }
-
-    protected MemberSuiteObject LoadObjectFromAPI(string id)
-    {
-        using (var api = GetConciegeAPIProxy())
-        {
-            return LoadObjectFromAPI(api, id);
-        }
-    }
-
-    protected MemberSuiteObject LoadObjectFromAPI(IConciergeAPIService proxy, string id)
-    {
-        if (id == null) return null;
-        var result = proxy.Get(id).ResultValue;
-            if (result == null)
-                return null;
-
-            return result;
+        return APIExtensions.LoadObjectFromAPI<T>(id);
     }
 
     protected MemberSuiteObject CreateNewObject(string className)
     {
-        using (IConciergeAPIService proxy = GetConciegeAPIProxy())
-        {
-            var meta = proxy.DescribeObject(className).ResultValue;
-            return MemberSuiteObject.FromClassMetadata(meta);
-        }
+        return MemberSuiteObject.FromClassMetadata(MetadataLogic.DescribeObject(className));
     }
 
     protected T CreateNewObject<T>() where T : msAggregate, new()
@@ -672,54 +657,6 @@ public abstract class PortalPage : Page, IControlHost
 
         return (from r in result select r.ConvertTo<T>()).ToList();
     }
-
-    /// <summary>
-    /// Executes a search against the Concierge API
-    /// </summary>
-    /// <param name="searchToRun">The search to run.</param>
-    /// <param name="startRecord">The start record.</param>
-    /// <param name="maximumNumberOfRecordsToReturn">The maximum number of records to return.</param>
-    /// <returns></returns>
-    protected SearchResult ExecuteSearch(IConciergeAPIService serviceProxy, Search searchToRun, int startRecord, int? maximumNumberOfRecordsToReturn)
-    {
-        var result = serviceProxy.ExecuteSearch(searchToRun, startRecord, maximumNumberOfRecordsToReturn);
-        return result.ResultValue;
-    }
-
-
-    /// <summary>
-    /// Executes a search against the Concierge API
-    /// </summary>
-    /// <param name="searchToRun">The search to run.</param>
-    /// <param name="startRecord">The start record.</param>
-    /// <param name="maximumNumberOfRecordsToReturn">The maximum number of records to return.</param>
-    /// <returns></returns>
-    protected SearchResult ExecuteSearch(Search searchToRun, int startRecord, int? maximumNumberOfRecordsToReturn)
-    {
-        using (var api = GetConciegeAPIProxy())
-        {
-            var result = api.ExecuteSearch(searchToRun, startRecord, maximumNumberOfRecordsToReturn);
-            return result.ResultValue;
-        }
-    }
-
-
-    protected List<SearchResult> ExecuteSearches(IConciergeAPIService serviceProxy, List<Search> searchesToRun, int startRecord, int? maximumNumberOfRecordsToReturn)
-    {
-        var result = serviceProxy.ExecuteSearches(searchesToRun, startRecord, maximumNumberOfRecordsToReturn);
-        return result.ResultValue;
-    }
-
-
-    protected List<SearchResult> ExecuteSearches(List<Search> searchesToRun, int startRecord, int? maximumNumberOfRecordsToReturn)
-    {
-        using (var api = GetConciegeAPIProxy())
-        {
-            var multiResult = api.ExecuteSearches(searchesToRun, startRecord, maximumNumberOfRecordsToReturn);
-            return multiResult.ResultValue;
-        }
-    }
-
 
     /// <summary>
     /// Describes the products, getting the price for the current customer
@@ -1077,40 +1014,6 @@ public abstract class PortalPage : Page, IControlHost
     }
     #endregion
 
-    protected msPortalPageLayoutContainer GetAppropriatePageLayout(MemberSuiteObject mso)
-    {
-        string typeId = mso.SafeGetValue<string>("Type");
-        string objectType = mso.ClassType;
-
-        if (String.IsNullOrWhiteSpace(typeId))
-            return GetDefaultPageLayout(objectType);
-
-        // let's get the type
-        using (var api = GetConciegeAPIProxy())
-        {
-            MemberSuiteObject msoType = api.Get(typeId).ResultValue;
-            string layoutId = msoType.SafeGetValue<string>("PortalPageLayout");
-
-            if (String.IsNullOrWhiteSpace(layoutId))
-                return GetDefaultPageLayout(objectType);
-
-            return api.Get(layoutId).ResultValue.ConvertTo<msPortalPageLayoutContainer>();
-        }
-    }
-
-    protected msPortalPageLayoutContainer GetDefaultPageLayout(string pageLayoutObject)
-    {
-        using (var api = GetConciegeAPIProxy())
-        {
-            Search s = new Search(msPortalPageLayoutContainer.CLASS_NAME);
-            s.AddCriteria(Expr.Equals("ApplicableType", pageLayoutObject));
-            s.AddCriteria(Expr.Equals("IsDefault", true));
-             
-            return api.GetObjectBySearch( s,null)
-                .ResultValue.ConvertTo<msPortalPageLayoutContainer>();
-        }
-    }
-
     public static string GetImageUrl(string imageID)
     {
         return String.Format("{0}/{1}/{2}/{3}", ConfigurationManager.AppSettings["ImageServerUri"],
@@ -1350,5 +1253,9 @@ public abstract class PortalPage : Page, IControlHost
             nextPageLink.NavigateUrl = String.Format("{0}page={1}", currentUrl, (SelectedPage + 1));
             nextPageLink.Visible = endRec < searchResult.TotalRowCount;
         }
+    }
+
+    protected virtual void AddCustomOverrideEligibleControls(List<msPortalControlPropertyOverride> eligibleControls)
+    {
     }
 }

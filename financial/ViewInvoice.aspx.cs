@@ -74,7 +74,7 @@ public partial class financial_ViewInvoice : PortalPage
         s.AddOutputColumn("BillingAddress");
         s.AddOutputColumn("PurchaseOrderNumber");
         
-        var sr = ExecuteSearch(s, 0, 1);
+        var sr = APIExtensions.GetSearchResult(s, 0, 1);
         if (sr.TotalRowCount == 0)
             GoToMissingRecordPage();
 
@@ -84,7 +84,7 @@ public partial class financial_ViewInvoice : PortalPage
         if (string.IsNullOrWhiteSpace(LeaderOfId))
             return;
 
-        MemberSuiteObject leaderOf = LoadObjectFromAPI(LeaderOfId);
+        var leaderOf = APIExtensions.LoadObjectFromAPI(LeaderOfId);
         switch (leaderOf.ClassType)
         {
             case msChapter.CLASS_NAME:
@@ -108,18 +108,20 @@ public partial class financial_ViewInvoice : PortalPage
     {
         base.InitializePage();
 
-        Search sInvoiceItems = generateInvoiceItemsSearch();
+        var sInvoiceItems = generateInvoiceItemsSearch();
      
-        Search sPayments = generatePaymentsSearch();
+        var sPayments = generatePaymentsSearch();
 
-        List<Search> searchesToRun = new List<Search> { sInvoiceItems, sPayments };
-        var searchResults = ExecuteSearches(searchesToRun, 0, null);
+        var searchesToRun = new List<Search> { sInvoiceItems, sPayments };
+        var searchResults = APIExtensions.GetMultipleSearchResults(searchesToRun, 0, null);
 
         gvInvoiceItems.DataSource = searchResults[0].Table;
         gvInvoiceItems.DataBind();
  
         gvPayments.DataSource = searchResults[1].Table;
         gvPayments.DataBind();
+
+        PageTitleExtenstion.Text = GetSearchResult(targetInvoice, "LocalID", null);
 
     }
 
@@ -144,7 +146,7 @@ public partial class financial_ViewInvoice : PortalPage
         
         s.AddOutputColumn("Payment.Date");
         s.AddOutputColumn("Payment.Owner.Name");
-        s.AddOutputColumn("Amount");
+        s.AddOutputColumn(msPaymentLineItem.FIELDS.Total);
         s.AddOutputColumn("Payment");
         s.AddOutputColumn("Payment.Name");
         

@@ -78,6 +78,8 @@ public partial class event_SearchEventRegistrations_Criteria : PortalPage
 
         ddlFee.DataSource = dvRegistrationFees;
         ddlFee.DataBind();
+
+        PageTitleExtension.Text = string.Format("{0} Registrations", targetEvent.Name);
     }
 
     protected override bool CheckSecurity()
@@ -114,7 +116,7 @@ public partial class event_SearchEventRegistrations_Criteria : PortalPage
         sRegistrationFees.AddCriteria(Expr.Equals("Event",targetEvent.ID));
         sRegistrationFees.AddSortColumn("Name");
 
-        SearchResult srRegistrationFees = ExecuteSearch(sRegistrationFees, 0, null);
+        SearchResult srRegistrationFees = APIExtensions.GetSearchResult(sRegistrationFees, 0, null);
         dvRegistrationFees = new DataView(srRegistrationFees.Table);
     }
 

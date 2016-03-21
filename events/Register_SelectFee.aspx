@@ -20,10 +20,10 @@
     <asp:Literal ID="PageText" runat="server" />
     <asp:Panel ID="pnlGroupRegistration" runat="server" Visible="false">
         <asp:Literal ID="lGroupRegNotice" runat="server">
- <font color=green><B>GROUP REGISTRATION MODE</B></font>
+            <span class="hlte"><B>GROUP REGISTRATION MODE</B></span>
         </asp:Literal>
-        <table style="width: 500px; margin-top: 5px">
-            <tr>
+        <table style="width: 500px; margin-top: 5px" id="GroupRegHeader">
+            <tr id="EventRegistrantNameRow">
                 <td class="columnHeader" style="width: 100px">
                     <asp:Literal ID="lGroup" runat="Server">Group:</asp:Literal>
                 </td>
@@ -31,7 +31,7 @@
                     <asp:Label ID="lblGroup" runat="server" />
                 </td>
             </tr>
-            <tr>
+            <tr id="EventRegistrantFeeRow">
                 <td class="columnHeader">
                     <asp:Literal ID="lRegistrant" runat="Server">Registrant:</asp:Literal>
                 </td>
@@ -65,13 +65,14 @@
                         <asp:Label CssClass="redHighlight" ID="lblNoRegistrationFees" runat="server" Visible="false">No registration fees are available for you – you may not be eligible to register for this event.</asp:Label>
                     </td>
                 </tr>
-                <tr>
-                    <td>
-                        <asp:Button runat="server" ID="btnContinue" OnClick="btnContinue_Click" CausesValidation="true"
-                            Text="Continue" />
-                    </td>
-                </tr>
             </table>
+        </div>
+        <div class="sectionContent">
+            <hr width="100%" />
+            <div align="center" style="padding-top: 20px">
+                <asp:Button runat="server" ID="btnContinue" OnClick="btnContinue_Click" CausesValidation="true"
+                    Text="Continue" />
+            </div>
         </div>
     </div>
 </asp:Content>

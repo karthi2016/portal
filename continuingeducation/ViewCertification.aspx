@@ -12,8 +12,7 @@
 <asp:Content ID="Content3" ContentPlaceHolderID="BreadcrumbBar" runat="Server">
 </asp:Content>
 <asp:Content ID="Content4" ContentPlaceHolderID="PageTitle" runat="Server">
-    View a Certification -
-    <%= programName  %>
+    View a Certification - <asp:Literal runat="server" ID="PageTitleExtension"></asp:Literal>
 </asp:Content>
 <asp:Content ID="Content5" ContentPlaceHolderID="TopRightContent" runat="Server">
 </asp:Content>

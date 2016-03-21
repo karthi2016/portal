@@ -60,6 +60,7 @@ public partial class forms_EditFormInstance : PortalPage
     {
         base.InitializePage();
 
+        PageTitleExtension.Text = targetForm.Name;
     }
 
     protected void btnSave_Click(object sender, EventArgs e)

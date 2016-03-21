@@ -66,7 +66,7 @@ public partial class chapters_ManageChapterLeaders : PortalPage
         sLeaders.AddCriteria(Expr.Equals("Chapter.ID", targetChapter.ID));
         sLeaders.AddSortColumn("Individual.Name");
 
-        SearchResult srLeaders = ExecuteSearch(sLeaders, 0, null);
+        SearchResult srLeaders = APIExtensions.GetSearchResult(sLeaders, 0, null);
         dvLeaders = new DataView(srLeaders.Table);
     }
 

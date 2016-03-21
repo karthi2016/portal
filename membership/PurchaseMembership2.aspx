@@ -79,7 +79,7 @@
             <tr id="trChapterAssigned" runat="server" visible="false">
                 <td colspan="2">
                     <asp:Literal ID="lPrimaryChapterAssigned" runat="server">
-                        <span style="color:Green">Your primary chapter has been assigned based on your postal code and cannot be changed.</span>
+                        <span class="hlte">Your primary chapter has been assigned based on your postal code and cannot be changed.</span>
                     </asp:Literal>
                 </td>
             </tr>

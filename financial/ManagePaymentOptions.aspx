@@ -47,13 +47,15 @@
         </div>
         <div class="sectionContent">
             <ul>
-                <li>
+                <li id="liCreditCard" runat="server">
                     <asp:HyperLink ID="hlAddCreditCard" runat="server" NavigateUrl="AddCreditCard.aspx">Add a Credit Card</asp:HyperLink>
-                    <li>
-                        <asp:HyperLink ID="hlAddElectronicCheck" runat="server" NavigateUrl="AddElectronicCheck.aspx">Add an eCheck Account</asp:HyperLink>
-                        <li>
-                            <asp:HyperLink ID="hlGoHome" runat="server" NavigateUrl="/">Go Home</asp:HyperLink>
-                        </li>
+                </li>
+                <li id="liElectronicCheck" runat="server">
+                    <asp:HyperLink ID="hlAddElectronicCheck" runat="server" NavigateUrl="AddElectronicCheck.aspx">Add an eCheck Account</asp:HyperLink>
+                </li>
+                <li>
+                    <asp:HyperLink ID="hlGoHome" runat="server" NavigateUrl="/">Go Home</asp:HyperLink>
+                </li>
             </ul>
         </div>
     </div>

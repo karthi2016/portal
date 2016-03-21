@@ -45,6 +45,8 @@ public partial class exhibits_ViewShow : PortalPage
 
         hlExhibitorList.Visible = targetShow.ShowExhibitorListInPortal;
         hlExhibitorList.NavigateUrl += targetShow.ID;
+
+        CustomTitle.Text = string.Format("{0}", targetShow.Name);
     }
 
     private void setupViewExhibitorLinks()
@@ -96,7 +98,7 @@ public partial class exhibits_ViewShow : PortalPage
             s.AddCriteria(Expr.Equals(msExhibitor.FIELDS.Show, targetShow.ID));
             s.AddCriteria(Expr.Equals(msExhibitor.FIELDS.Customer, p.EntityID ));
 
-            if ( ExecuteSearch(s, 0, 1).TotalRowCount == 0)
+            if ( APIExtensions.GetSearchResult(s, 0, 1).TotalRowCount == 0)
             {
                 hlRegistration.Visible = true;  // good to go!
                 return;

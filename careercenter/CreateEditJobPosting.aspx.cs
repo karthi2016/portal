@@ -115,12 +115,12 @@ public partial class careercenter_CreateEditJobPosting : PortalPage
     {
         CustomFieldSet1.MemberSuiteObject = targetJobPosting;
 
-        var pageLayout = GetAppropriatePageLayout(targetJobPosting);
+        var pageLayout = targetJobPosting.GetAppropriatePageLayout();
         if (pageLayout == null || pageLayout.Metadata == null || pageLayout.Metadata.IsEmpty())
             return;
 
         // setup the metadata
-        CustomFieldSet1.Metadata = proxy.DescribeObject(msJobPosting.CLASS_NAME).ResultValue;
+        CustomFieldSet1.Metadata = targetJobPosting.DescribeObject();
         CustomFieldSet1.PageLayout = pageLayout.Metadata;
 
         CustomFieldSet1.Render();
@@ -132,25 +132,25 @@ public partial class careercenter_CreateEditJobPosting : PortalPage
 
     protected void loadDataFromConcierge()
     {
-        List<Search> searches = new List<Search>();
+        var searches = new List<Search>();
 
-        //Job Posting Locations
-        Search sLocations = new Search(msJobPostingLocation.CLASS_NAME);
+        // Job Posting Locations
+        var sLocations = new Search(msJobPostingLocation.CLASS_NAME);
         sLocations.AddOutputColumn("ID");
         sLocations.AddOutputColumn("Name");
         sLocations.AddSortColumn("Name");
 
         searches.Add(sLocations);
 
-        //Job Posting Categories
-        Search sCategories = new Search(msJobPostingCategory.CLASS_NAME);
+        // Job Posting Categories
+        var sCategories = new Search(msJobPostingCategory.CLASS_NAME);
         sCategories.AddOutputColumn("ID");
         sCategories.AddOutputColumn("Name");
         sCategories.AddSortColumn("Name");
 
         searches.Add(sCategories);
 
-        List<SearchResult> results = ExecuteSearches(searches, 0, null);
+        var results = APIExtensions.GetMultipleSearchResults(searches, 0, null);
         dvLocations = new DataView(results[0].Table);
         dvCategories = new DataView(results[1].Table);
     }
@@ -212,12 +212,16 @@ public partial class careercenter_CreateEditJobPosting : PortalPage
         targetJobPosting.Categories = (from item in dlbCategories.Destination.Items
                                        select item.Value).ToList();
 
+        CustomFieldSet1.Harvest();
+
         // MS-5754 (Modified 11/6/2014) At this point, it is worth checking that the target job posting has a proper ID.
         // If it doesn't, then save the object so that it does
-        if (string.IsNullOrWhiteSpace(targetJobPosting.ID))
-            targetJobPosting = SaveObject(targetJobPosting);
-
-        CustomFieldSet1.Harvest();
+        // MS-6201 - undo MS5747 so that nothing is saved until Order processes
+        ////if (string.IsNullOrWhiteSpace(targetJobPosting.ID))
+        ////{
+        ////    targetJobPosting = SaveObject(targetJobPosting);
+        ////    CustomFieldSet1.MemberSuiteObject = targetJobPosting;
+        ////}
     }
 
     #endregion

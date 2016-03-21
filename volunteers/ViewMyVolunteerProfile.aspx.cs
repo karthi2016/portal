@@ -128,7 +128,7 @@ public partial class volunteers_ViewMyVolunteerProfile : PortalPage
         s.AddOutputColumn("LastAssignment.JobOccurrence.StartDateTime");
         s.AddOutputColumn("LastAssignment.JobOccurrence.EndDateTime");
 
-        drSearchResults = ExecuteSearch(s, 0, 1).Table.Rows[0];
+        drSearchResults = APIExtensions.GetSearchResult(s, 0, 1).Table.Rows[0];
 
         trSponsor.Visible = drSearchResults["Sponsor.Name"] != DBNull.Value;
     }

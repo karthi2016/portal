@@ -218,7 +218,19 @@ public class ConciergeAPI : IConciergeAPISessionIdProvider, IConciergeAPIBrowser
             CurrentTabs = null;
 
         CurrentLocale = result.Locale;
-        Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo(result.Locale);
+
+        // MS-6753
+        using (var api = ConciergeAPIProxyGenerator.GenerateProxy())
+        {
+            var config = api.GetAssociationConfiguration().ResultValue;
+            if (config != null)
+            {
+                var assocConfig = config.ConvertTo<msAssociationConfigurationContainer>();
+                CurrentLocale = assocConfig.Locale;
+            }
+        }
+
+        Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo(CurrentLocale);
 
         AccessibleEntities = result.AccessibleEntities;
 

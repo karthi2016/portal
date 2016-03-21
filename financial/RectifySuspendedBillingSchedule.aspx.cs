@@ -26,7 +26,7 @@ public partial class financial_RectifySuspendedBillingSchedule : CreditCardLogic
         s.AddOutputColumn("Order.BillTo");
         s.AddOutputColumn("Order.FutureBillingAmount");
 
-        var sr = ExecuteSearch(s, 0, 1);
+        var sr = APIExtensions.GetSearchResult(s, 0, 1);
         if (sr.TotalRowCount == 0)
             GoToMissingRecordPage();
 

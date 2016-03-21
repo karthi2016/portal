@@ -72,6 +72,8 @@ public partial class forms_ViewFormInstance : PortalPage
         hlBack.Text = string.Format("<LI>Back to {0}</LI>", targetFormManifest.ManageLink );
 
         RegisterJavascriptConfirmationBox(lbDelete, "Are you sure you want to delete this record? This cannot be undone.");
+
+        PageTitleExtension.Text = targetForm.Name;
     }
 
     protected void lbDelete_Click(object sender, EventArgs e)

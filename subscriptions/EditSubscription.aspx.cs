@@ -18,6 +18,8 @@ public partial class subscriptions_EditSubscription : PortalPage
         if (targetSubscription == null) GoToMissingRecordPage();
 
         targetEntity = LoadObjectFromAPI<msEntity>(targetSubscription.Owner);
+
+        acAddress.Host = this;
     }
 
     protected override bool CheckSecurity()

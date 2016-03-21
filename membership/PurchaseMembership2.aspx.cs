@@ -88,7 +88,7 @@ public partial class membership_PurchaseMembership2 : PortalPage
         sProducts.AddCriteria(Expr.Equals(msProduct.FIELDS.ShowOnMembershipForm, true));
 
 
-        var results = ExecuteSearch(sProducts, 0, null);
+        var results = APIExtensions.GetSearchResult(sProducts, 0, null);
 
         List<string> productsToDescribe = new List<string>();
 
@@ -175,12 +175,12 @@ public partial class membership_PurchaseMembership2 : PortalPage
     {
         CustomFieldSet1.MemberSuiteObject = targetMembership;
 
-        var pageLayout = GetAppropriatePageLayout(targetMembership);
+        var pageLayout = targetMembership.GetAppropriatePageLayout();
         if (pageLayout == null || pageLayout.Metadata == null || pageLayout.Metadata.IsEmpty())
             return;
 
         // setup the metadata
-        CustomFieldSet1.Metadata = proxy.DescribeObject(msMembership.CLASS_NAME).ResultValue;
+        CustomFieldSet1.Metadata = targetMembership.DescribeObject();
         CustomFieldSet1.PageLayout = pageLayout.Metadata;
 
         CustomFieldSet1.Render();
@@ -198,6 +198,10 @@ public partial class membership_PurchaseMembership2 : PortalPage
     protected void ClearAndRedirect()
     {
         MultiStepWizards.RenewMembership.Clear();
+
+        // Clear any cached Membership checks since a Membership Order has just processed.
+        MembershipLogic.ClearMemberCaches();
+
         GoTo(string.Format("~/orders/OrderComplete.aspx?contextID={0}", OrderId));
     }
 
@@ -229,7 +233,7 @@ public partial class membership_PurchaseMembership2 : PortalPage
         sSections.AddOutputColumn("Name");
         sSections.AddOutputColumn("Type.Name");
 
-        _sections = ExecuteSearch(sSections, 0, null).Table;
+        _sections = APIExtensions.GetSearchResult(sSections, 0, null).Table;
 
 
         // ok, let's pull out all of the section types
@@ -448,7 +452,7 @@ public partial class membership_PurchaseMembership2 : PortalPage
 
     private void unbindAdditionalItems(msOrder mso, string parentItem)
     {
-        if (!divOtherInformation.Visible)
+        if (!divOtherProducts.Visible)
             return;
 
         foreach (RepeaterItem ri in rptAdditionalItems.Items)
@@ -457,7 +461,7 @@ public partial class membership_PurchaseMembership2 : PortalPage
             HiddenField hfProductID = (HiddenField)ri.FindControl("hfProductID");
 
             msOrderLineItem li = new msOrderLineItem();
-            li.Quantity = decimal.Parse(tbQuantity.Text);
+            li.Quantity = int.Parse(tbQuantity.Text);
             if (li.Quantity <= 0)
                 continue;   // don't add
 
@@ -525,7 +529,7 @@ public partial class membership_PurchaseMembership2 : PortalPage
                 s.Context = chapter;
                 s.AddOutputColumn("ID");
 
-                SearchResult sr = ExecuteSearch(api, s, 0, null);
+                SearchResult sr = APIExtensions.GetSearchResult(api, s, 0, null);
 
                 foreach (DataRow dataRow in sr.Table.Rows)
                 {

@@ -53,7 +53,7 @@ public partial class membership_PurchaseMembership1 : PortalPage
                                        ? Expr.Equals("IsDefault", true)
                                        : Expr.Equals("ID", ContextID));
 
-        SearchResult srDefaultMemOrg = ExecuteSearch(sDefaultMemOrg, 0, null);
+        SearchResult srDefaultMemOrg = APIExtensions.GetSearchResult(sDefaultMemOrg, 0, null);
         if (srDefaultMemOrg != null && srDefaultMemOrg.Table != null && srDefaultMemOrg.Table.Rows.Count > 0)
             drMembershipOrganization = srDefaultMemOrg.Table.Rows[0];
 
@@ -90,7 +90,7 @@ public partial class membership_PurchaseMembership1 : PortalPage
         sExistingMembership.AddOutputColumn(msMembership.FIELDS.Product + ".RenewsWith");   // get the product
         sExistingMembership.AddOutputColumn(msMembership.FIELDS.Type);   // get the product
 
-        var dtResult = ExecuteSearch(sExistingMembership, 0, 1);
+        var dtResult = APIExtensions.GetSearchResult(sExistingMembership, 0, 1);
         if (dtResult.TotalRowCount > 0)
         {
             // ok, there's a current membership

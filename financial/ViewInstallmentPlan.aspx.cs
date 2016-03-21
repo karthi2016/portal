@@ -43,7 +43,7 @@ public partial class financial_ViewInstallmentPlan : PortalPage
         s.AddOutputColumn("PastBillingAmount");
         s.AddOutputColumn("Status");
 
-        DataRow dr = ExecuteSearch(s, 0, null).Table.Rows[0];
+        DataRow dr = APIExtensions.GetSearchResult(s, 0, null).Table.Rows[0];
 
         if (Convert.ToString(dr["Order.BillTo"]) != ConciergeAPI.CurrentEntity.ID)
             throw new ApplicationException("Access denied");
@@ -83,7 +83,7 @@ public partial class financial_ViewInstallmentPlan : PortalPage
 
         using (var api = GetServiceAPIProxy())
         {
-            var result = api.ExecuteSearch(s, 0, null).ResultValue;
+            var result = api.GetSearchResult(s, 0, null);
 
             if (result.Table != null)
                 rgBillingHistory.DataSource = result.Table.DefaultView;

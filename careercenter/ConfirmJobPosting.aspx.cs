@@ -63,12 +63,12 @@ public partial class careercenter_ConfirmJobPosting : PortalPage
     {
         CustomFieldSet1.MemberSuiteObject = targetJobPosting;
 
-        var pageLayout = GetAppropriatePageLayout(targetJobPosting);
+        var pageLayout = targetJobPosting.GetAppropriatePageLayout();
         if (pageLayout == null || pageLayout.Metadata == null || pageLayout.Metadata.IsEmpty())
             return;
 
         // setup the metadata
-        CustomFieldSet1.Metadata = proxy.DescribeObject(msJobPosting.CLASS_NAME).ResultValue;
+        CustomFieldSet1.Metadata = targetJobPosting.DescribeObject();
         CustomFieldSet1.PageLayout = pageLayout.Metadata;
 
         CustomFieldSet1.AddReferenceNamesToTargetObject(proxy);
@@ -102,21 +102,44 @@ public partial class careercenter_ConfirmJobPosting : PortalPage
         s.AddOutputColumn("IsActive");
         s.AddCriteria(Expr.Equals("Owner", ConciergeAPI.CurrentEntity.ID));
 
-        SearchResult sr = ExecuteSearch(s, 0, null);
+        SearchResult sr = APIExtensions.GetSearchResult(s, 0, null);
         dvResumes = new DataView(sr.Table);
     }
 
     protected void Redirect()
     {
+        string postingId = targetJobPosting.ID;
+        string postingLocalId = Convert.ToString(targetJobPosting.LocalID);
+
         using (IConciergeAPIService proxy = GetConciegeAPIProxy())
         {
-                
-            //Send the confirmation e-mail
-            proxy.SendEmail(EmailTemplates.CareerCenter.JobPosted, new List<string> { targetJobPosting.ID },
+            if (string.IsNullOrEmpty(postingId))
+            {
+                var orderId = Request.QueryString["OrderID"];
+                var s = new Search(msJobPosting.CLASS_NAME);
+                s.AddOutputColumn("ID");
+                s.AddOutputColumn("LocalID");
+                s.AddCriteria(Expr.Equals("Order", orderId));
+
+                var sr = proxy.ExecuteSearch(s, 0, null);
+                if (sr.Success && sr.ResultValue.TotalRowCount > 0)
+                {
+                    var dr = sr.ResultValue.Table.Rows[0];
+                    postingId = Convert.ToString(dr["ID"]);
+                    postingLocalId = Convert.ToString(dr["LocalID"]);
+                }
+                else
+                {
+                    QueueBannerError(string.Format("Cannot find Job Posting for Order: {0}", sr.Success ? orderId : sr.FirstErrorMessage));
+                }
+            }
+
+            // Send the confirmation e-mail
+            proxy.SendTransactionalEmail(EmailTemplates.CareerCenter.JobPosted, postingId ,
                             ConciergeAPI.CurrentUser.EmailAddress);
         }
 
-        QueueBannerMessage(string.Format("Job Posting #{0} has been posted successfully. A confirmation e-mail has been sent to {1}.", targetJobPosting.LocalID, ConciergeAPI.CurrentUser.EmailAddress));
+        QueueBannerMessage(string.Format("Job Posting #{0} has been posted successfully. A confirmation e-mail has been sent to {1}.", postingLocalId, ConciergeAPI.CurrentUser.EmailAddress));
 
         MultiStepWizards.PostAJob.JobPosting = null;
         GoHome();
@@ -160,7 +183,14 @@ public partial class careercenter_ConfirmJobPosting : PortalPage
 
             if (er.IsEntitled && er.Quantity > 0)
             {
-                api.Save(targetJobPosting);
+                var saveResult = api.Save(targetJobPosting);
+                if (!saveResult.Success)
+                {
+                    QueueBannerError(string.Format("Unable to save Job Posting: {0}", saveResult.FirstErrorMessage));
+                }
+
+                targetJobPosting = saveResult.ResultValue.ConvertTo<msJobPosting>();
+
                 // MS-5386 Adjust entitlement (-1). Otherwise user will be able to use the entitlement forever.
                 api.AdjustEntitlementAvailableQuantity(ConciergeAPI.CurrentEntity.ID, msJobPostingEntitlement.CLASS_NAME,
                     null, -1);

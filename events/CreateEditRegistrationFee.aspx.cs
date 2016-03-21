@@ -51,7 +51,7 @@ public partial class events_CreateEditRegistrationFee : PortalPage
             registrationFeeFieldMetadata = registrationFeeClassMetadata.GenerateFieldDictionary();
         }
 
-        MemberSuiteObject contextObject = LoadObjectFromAPI(ContextID);
+        var contextObject = APIExtensions.LoadObjectFromAPI(ContextID);
 
         if (contextObject.ClassType == msEvent.CLASS_NAME)
         {
@@ -160,10 +160,10 @@ public partial class events_CreateEditRegistrationFee : PortalPage
 
     protected void loadDataFromConcierge()
     {
-        List<Search> searches = new List<Search>();
+        var searches = new List<Search>();
 
-        //Search for registration classes - these are not described as pick list entries
-        Search sRegistrationClasses = new Search(msRegistrationClass.CLASS_NAME);
+        // Search for registration classes - these are not described as pick list entries
+        var sRegistrationClasses = new Search(msRegistrationClass.CLASS_NAME);
         sRegistrationClasses.AddOutputColumn("ID");
         sRegistrationClasses.AddOutputColumn("Name");
         sRegistrationClasses.AddCriteria(Expr.Equals("Event", targetEvent.ID));
@@ -171,8 +171,8 @@ public partial class events_CreateEditRegistrationFee : PortalPage
 
         searches.Add(sRegistrationClasses);
 
-        //Search for registration categories - these are not described as pick list entries
-        Search sRegistrationCategories = new Search(msRegistrationCategory.CLASS_NAME);
+        // Search for registration categories - these are not described as pick list entries
+        var sRegistrationCategories = new Search(msRegistrationCategory.CLASS_NAME);
         sRegistrationCategories.AddOutputColumn("ID");
         sRegistrationCategories.AddOutputColumn("Name");
         sRegistrationCategories.AddCriteria(Expr.Equals("Event", targetEvent.ID));
@@ -180,8 +180,8 @@ public partial class events_CreateEditRegistrationFee : PortalPage
 
         searches.Add(sRegistrationCategories);
 
-        //Search for confirmation emails
-        Search sConfirmationEmails = new Search(msEmailTemplateContainer.CLASS_NAME);
+        // Search for confirmation emails
+        var sConfirmationEmails = new Search(msEmailTemplateContainer.CLASS_NAME);
         sConfirmationEmails.AddOutputColumn("ID");
         sConfirmationEmails.AddOutputColumn("Name");
         sConfirmationEmails.AddCriteria(Expr.Equals("Context", targetEvent.ID));
@@ -189,7 +189,7 @@ public partial class events_CreateEditRegistrationFee : PortalPage
 
         searches.Add(sConfirmationEmails);
 
-        List<SearchResult> searchResults = ExecuteSearches(searches, 0, null);
+        var searchResults = APIExtensions.GetMultipleSearchResults(searches, 0, null);
         dvRegistrationClasses = new DataView(searchResults[0].Table);
         dvRegistrationCategories = new DataView(searchResults[1].Table);
         dvConfirmationEmails = new DataView(searchResults[2].Table);

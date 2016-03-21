@@ -10,9 +10,7 @@
         <%=targetEvent.Name%></a>
 </asp:Content>
 <asp:Content ID="Content4" ContentPlaceHolderID="PageTitle" runat="Server">
-    <%=targetEvent.Name%>
-    Group Registation -
-    <%=targetOrganization.Name%>
+    <asp:Literal runat="server" ID="CustomTitle"></asp:Literal>
 </asp:Content>
 <asp:Content ID="Content5" ContentPlaceHolderID="TopRightContent" runat="Server">
 </asp:Content>
@@ -20,10 +18,10 @@
     <asp:Literal ID="lPageText" runat="server" />
     <p>
         <asp:Literal ID="lStatus" runat="server">Group Registration Status:</asp:Literal>
-        <asp:Label ID="lblGroupRegStatus" runat="server" ForeColor="Green">Open until 12/15/2011</asp:Label>
+        <asp:Label ID="lblGroupRegStatus" runat="server" CssClass="hlte">Open until 12/15/2011</asp:Label>
     </p>
     <h2>
-        Current Registrations</h2>
+        <asp:Literal runat="server" ID="lCurrentRegistrations">Current Registrations</asp:Literal></h2>
     <asp:GridView ID="gvRegistrants" runat="server" EmptyDataText="There are currently no registrations for the specified organization."
         AutoGenerateColumns="false" GridLines="None"
          OnRowCommand="gvRegistrants_Command"
@@ -43,9 +41,11 @@
     <asp:Panel ID="pnlPending" runat="server" Visible="false">
         <h2>
             <asp:Literal ID="lPendingRegistrations" runat="server">Pending Registrations</asp:Literal></h2>
-        <b><font color="red"> 
+        <asp:Literal runat="server" ID="lPendingRegistrationWarning">
+        <b><span class="hlteWarn"> 
             Important: The registrants below are in progress but have not yet been saved. Once you have finished adding your registrants, you must click on the "Complete Group Registration" button below to process these
-            registrations, or they will not be saved!</font></b>
+            registrations, or they will not be saved!</span></b>
+        </asp:Literal>
         <asp:GridView ID="gvPendingRegistrations" runat="server" AutoGenerateColumns="false"    
          OnRowDataBound="gvPendingRegistrations_OnRowDataBound"
         OnRowCommand="gvPendingRegistrations_Command"
@@ -64,7 +64,7 @@
         </asp:GridView>
         <div style="float: right; padding-top: 10px; padding-bottom: 10px">
             <asp:Literal ID="lTotalPending" runat="server"><b>Total Pending Amount: </b></asp:Literal>
-            <asp:Label ID="lblTotalPending" runat="server" ForeColor="Green" />
+            <asp:Label ID="lblTotalPending" runat="server" CssClass="hlte" />
             <br />
             <asp:Button ID="btnCompleteGroup" runat="server" Text="Complete Group Registration" OnClick="btnCompleteGroup_Click"
                 Visible="false" />

@@ -18,10 +18,10 @@ Copyright (C) Microsoft Corporation. All rights reserved.
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{16ad5350-e4bd-4027-966f-257e7adf88b6}</ProjectGuid>
     <SourceWebPhysicalPath>$(MSBuildThisFileDirectory)</SourceWebPhysicalPath>
-    <SourceWebVirtualPath>/MemberSuite.Portal.Web</SourceWebVirtualPath>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <SourceWebProject>C:\perforce\dev\mss\portal\MemberSuite.Portal.Web</SourceWebProject>
-    <SourceWebMetabasePath>/IISExpress/7.5/LM/W3SVC/10/ROOT</SourceWebMetabasePath>
+    <SourceWebVirtualPath>/MemberSuite.Portal</SourceWebVirtualPath>
+    <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
+    <SourceWebProject>http://localhost:3034</SourceWebProject>
+    <SourceWebMetabasePath>/IISExpress/7.5/LM/W3SVC/9/ROOT</SourceWebMetabasePath>
   </PropertyGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
@@ -41,15 +41,6 @@ Copyright (C) Microsoft Corporation. All rights reserved.
       <Value>$(AssemblyVersion)</Value>
     </AssemblyAttributes>
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\shared\MemberSuite.SDK.Web\MemberSuite.SDK.Web.csproj">
-      <Project>{08BE75E9-6DD3-4698-9934-FE7FC4458AD2}</Project>
-      <Name>MemberSuite.SDK.Web</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\shared\MemberSuite.SDK\MemberSuite.SDK.csproj">
-      <Project>{7C680047-90EB-4BE5-865C-1BD3502F9BBB}</Project>
-      <Name>MemberSuite.SDK</Name>
-    </ProjectReference>
-  </ItemGroup>
+ 
   <Import Project="$(_WebPublishTargetsPath)\Web\Microsoft.WebSite.Publishing.targets" />
 </Project>

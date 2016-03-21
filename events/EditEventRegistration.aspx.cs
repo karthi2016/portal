@@ -119,10 +119,10 @@ public partial class events_EditEventRegistration : PortalPage
 
     protected void loadDataFromConcierge()
     {
-        List<Search> searches = new List<Search>();
+        var searches = new List<Search>();
 
-        //Registration Fees
-        Search sRegistrationFees = new Search(msRegistrationFee.CLASS_NAME){ID = "RegistrationFees"};
+        // Registration Fees
+        var sRegistrationFees = new Search(msRegistrationFee.CLASS_NAME){ID = "RegistrationFees"};
         sRegistrationFees.AddOutputColumn("ID");
         sRegistrationFees.AddOutputColumn("Name");
         sRegistrationFees.AddCriteria(Expr.Equals("Event", targetEventRegistration.Event));
@@ -130,8 +130,8 @@ public partial class events_EditEventRegistration : PortalPage
         
         searches.Add(sRegistrationFees);
 
-        //Registration Categories
-        Search sRegistrationCategories = new Search(msRegistrationCategory.CLASS_NAME) {ID = "RegistrationCategories"};
+        // Registration Categories
+        var sRegistrationCategories = new Search(msRegistrationCategory.CLASS_NAME) {ID = "RegistrationCategories"};
         sRegistrationCategories.AddOutputColumn("ID");
         sRegistrationCategories.AddOutputColumn("Name");
         sRegistrationCategories.AddCriteria(Expr.Equals("Event", targetEventRegistration.Event));
@@ -139,8 +139,8 @@ public partial class events_EditEventRegistration : PortalPage
 
         searches.Add(sRegistrationCategories);
 
-        //Registration Classes
-        Search sRegistrationClasses = new Search(msRegistrationClass.CLASS_NAME) {ID = "RegistrationClasses"};
+        // Registration Classes
+        var sRegistrationClasses = new Search(msRegistrationClass.CLASS_NAME) {ID = "RegistrationClasses"};
         sRegistrationClasses.AddOutputColumn("ID");
         sRegistrationClasses.AddOutputColumn("Name");
         sRegistrationClasses.AddCriteria(Expr.Equals("Event", targetEventRegistration.Event));
@@ -148,7 +148,7 @@ public partial class events_EditEventRegistration : PortalPage
 
         searches.Add(sRegistrationClasses);
 
-        List<SearchResult> searchResults = ExecuteSearches(searches, 0, null);
+        var searchResults = APIExtensions.GetMultipleSearchResults(searches, 0, null);
         dvRegistrationFees = new DataView(searchResults.Single(x => x.ID == "RegistrationFees").Table);
         dvRegistrationCategories = new DataView(searchResults.Single(x => x.ID == "RegistrationCategories").Table);
         dvRegistrationClasses = new DataView(searchResults.Single(x => x.ID == "RegistrationClasses").Table);

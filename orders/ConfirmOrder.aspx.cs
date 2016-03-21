@@ -6,12 +6,12 @@ using System.Text;
 using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
+using MemberSuite.SDK.Concierge;
 using MemberSuite.SDK.Manifests;
 using MemberSuite.SDK.Searching;
 using MemberSuite.SDK.Searching.Operations;
 using MemberSuite.SDK.Types;
 using MemberSuite.SDK.Utilities;
-using MemberSuite.SDK.WCF;
 
 public partial class orders_ConfirmOrder : PortalPage
 {
@@ -100,11 +100,11 @@ public partial class orders_ConfirmOrder : PortalPage
     private void setupConfirmationSections()
     {
         // we have special setions for different kinds of confirmations
-        OrderConfirmationPacket confirmationPacket = MultiStepWizards.PlaceAnOrder.OrderConfirmaionPacket;
+        var confirmationPacket = MultiStepWizards.PlaceAnOrder.OrderConfirmationPacket;
         if (confirmationPacket == null || !confirmationPacket.ShouldShow()) return;
 
         // now, let's got through and try and cast the packet, and see which kind it is
-        ExhibitorConfirmationPacket ep = confirmationPacket as ExhibitorConfirmationPacket;
+        var ep = confirmationPacket as ExhibitorConfirmationPacket;
 
         if (ep != null) setupExhibitorConfirmation(ep);
     }
@@ -114,16 +114,24 @@ public partial class orders_ConfirmOrder : PortalPage
         divExhibitorConfirmation.Visible = true;
 
         using (var api = GetServiceAPIProxy())
+        {
             if (ep.BoothPreferences != null && ep.BoothPreferences.Count > 0)
             {
                 divExhibitorConfirmation_BoothPreferences.Visible = true;
 
-                StringBuilder sb = new StringBuilder();
+                var sb = new StringBuilder();
                 foreach (var b in ep.BoothPreferences)
                     sb.AppendFormat("{0}, ", api.GetName(b).ResultValue);
 
                 lblExhbitor_BoothPreferences.Text = sb.ToString().Trim().TrimEnd(',');
             }
+        }
+
+        if (!string.IsNullOrWhiteSpace(ep.ConfirmationInstructions))
+        {
+            divExhibitorConfirmation_ConfirmationInstructions.Visible = true;
+            lblExhibitorConfirmationInstructions.Text = ep.ConfirmationInstructions;
+        }
 
         if (!string.IsNullOrWhiteSpace(ep.SpecialRequests))
             lblExhibitorSpecialRequests.Text = ep.SpecialRequests;
@@ -151,11 +159,11 @@ public partial class orders_ConfirmOrder : PortalPage
         }
 
         // we have to preprocess the order to get the prices and such
-        if (string.IsNullOrWhiteSpace(targetOrder.BillingEmailAddress))
-            targetOrder.BillingEmailAddress = ConciergeAPI.CurrentEntity.EmailAddress;
+        //if (string.IsNullOrWhiteSpace(targetOrder.BillingEmailAddress))
+        //    targetOrder.BillingEmailAddress = ConciergeAPI.CurrentEntity.EmailAddress;
 
-        if (string.IsNullOrWhiteSpace(targetOrder.BillingEmailAddress))
-            targetOrder.BillingEmailAddress = ConciergeAPI.CurrentUser.EmailAddress;
+        //if (string.IsNullOrWhiteSpace(targetOrder.BillingEmailAddress))
+        //    targetOrder.BillingEmailAddress = ConciergeAPI.CurrentUser.EmailAddress;
 
         using (var api = GetConciegeAPIProxy())
         {
@@ -191,11 +199,13 @@ public partial class orders_ConfirmOrder : PortalPage
             var csi = MultiStepWizards.PlaceAnOrder.CrossSellItems;
             if (csi != null && csi.Count > 0)
             {
-                targetOrder.LineItems.AddRange(csi.FindAll(x=>x.Quantity != 0)); // add any cross sell items
+                targetOrder.LineItems.AddRange(csi.FindAll(x => x.Quantity != 0)); // add any cross sell items
                 hlChangeRemoveAdditionalItems.Visible = true;
                 hlChangeRemoveAdditionalItems.NavigateUrl += "?useTransient" + isTransient;
             }
 
+            if (targetOrder.Date == DateTime.MinValue)
+                targetOrder.Date = DateTime.Now;
 
             preProcessedOrderPacket = api.PreProcessOrder(targetOrder).ResultValue;
         }
@@ -262,7 +272,7 @@ public partial class orders_ConfirmOrder : PortalPage
     protected void btnPlaceOrder_Click(object sender, EventArgs e)
     {
         const string ContentSuffix = "_Contents";
-   
+
         if (!IsValid)
             return;
 
@@ -279,7 +289,7 @@ public partial class orders_ConfirmOrder : PortalPage
             // add cross sell
             var csi = MultiStepWizards.PlaceAnOrder.CrossSellItems;
             if (csi != null && csi.Count > 0)
-                targetOrder.LineItems.AddRange( csi.FindAll(x => x.Quantity != 0)); // add any cross sell items
+                targetOrder.LineItems.AddRange(csi.FindAll(x => x.Quantity != 0)); // add any cross sell items
 
             using (var api = GetServiceAPIProxy())
             {
@@ -309,8 +319,18 @@ public partial class orders_ConfirmOrder : PortalPage
                     {
                         foreach (var a in attachments)
                         {
-                            // Add to current lineItem's Options field's name and according file Id.
-                            lineItem.Options.Add(new NameValueStringPair { Name = a.Key, Value = a.FileId });
+                            // JES product fullfillment logic expects an xml file to save.. Copy relevant values into MemberSuiteFile & serializer it to send to JES (MS-6424)
+                            //
+                            var ms = new MemberSuiteFile();
+                            ms.FileName = a.File.SafeGetValue<string>("Name");
+                            ms.FileContents = a.File.SafeGetValue<byte[]>("FileContents");
+                            ms.FileType = a.File.SafeGetValue<string>("FileType"); //we don't currently have this
+
+
+                            var xml = MemberSuite.SDK.Utilities.Xml.Serialize(ms);
+
+
+                            lineItem.Options.Add(new NameValueStringPair { Name = a.Key, Value = xml });
                             // Add according ms file to payload.
                             msPayload.Add(a.File);
                         }
@@ -334,28 +354,46 @@ public partial class orders_ConfirmOrder : PortalPage
                     payload.ObjectsToSave.AddRange(msPayload);
                 }
 
+                if (targetOrder.Date == DateTime.MinValue)
+                    targetOrder.Date = DateTime.Now;
+
                 var processedOrderPacket = api.PreProcessOrder(targetOrder).ResultValue;
                 cleanOrder = processedOrderPacket.FinalizedOrder.ConvertTo<msOrder>();
                 cleanOrder.Total = processedOrderPacket.Total;
 
-                if (string.IsNullOrWhiteSpace(cleanOrder.BillingEmailAddress))
-                    cleanOrder.BillingEmailAddress = CurrentUser.EmailAddress;
+                //if (string.IsNullOrWhiteSpace(cleanOrder.BillingEmailAddress))
+                //    cleanOrder.BillingEmailAddress = CurrentUser.EmailAddress;
 
-                string antiDupeKey = (string)ViewState["AntiDupeKey"];
+                if (MultiStepWizards.RegisterForEvent.IsSessionSwap)
+                {
+                    var swapResult = api.SwapSessions(
+                        MultiStepWizards.RegisterForEvent.SwapRegistrationID, 
+                        MultiStepWizards.RegisterForEvent.SessionsToCancel,
+                        cleanOrder);
 
+                    if (!swapResult.Success)
+                    {
+                        QueueBannerError(swapResult.FirstErrorMessage);
+                    }
+                    else
+                    {
+                        QueueBannerMessage("Session updates complete.");
+                    }
 
-                string trackingKey;
-                if (payload == null)
-                    trackingKey = api.ProcessOrder(cleanOrder, antiDupeKey).ResultValue;
-                else
-                    trackingKey = api.ProcessOrderWithPayload(cleanOrder, payload, antiDupeKey).ResultValue;
+                    MultiStepWizards.RegisterForEvent.Clear();
+                    GoTo(MultiStepWizards.PlaceAnOrder.OrderCompleteUrl ?? "OrderComplete.aspx");
+                }
+
+                var processInfo = api.ProcessOrder(cleanOrder, payload).ResultValue;
+
 
                 // let's wait for the order
-                var log = OrderUtilities.WaitForOrderToComplete(api, trackingKey);
+                var processStatus = OrderUtilities.WaitForOrderToComplete(api, processInfo);
 
-                if (log != null && log.Type == AuditLogType.OrderFailure)
-                    throw new ConciergeClientException(MemberSuite.SDK.Concierge.ConciergeErrorCode.IllegalOperation,
-                        log.Description);
+                if (processStatus.Status == LongRunningTaskStatus.Failed)
+                    throw new ConciergeClientException(
+                        MemberSuite.SDK.Concierge.ConciergeErrorCode.IllegalOperation,
+                        processStatus.AdditionalInfo);
 
                 string url = MultiStepWizards.PlaceAnOrder.OrderCompleteUrl ?? "OrderComplete.aspx";
                 if (url.Contains("?"))
@@ -389,9 +427,9 @@ public partial class orders_ConfirmOrder : PortalPage
                 MultiStepWizards.PlaceAnOrder.EditOrderLineItem = null; // clear this out
                 MultiStepWizards.PlaceAnOrder.EditOrderLineItemProductName = null; // clear this out
                 MultiStepWizards.PlaceAnOrder.EditOrderLineItemProductDemographics = null; // clear this out
-                MultiStepWizards.PlaceAnOrder.OrderConfirmaionPacket = null;
+                MultiStepWizards.PlaceAnOrder.OrderConfirmationPacket = null;
 
-                if (log == null)
+                if (processStatus.Status == LongRunningTaskStatus.Running )
                 {
                     // MS-5204. Don't create job posting here. If JES is down then, job posting will be created 
                     // during order processing. Otherwise we'll endup with duplicate job postings.
@@ -404,7 +442,7 @@ public partial class orders_ConfirmOrder : PortalPage
                     GoTo("OrderQueued.aspx");
                 }
 
-                var order = LoadObjectFromAPI<msOrder>(log.AffectedRecord_ID);
+                var order = LoadObjectFromAPI<msOrder>(processStatus.WorkflowID );
                 QueueBannerMessage(string.Format("Order #{0} was processed successfully.",
                                                  order.SafeGetValue<long>(
                                                      msLocallyIdentifiableAssociationDomainObject.FIELDS.LocalID)));
@@ -487,19 +525,20 @@ public partial class orders_ConfirmOrder : PortalPage
     {
         // now - IMPORTANT - are there any missing demographics?
         var pp = preProcessedOrderPacket;
-        if (pp == null || pp.ProductDemographics == null || pp.ProductDemographics.Count <= j) return;
+        if (pp == null || pp.ProductDemographics == null || pp.ProductDemographics.Count <= j)
+            return;
         var list = pp.ProductDemographics[j];
         if (list == null) return;
-        var requiredDemographics = list.FindAll(x => x.IsRequired || x.IsRequiredInPortal);
 
-        foreach (var rd in requiredDemographics)
-            if (item.SafeGetValue(rd.Name) == null) // we have a problem
-            {
-                divMissingDemographics.Visible = true;
-                imgWarning.Visible = true;
-                btnPlaceOrder.Enabled = false;
-                break;
-            }
+        var requiredDemographics = list.FindAll(x => x.IsRequiredInPortal);
+        if (requiredDemographics == null)
+            return;
+        if (requiredDemographics.Any(rd => !item.Options.Exists(x => x.Name == rd.Name) || item.Options.Find(x => x.Name == rd.Name).Value == null))
+        {
+            divMissingDemographics.Visible = true;
+            imgWarning.Visible = true;
+            btnPlaceOrder.Enabled = false;
+        }
     }
 
     private bool canProductBeEdited(int rowIndex)

@@ -51,7 +51,7 @@
         </li>
         <li>
             <asp:HyperLink ID="hlChangePassword" runat="server" CssClass="iconBtn iconBtnGear"
-                NavigateUrl="~/profile/ChangePassword.aspx">Change My Password</asp:HyperLink>
+                NavigateUrl="~/profile/ChangePassword.aspx?n=/">Change My Password</asp:HyperLink>
         </li>
         <li runat="server" id="liManageContacts"><a href="/profile/ManageContacts.aspx" class="iconBtn iconBtnGear">
             Manage Organization Contacts</a></li>

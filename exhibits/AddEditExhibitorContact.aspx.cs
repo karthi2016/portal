@@ -48,7 +48,7 @@ public partial class exhibits_AddEditExhibitorContact : PortalPage
         s.AddSortColumn( "DisplayOrder" );
         s.AddSortColumn( "Name");
         s.AddCriteria( Expr.Equals( "IsActive", true ) );
-        ddlType.DataSource = ExecuteSearch(s, 0, null).Table;
+        ddlType.DataSource = APIExtensions.GetSearchResult(s, 0, null).Table;
 
         ddlType.DataTextField = "Name";
         ddlType.DataValueField = "ID";
@@ -71,6 +71,8 @@ public partial class exhibits_AddEditExhibitorContact : PortalPage
             tbMobilePhone.Text = targetContact.MobilePhone;
             tbTitle.Text = targetContact.SafeGetValue<string>("Title");
         }
+
+        CustomTitle.Text = string.Format("{0} Exhibitor - {1}", targetShow.Name, targetExhibitor.Name);
     }
 
     

@@ -15,9 +15,7 @@
         ></a>
 </asp:Content>
 <asp:Content ID="Content3" ContentPlaceHolderID="PageTitle" runat="Server">
-    Edit
-    <%=GetSearchResult( drTargetOrganizationalLayerType, "Name", null ) %>
-    Information
+    Edit <asp:Literal runat="server" ID="PageTitleExtension"></asp:Literal>
 </asp:Content>
 <asp:Content ID="Content4" ContentPlaceHolderID="TopRightContent" runat="Server">
 </asp:Content>
@@ -109,7 +107,7 @@
                                         Address</u></b>
                                     <br />
                                     <asp:HiddenField ID="hfAddressCode" runat="server" />
-                                    <cc1:AddressControl ID="acAddress" runat="server" />
+                                    <cc1:AddressControl ID="acAddress" runat="server" EnableValidation="True" />
                                 </td>
                                 <asp:Literal ID="lNewRowTag" runat="server" />
                             </ItemTemplate>

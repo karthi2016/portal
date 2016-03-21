@@ -4,7 +4,6 @@ using System.Linq;
 using System.Web;
 using MemberSuite.SDK.Concierge;
 using MemberSuite.SDK.Types;
-using MemberSuite.SDK.WCF;
 
 /// <summary>
 /// Repsponsible for accessing data stored in cofiguration settings.

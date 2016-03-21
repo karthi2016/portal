@@ -12,15 +12,9 @@ using MemberSuite.SDK.Types;
 
 public partial class onlinestorefront_EditCart : PortalPage
 {
-    #region Fields
-
     private msOrder targetOrder;
     private PreProcessedOrderPacket preProcessedOrder;
-    
 
-    #endregion
-
-    #region Properties
 
     protected override bool IsPublic
     {
@@ -29,10 +23,6 @@ public partial class onlinestorefront_EditCart : PortalPage
             return true;
         }
     }
-
-    #endregion
-
-    #region Initialization
 
     /// <summary>
     /// Initializes the target object for the page
@@ -74,13 +64,8 @@ public partial class onlinestorefront_EditCart : PortalPage
         }
     }
 
-    #endregion
-
-    #region Methods
-
     protected void loadDataFromConcierge(IConciergeAPIService proxy)
     {
-      
         preProcessedOrder = proxy.PreProcessOrder(targetOrder).ResultValue;
 
         if (targetOrder == null || targetOrder.LineItems == null ||
@@ -93,21 +78,12 @@ public partial class onlinestorefront_EditCart : PortalPage
             return;
         }
 
-
-        // this is just the shopping cart, so we don't want to display shipping/taxes yet (they should not exist at this point).  Remove those items from the order if they exist for some reason
-        List<msOrderLineItem> itemsToDisplay = new List<msOrderLineItem>(preProcessedOrder.FinalizedOrder.ConvertTo<msOrder>().LineItems);
-        itemsToDisplay.RemoveAll(x => x.Type == OrderLineItemType.Shipping || x.Type == OrderLineItemType.Taxes || x.Type == OrderLineItemType.Discount);
-
         gvShoppingCart.Visible = true;
-        gvShoppingCart.DataSource = itemsToDisplay;
+        gvShoppingCart.DataSource = GetCartItems();
         gvShoppingCart.DataBind();
         lblShoppingCartEmpty.Visible = false;
         lblContinueShoppingInstructions.Visible = true;
     }
-
-    #endregion
-
-    #region Event Handlers
 
     protected void btnContinueShopping_Click(object sender, EventArgs e)
     {
@@ -157,10 +133,7 @@ public partial class onlinestorefront_EditCart : PortalPage
                 {
                     e.Row.Cells[3].CssClass = "columnHeader";
                     e.Row.Cells[3].HorizontalAlign = HorizontalAlign.Right;
-                    e.Row.Cells[3].Text = string.Format("Cart Total: {0}",
-                                                        preProcessedOrder.FinalizedOrder.ConvertTo<msOrder>().LineItems.
-                                                            Sum(
-                                                                x => x.UnitPrice * x.Quantity).ToString("C"));
+                    e.Row.Cells[3].Text = string.Format("Cart Total: {0}", GetCartItems().Sum(x => x.UnitPrice * x.Quantity).ToString("C"));
                 }
                 break;
 
@@ -179,7 +152,7 @@ public partial class onlinestorefront_EditCart : PortalPage
                 // The item can have bundled items which don't have associated row in shopping cart. 
                 // Such bundled items are handled by server.
                 e.Row.Enabled = GetLineItem(li.OrderLineItemID) != null;
-                
+
 
                 string productName = "Product";
 
@@ -256,7 +229,7 @@ public partial class onlinestorefront_EditCart : PortalPage
                 var lineItem = GetLineItem(gvr);
                 if (lineItem != null)
                 {
-                    MultiStepWizards.PlaceAnOrder.ShoppingCart.LineItems.Remove(lineItem);                    
+                    MultiStepWizards.PlaceAnOrder.ShoppingCart.LineItems.Remove(lineItem);
                 }
                 break;
         }
@@ -270,12 +243,19 @@ public partial class onlinestorefront_EditCart : PortalPage
         }
     }
 
-    #endregion
-
     protected void btnClear_Click(object sender, EventArgs e)
     {
         MultiStepWizards.PlaceAnOrder.Clear();
         QueueBannerMessage("Your shopping cart has been cleared.");
         Refresh();
+    }
+
+    private List<msOrderLineItem> GetCartItems()
+    {
+        // this is just the shopping cart, so we don't want to display shipping/taxes yet (they should not exist at this point).  Remove those items from the order if they exist for some reason
+        var itemsToDisplay = new List<msOrderLineItem>(preProcessedOrder.FinalizedOrder.ConvertTo<msOrder>().LineItems);
+        itemsToDisplay.RemoveAll(x => x.Type == OrderLineItemType.Shipping || x.Type == OrderLineItemType.Taxes || x.Type == OrderLineItemType.Discount);
+
+        return itemsToDisplay;
     }
 }

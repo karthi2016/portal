@@ -73,6 +73,8 @@ public partial class sections_ViewSection : PortalPage
 
         hlDiscussionBoard.Visible = IsModuleActive("Discussions");
         hlDiscussionBoard.NavigateUrl += ContextID;
+
+        CustomTitle.Text = string.Format("{0} Section", GetSearchResult( drTargetSection, "Name", null));
     }
 
     private void setupSectionLeaderOptions()
@@ -126,7 +128,7 @@ public partial class sections_ViewSection : PortalPage
     {
         cfsSectionFields.MemberSuiteObject = targetSection;
 
-        var pageLayout = GetAppropriatePageLayout(targetSection);
+        var pageLayout = targetSection.GetAppropriatePageLayout();
         if (pageLayout == null || pageLayout.Metadata == null || pageLayout.Metadata.IsEmpty())
         {
             divOtherInformation.Visible = false;
@@ -134,7 +136,7 @@ public partial class sections_ViewSection : PortalPage
         }
 
         // setup the metadata
-        cfsSectionFields.Metadata = proxy.DescribeObject(msSection.CLASS_NAME).ResultValue;
+        cfsSectionFields.Metadata = targetSection.DescribeObject();
         cfsSectionFields.PageLayout = pageLayout.Metadata;
 
         cfsSectionFields.AddReferenceNamesToTargetObject(proxy);
@@ -148,10 +150,10 @@ public partial class sections_ViewSection : PortalPage
 
     protected void loadDataFromConcierge()
     {
-        List<Search> searches = new List<Search>();
+        var searches = new List<Search>();
 
         // Search for the section to get aggregate information
-        Search sSection = new Search {Type = msSection.CLASS_NAME, ID = msSection.CLASS_NAME};
+        var sSection = new Search {Type = msSection.CLASS_NAME, ID = msSection.CLASS_NAME};
         sSection.AddOutputColumn("ActiveMemberCount");
         sSection.AddOutputColumn("TotalMemberCount");
         sSection.AddOutputColumn("LocalID");
@@ -160,8 +162,8 @@ public partial class sections_ViewSection : PortalPage
         sSection.AddCriteria(Expr.Equals("ID", ContextID));
         searches.Add(sSection);
 
-        //Search for related committees
-        Search sSectionCommittees = new Search {Type = msCommittee.CLASS_NAME, ID = msCommittee.CLASS_NAME};
+        // Search for related committees
+        var sSectionCommittees = new Search {Type = msCommittee.CLASS_NAME, ID = msCommittee.CLASS_NAME};
         sSectionCommittees.AddOutputColumn("ID");
         sSectionCommittees.AddOutputColumn("Name");
         sSectionCommittees.AddOutputColumn("CurrentMemberCount");
@@ -170,8 +172,8 @@ public partial class sections_ViewSection : PortalPage
 
         searches.Add(sSectionCommittees);
 
-        //Search for related events
-        Search sSectionEvents = new Search {Type = msEvent.CLASS_NAME, ID = msEvent.CLASS_NAME};
+        // Search for related events
+        var sSectionEvents = new Search {Type = msEvent.CLASS_NAME, ID = msEvent.CLASS_NAME};
         sSectionEvents.AddOutputColumn("ID");
         sSectionEvents.AddOutputColumn("Name");
         sSectionEvents.AddOutputColumn("StartDate");
@@ -183,19 +185,19 @@ public partial class sections_ViewSection : PortalPage
         sSectionEvents.AddSortColumn("Name");
         searches.Add(sSectionEvents);
 
-        Search sLeader = GetSectionLeaderSearch(targetSection.ID);
+        var sLeader = GetSectionLeaderSearch(targetSection.ID);
         searches.Add(sLeader);
 
-        var searchResults = ExecuteSearches(searches, 0, null);
+        var searchResults = APIExtensions.GetMultipleSearchResults(searches, 0, null);
 
-        SearchResult srSection = searchResults.Single(x => x.ID == msSection.CLASS_NAME);
+        var srSection = searchResults.Single(x => x.ID == msSection.CLASS_NAME);
         if (srSection.TotalRowCount == 0) GoToMissingRecordPage();
 
         drTargetSection = srSection.Table.Rows[0];
         dvSectionCommittees = new DataView(searchResults.Single(x => x.ID == msCommittee.CLASS_NAME).Table);
         dvSectionEvents = new DataView(searchResults.Single(x => x.ID == msEvent.CLASS_NAME).Table);
 
-        SearchResult srLeader = searchResults.Single(x => x.ID == "SectionLeader");
+        var srLeader = searchResults.Single(x => x.ID == "SectionLeader");
         if (srLeader != null)
             leader = ConvertLeaderSearchResult(srLeader);
     }

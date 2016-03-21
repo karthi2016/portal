@@ -9,7 +9,7 @@
     <asp:HyperLink runat="server" ID="hlEventOwner" Visible="false" />
 </asp:Content>
 <asp:Content ID="Content4" ContentPlaceHolderID="PageTitle" runat="Server">
-    Edit <%=targetCommittee.Name %>
+    Edit <asp:Literal runat="server" ID="PageTitleExtension"></asp:Literal>
 </asp:Content>
 <asp:Content ID="Content5" ContentPlaceHolderID="TopRightContent" runat="Server">
 </asp:Content>

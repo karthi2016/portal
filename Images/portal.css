@@ -227,7 +227,20 @@ h6
 {
 	font: normal 13px Verdana, Geneva, Arial, Helvetica, sans-serif;
 }
-
+.hlte {
+    color: green;
+}
+.hlteMon {
+    color: green;
+}
+.hlteWarn {
+    color: red;
+}
+.disabledInput {
+    background-color: rgb(235, 235, 228);
+    padding: 2px;
+    border: 1px solid #999;
+}
 table
 {
 	padding: 0;

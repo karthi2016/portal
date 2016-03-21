@@ -44,14 +44,14 @@ public partial class volunteers_UpdateMyVolunteerProfile : PortalPage
 
     protected override void InstantiateCustomFields(IConciergeAPIService proxy)
     {
-        CustomFieldSet1.MemberSuiteObject = targetVolunteer ;
+        CustomFieldSet1.MemberSuiteObject = targetVolunteer;
 
-        var pageLayout = GetAppropriatePageLayout(targetVolunteer);
+        var pageLayout = targetVolunteer.GetAppropriatePageLayout();
         if (pageLayout == null || pageLayout.Metadata == null || pageLayout.Metadata.IsEmpty())
             return;
 
         // setup the metadata
-        CustomFieldSet1.Metadata = proxy.DescribeObject(msVolunteer.CLASS_NAME).ResultValue;
+        CustomFieldSet1.Metadata = targetVolunteer.DescribeObject();
         CustomFieldSet1.PageLayout = pageLayout.Metadata;
 
 

@@ -20,7 +20,6 @@ public partial class financial_AccountHistory : PortalPage
     protected msSection targetSection;
     protected msOrganizationalLayer targetOrganizationalLayer;
 
-
     #endregion
 
     #region Properties
@@ -56,7 +55,7 @@ public partial class financial_AccountHistory : PortalPage
         if (string.IsNullOrWhiteSpace(LeaderOfId))
             return;
 
-        MemberSuiteObject leaderOf = LoadObjectFromAPI(LeaderOfId);
+        var leaderOf = APIExtensions.LoadObjectFromAPI(LeaderOfId);
         switch (leaderOf.ClassType)
         {
             case msChapter.CLASS_NAME:
@@ -95,6 +94,8 @@ public partial class financial_AccountHistory : PortalPage
 
         gvTransactions.DataSource = dvFinancialTransactions;
         gvTransactions.DataBind();
+
+        PageTitleExtension.Text = targetEntity.Name;
     }
 
     /// <summary>
@@ -137,18 +138,16 @@ public partial class financial_AccountHistory : PortalPage
 
     private void loadDataFromConcierge()
     {
-        Search sFinancialTransactions = new Search { Type = "FinancialTransactions" };
-        sFinancialTransactions.AddCriteria(Expr.Equals("Owner", targetEntity.ID));
+        var sFinancialTransactions = new Search { Type = msOrder.CLASS_NAME };
+        sFinancialTransactions.AddCriteria(Expr.Equals(msOrder.FIELDS.BillTo, targetEntity.ID));
 
-        sFinancialTransactions.AddOutputColumn("TransactionType");
         sFinancialTransactions.AddOutputColumn("Date");
-        sFinancialTransactions.AddOutputColumn("ID");
         sFinancialTransactions.AddOutputColumn("Name");
         sFinancialTransactions.AddOutputColumn("Memo");
         sFinancialTransactions.AddOutputColumn("Total");
         sFinancialTransactions.AddSortColumn("Date", true);
 
-        SearchResult srFinancialTransactions = ExecuteSearch(sFinancialTransactions, 0, null);
+        var srFinancialTransactions = APIExtensions.GetSearchResult(sFinancialTransactions, 0, null);
         dvFinancialTransactions = new DataView(srFinancialTransactions.Table);
     }
 
@@ -163,27 +162,17 @@ public partial class financial_AccountHistory : PortalPage
 
     protected void gvTransactions_RowDataBound(object sender, GridViewRowEventArgs e)
     {
-        DataRowView drv = (DataRowView)e.Row.DataItem;
+        var drv = (DataRowView)e.Row.DataItem;
 
         if (Page.IsPostBack)
             return;				// only do this if there's a postback - otherwise, preserve ViewState
 
         switch (e.Row.RowType)
         {
-            case DataControlRowType.Header:
-                break;
-
-            case DataControlRowType.Footer:
-                break;
-
-
-
             case DataControlRowType.DataRow:
-
-                HyperLink hlView = (HyperLink)e.Row.FindControl("hlView");
+                var hlView = (HyperLink)e.Row.FindControl("hlView");
                 string nextUrl;
 
-                var transactionType = (string)drv["TransactionType"];
                 var transactionID = Convert.ToString( drv["ID"] );
                
                 if (transactionID.ToUpper().Contains("-00D7-"))   // it's a historical transaction
@@ -192,41 +181,10 @@ public partial class financial_AccountHistory : PortalPage
                     return;
                 }
 
-                switch (transactionType)
-                {
-                    case "Order":
-                        nextUrl = "/financial/ViewOrder.aspx?contextID=" + drv["ID"];
-                        if (!string.IsNullOrWhiteSpace(LeaderOfId))
-                            nextUrl += string.Format("{0}&leaderOfID={1}", nextUrl, LeaderOfId);
-                        hlView.NavigateUrl = nextUrl;
-                        break;
-
-                    case "Invoice":
-                        nextUrl = "/financial/ViewInvoice.aspx?contextID=" + drv["ID"];
-                        if (!string.IsNullOrWhiteSpace(LeaderOfId))
-                            nextUrl += string.Format("{0}&leaderOfID={1}", nextUrl, LeaderOfId);
-                        hlView.NavigateUrl = nextUrl;
-                        break;
-
-                    case "Payment":
-                        nextUrl = "/financial/ViewPayment.aspx?contextID=" + drv["ID"];
-                        if (!string.IsNullOrWhiteSpace(LeaderOfId))
-                            nextUrl += string.Format("{0}&leaderOfID={1}", nextUrl, LeaderOfId);
-                        hlView.NavigateUrl = nextUrl;
-                        break;
-
-                    case "Gift":
-                        nextUrl = "/donations/ViewGift.aspx?contextID=" + drv["ID"];
-                        
-                        hlView.NavigateUrl = nextUrl;
-                        break;
-
-                    default:
-                        hlView.Visible = false;
-                        break;
-                }
-
-
+                nextUrl = "/financial/ViewOrder.aspx?contextID=" + drv["ID"];
+                if (!string.IsNullOrWhiteSpace(LeaderOfId))
+                    nextUrl += string.Format("{0}&leaderOfID={1}", nextUrl, LeaderOfId);
+                hlView.NavigateUrl = nextUrl;
                 break;
         }
     }

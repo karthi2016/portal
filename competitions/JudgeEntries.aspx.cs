@@ -38,7 +38,7 @@ public partial class competitions_JudgeEntries : PortalPage
     {
         base.InitializeTargetObject();
 
-        targetJudgingTeam = LoadObjectFromAPI(ContextID).ConvertTo<msJudgingTeam>();
+        targetJudgingTeam = LoadObjectFromAPI<msJudgingTeam>(ContextID);
 
         if (targetJudgingTeam == null)
         {
@@ -46,7 +46,7 @@ public partial class competitions_JudgeEntries : PortalPage
             return;
         }
 
-        targetCompetition = LoadObjectFromAPI(targetJudgingTeam.Competition).ConvertTo<msCompetition>();
+        targetCompetition = LoadObjectFromAPI<msCompetition>(targetJudgingTeam.Competition);
 
         if (Request.QueryString["roundID"] != null)
             targetRound = LoadObjectFromAPI<msJudgingRound>(Request.QueryString["roundID"]);
@@ -56,6 +56,13 @@ public partial class competitions_JudgeEntries : PortalPage
             GoToMissingRecordPage();
             return;
         }
+    }
+
+    protected override void InitializePage()
+    {
+        base.InitializePage();
+
+        PageTitleExtension.Text = string.Format(" {0} Entries", targetCompetition.Name);
     }
 
     protected override void Page_Load(object sender, EventArgs e)
@@ -82,17 +89,32 @@ public partial class competitions_JudgeEntries : PortalPage
             ddlJudgingRounds.DataSource = dtJudgingRounds;
             ddlJudgingRounds.DataBind();
 
-            //Select the current judging round by default if possible
-            foreach (DataRow judgingRound in dtJudgingRounds.Rows)
-                if ((judgingRound["JudgingBegins"] == DBNull.Value || (DateTime.Now > (DateTime)judgingRound["JudgingBegins"])) && (judgingRound["JudgingBegins"] == DBNull.Value || (DateTime.Now < (DateTime)judgingRound["JudgingEnds"])))
-                {
-                    ddlJudgingRounds.SelectedValue = judgingRound["ID"].ToString();
-                    break;
-                }
+        
+
+            // MS - 6295
+            var cacheKey = string.Format("SelectedRound_{0}", targetCompetition.ID);
+            var defaultRound = SessionManager.Get<string>(cacheKey);
+            if (!string.IsNullOrEmpty(defaultRound) && ddlJudgingRounds.Items.FindByValue(defaultRound) != null)
+            {
+                ddlJudgingRounds.SelectedValue = defaultRound;
+            }
+            else
+            {
+                // Do current selection code 
+                //Select the current judging round by default if possible
+                foreach (DataRow judgingRound in dtJudgingRounds.Rows)
+                    if ((judgingRound["JudgingBegins"] == DBNull.Value || (DateTime.Now > (DateTime)judgingRound["JudgingBegins"])) && (judgingRound["JudgingBegins"] == DBNull.Value || (DateTime.Now < (DateTime)judgingRound["JudgingEnds"])))
+                    {
+                        ddlJudgingRounds.SelectedValue = judgingRound["ID"].ToString();
+                        break;
+                    }
 
 
-            if (targetRound != null)
-                ddlJudgingRounds.SelectedValue = targetRound.ID;
+                if (targetRound != null)
+                    ddlJudgingRounds.SelectedValue = targetRound.ID;
+            } 
+
+           
 
             setJudgingRoundWarning(); // do this first - MS-4424
 
@@ -105,7 +127,7 @@ public partial class competitions_JudgeEntries : PortalPage
                                        "{0}, you have {1} entries that you need to score for the selected round.",
                                        ConciergeAPI.CurrentEntity.Name, dvCompetitionEntriesInRound.Count)
                                    : "There are no entries assigned to you for the selected round.";
-
+  
     }
 
     #endregion
@@ -114,10 +136,10 @@ public partial class competitions_JudgeEntries : PortalPage
 
     protected void loadDataFromConcierge()
     {
-        List<Search> searches = new List<Search>();
+        var searches = new List<Search>();
 
-        //Get all judging rounds related to the competition
-        Search sJudgingRounds = new Search(msJudgingRound.CLASS_NAME){ID= msJudgingRound.CLASS_NAME};
+        // Get all judging rounds related to the competition
+        var sJudgingRounds = new Search(msJudgingRound.CLASS_NAME){ID= msJudgingRound.CLASS_NAME};
         sJudgingRounds.AddOutputColumn("ID");
         sJudgingRounds.AddOutputColumn("Name");
         sJudgingRounds.AddOutputColumn("JudgingBegins");
@@ -126,18 +148,18 @@ public partial class competitions_JudgeEntries : PortalPage
         sJudgingRounds.AddSortColumn("RoundNumber");
         searches.Add(sJudgingRounds);
 
-        //Get the judging buckets related to this team and sort by name
-        Search sJudgingBuckets = new Search(msJudgingBucket.CLASS_NAME) { ID = msJudgingBucket.CLASS_NAME };
+        // Get the judging buckets related to this team and sort by name
+        var sJudgingBuckets = new Search(msJudgingBucket.CLASS_NAME) { ID = msJudgingBucket.CLASS_NAME };
         sJudgingBuckets.AddOutputColumn("Name");
-        SearchOperationGroup sJudgingBucketIdClause = new SearchOperationGroup { GroupType = SearchOperationGroupType.Or };
+        var sJudgingBucketIdClause = new SearchOperationGroup { GroupType = SearchOperationGroupType.Or };
         foreach (var bucketId in targetJudgingTeam.Buckets)
             sJudgingBucketIdClause.Criteria.Add(Expr.Equals("ID", bucketId));
         sJudgingBuckets.AddCriteria(sJudgingBucketIdClause);
         sJudgingBuckets.AddSortColumn("Name");
         searches.Add(sJudgingBuckets);
 
-        //Get the all the competition enties related to any of the buckets related to this team (we will filter based on bucket / round with data views later)
-        Search sCompetitionEntries = new Search(msCompetitionEntry.CLASS_NAME) { ID = msCompetitionEntry.CLASS_NAME };
+        // Get the all the competition enties related to any of the buckets related to this team (we will filter based on bucket / round with data views later)
+        var sCompetitionEntries = new Search(msCompetitionEntry.CLASS_NAME) { ID = msCompetitionEntry.CLASS_NAME };
         sCompetitionEntries.AddOutputColumn("ID");
         sCompetitionEntries.AddOutputColumn("Name");
         sCompetitionEntries.AddOutputColumn("JudgingBucket.ID");
@@ -153,8 +175,8 @@ public partial class competitions_JudgeEntries : PortalPage
         sCompetitionEntries.AddCriteria(sJudgingBucketIdClause);
         searches.Add(sCompetitionEntries);
 
-        //Get the score cards for the current user related to competition entries related to any of the buckets related to this team (we will filter based on bucket / round with data views later)
-        Search sScoreCards = new Search(msScoreCard.CLASS_NAME){ID = msScoreCard.CLASS_NAME};
+        // Get the score cards for the current user related to competition entries related to any of the buckets related to this team (we will filter based on bucket / round with data views later)
+        var sScoreCards = new Search(msScoreCard.CLASS_NAME){ID = msScoreCard.CLASS_NAME};
         sScoreCards.AddOutputColumn("ID");
         sScoreCards.AddOutputColumn("Round.ID");
         sScoreCards.AddOutputColumn("Entry.ID");
@@ -166,17 +188,17 @@ public partial class competitions_JudgeEntries : PortalPage
         sScoreCards.AddCriteria(sJudgingBucketIdClause);
         searches.Add(sScoreCards);
 
-        //Execute the searches as a multi-search
-        List<SearchResult> searchResults = ExecuteSearches(searches, 0, null);
+        // Execute the searches as a multi-search
+        var searchResults = APIExtensions.GetMultipleSearchResults(searches, 0, null);
 
-        //Handle the judging round results
+        // Handle the judging round results
         dtJudgingRounds = searchResults.Single(x => x.ID == msJudgingRound.CLASS_NAME).Table;
         dtJudgingRounds.PrimaryKey = new[] { dtJudgingRounds.Columns["ID"] };
 
-        //Handle the bucket results
+        // Handle the bucket results
         dvJudgingBuckets = new DataView(searchResults.Single(x => x.ID == msJudgingBucket.CLASS_NAME).Table);
 
-        //Handle the competition entry results
+        // Handle the competition entry results
         dtCompetitionEntries = searchResults.Single(x => x.ID == msCompetitionEntry.CLASS_NAME).Table;
 
         dtCompetitionEntries.Columns.Add("TeamID");
@@ -237,6 +259,8 @@ public partial class competitions_JudgeEntries : PortalPage
 
     protected void ddlJudgingRounds_OnSelectedIndexChanged(object sender, EventArgs e)
     {
+        var cacheKey = string.Format("SelectedRound_{0}", targetCompetition.ID);
+        SessionManager.Set(cacheKey, ddlJudgingRounds.SelectedValue);
         GoTo(string.Format("JudgeEntries.aspx?contextID={0}&roundID={1}",
                            targetJudgingTeam.ID, ddlJudgingRounds.SelectedValue));
     }

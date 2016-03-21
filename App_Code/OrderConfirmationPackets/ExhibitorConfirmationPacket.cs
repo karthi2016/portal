@@ -13,7 +13,6 @@ public class ExhibitorConfirmationPacket : OrderConfirmationPacket
 		 
 	}
 
-
     public override bool ShouldShow()
     {
         if (BoothPreferences != null && BoothPreferences.Count > 0)
@@ -26,6 +25,8 @@ public class ExhibitorConfirmationPacket : OrderConfirmationPacket
     }
 
     public List<string> BoothPreferences { get; set; }
+
     public string SpecialRequests { get; set; }
 
+    public string ConfirmationInstructions { get; set; }
 }

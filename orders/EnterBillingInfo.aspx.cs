@@ -1,24 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Web.UI.WebControls;
 using MemberSuite.SDK.Searching;
 using MemberSuite.SDK.Searching.Operations;
 using MemberSuite.SDK.Types;
 
 public partial class orders_EnterBillingInfo : CreditCardLogic
 {
-
     #region Fields
 
     private msOrder targetOrder;
+
     private bool IsTransient
     {
         get { return string.Equals(Request.QueryString["useTransient"], "true", StringComparison.CurrentCultureIgnoreCase); }
     }
+
     private PreProcessedOrderPacket preProcessedOrderPacket;
 
-
     #endregion
+
     #region Initialization
 
     /// <summary>
@@ -58,8 +60,29 @@ public partial class orders_EnterBillingInfo : CreditCardLogic
 
         if (!IsPostBack)
         {
+            // let's preprocess and figure out whether we need shipping information
+            var completeOrder = targetOrder.Clone().ConvertTo<msOrder>();
+            var csi = MultiStepWizards.PlaceAnOrder.CrossSellItems;
+            if (csi != null && csi.Count > 0)
+                completeOrder.LineItems.AddRange(csi.FindAll(x => x.Quantity != 0)); // add any cross sell items
+
+            if (completeOrder.Date == DateTime.MinValue)
+                completeOrder.Date = DateTime.Now;
+
+            using (var api = GetConciegeAPIProxy())
+            {
+                preProcessedOrderPacket = api.PreProcessOrder(completeOrder).ResultValue;
+            }
+
+            // no billing, but we want to test Total, and not AmountDueNow
+            // because even if nothing is due now we need to capture credit card info
+            if (preProcessedOrderPacket.Total == 0)
+                GoTo("ConfirmOrder.aspx?useTransient=" + IsTransient);
+
+            lblAmountDue.Text = preProcessedOrderPacket.AmountDueNow.ToString("C");
+
             using (var api = GetServiceAPIProxy())
-                BillingInfoWidget.AllowableMethods = api.DetermineAllowableOrderPaymentMethods(targetOrder).ResultValue;
+                BillingInfoWidget.AllowableMethods = api.DetermineAllowableOrderPaymentMethods(preProcessedOrderPacket.FinalizedOrder.ConvertTo<msOrder>()).ResultValue;
 
             // let's set default payment info
             switch (targetOrder.PaymentMethod)
@@ -68,7 +91,7 @@ public partial class orders_EnterBillingInfo : CreditCardLogic
                     break; // do nothing
 
                 case OrderPaymentMethod.CreditCard:
-                    CreditCard cc = new CreditCard();
+                    var cc = new CreditCard();
                     // Do NOT keep the credit card information on the page unpon refreshes
                     cc.SavePaymentMethod = targetOrder.SavePaymentMethod;
                     cc.NameOnCard = targetOrder.SafeGetValue<string>("NameOnCreditCard");
@@ -76,7 +99,7 @@ public partial class orders_EnterBillingInfo : CreditCardLogic
                     break;
 
                 case OrderPaymentMethod.ElectronicCheck:
-                    ElectronicCheck ec = new ElectronicCheck();
+                    var ec = new ElectronicCheck();
                     ec.BankAccountNumber = targetOrder.ACHAccountNumber;
                     ec.RoutingNumber = targetOrder.ACHRoutingNumber;
                     ec.SavePaymentMethod = targetOrder.SavePaymentMethod;
@@ -84,19 +107,17 @@ public partial class orders_EnterBillingInfo : CreditCardLogic
                     break;
 
                 case OrderPaymentMethod.SavedPaymentMethod:
-                    SavedPaymentInfo spi = new SavedPaymentInfo();
+                    var spi = new SavedPaymentInfo();
                     spi.SavedPaymentMethodID = targetOrder.SavedPaymentMethod;
                     BillingInfoWidget.SetPaymentInfo(spi);
                     break;
 
                 default:
-                    NonElectronicPayment nep = new NonElectronicPayment();
+                    var nep = new NonElectronicPayment();
                     nep._OrderPaymentMethod = targetOrder.PaymentMethod;
                     nep.ReferenceNumber = targetOrder.PaymentReferenceNumber;
                     BillingInfoWidget.SetPaymentInfo(nep);
                     break;
-
-
             }
 
             BillingInfoWidget.SetBillingAddress(targetOrder.BillingAddress);
@@ -112,44 +133,29 @@ public partial class orders_EnterBillingInfo : CreditCardLogic
     protected override void InitializePage()
     {
         base.InitializePage();
-
-        // let's preprocess and figure out whether we need shipping information
-        var completeOrder = targetOrder.Clone().ConvertTo<msOrder>();
-        var csi = MultiStepWizards.PlaceAnOrder.CrossSellItems;
-        if (csi != null && csi.Count > 0)
-            completeOrder.LineItems.AddRange(csi.FindAll(x => x.Quantity != 0)); // add any cross sell items
-
-        using (var api = GetConciegeAPIProxy())
-        {
-            preProcessedOrderPacket = api.PreProcessOrder(completeOrder).ResultValue;
-        }
-
-
-        // no billing, but we want to test Total, and not AmountDueNow
-        // because even if nothing is due now we need to capture credit card info
-        if (preProcessedOrderPacket.Total == 0)
-            GoTo("ConfirmOrder.aspx?useTransient=" + IsTransient);
-
-
-
-        lblAmountDue.Text = preProcessedOrderPacket.AmountDueNow.ToString("C");
         RegisterJavascriptConfirmationBox(lbCancel, "Are you sure you want to cancel this order?");
     }
-
 
     #endregion
 
     protected void btnContinue_Click(object sender, EventArgs e)
     {
         if (!IsValid)
+        {
+            var tbCardNumber = BillingInfoWidget.FindControl("tbCardNumber") as TextBox;
+            if (tbCardNumber != null)
+                tbCardNumber.Text = string.Empty;
             return;
-
+        }
 
         var ePayment = BillingInfoWidget.GetPaymentInfo();
 
-
         if (ePayment == null)
-            throw new ApplicationException("No payment type selected.");    // this should be caught during validation
+        {
+            cvCustom.IsValid = false;
+            cvCustom.ErrorMessage = "You have not selected a payment method.";
+            return;
+        }
 
         targetOrder.PaymentMethod = ePayment.OrderPaymentMethod;
 
@@ -157,7 +163,7 @@ public partial class orders_EnterBillingInfo : CreditCardLogic
         {
             case OrderPaymentMethod.CreditCard:
 
-                CreditCard cc = ePayment as CreditCard;
+                var cc = ePayment as CreditCard;
                 if (cc == null)
                     throw new ApplicationException(
                         "Payment is of type credit card, but no credit card manifest provided");
@@ -169,7 +175,7 @@ public partial class orders_EnterBillingInfo : CreditCardLogic
 
             case OrderPaymentMethod.ElectronicCheck:
 
-                ElectronicCheck ec = ePayment as ElectronicCheck;
+                var ec = ePayment as ElectronicCheck;
                 if (ec == null)
                     throw new ApplicationException(
                         "Payment is of type electronic check, but no check  manifest provided");
@@ -179,16 +185,13 @@ public partial class orders_EnterBillingInfo : CreditCardLogic
                 break;
 
             case OrderPaymentMethod.SavedPaymentMethod:
-                SavedPaymentInfo spi = ePayment as SavedPaymentInfo;
+                var spi = ePayment as SavedPaymentInfo;
                 if (spi == null)
                     throw new ApplicationException(
                         "Payment is of type saved method, but not method manifest provided");
 
                 targetOrder.SavedPaymentMethod = spi.SavedPaymentMethodID;
                 break;
-
-
-
         }
 
         targetOrder["BillingMethodFriendlyName"] = ePayment.ToString();
@@ -266,7 +269,7 @@ public partial class orders_EnterBillingInfo : CreditCardLogic
         s.AddCriteria(Expr.Equals("Code", discountCode));
         using (var api = GetServiceAPIProxy())
         {
-            var result = api.ExecuteSearch(s, 0, 1).ResultValue;
+            var result = api.GetSearchResult(s, 0, 1);
             if (result.TotalRowCount > 0)
                 return Convert.ToString(result.Table.Rows[0]["ID"]);
         }

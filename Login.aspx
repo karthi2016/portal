@@ -47,7 +47,7 @@
                     </tr>
                     <tr>
                         <td colspan="2" align="center">
-                            <a href="/profile/ForgotPassword.aspx">Forgot your password? Click here</a>
+                            <asp:HyperLink ID="hlForgotPassword" runat="server" NavigateUrl="/profile/ForgotPassword.aspx">Forgot your password? Click here</asp:HyperLink>
                             <br />
                             <asp:Button ID="btnLogin" runat="server" Text="Login" OnClick="btnLogin_Click" />
                             <asp:CustomValidator ID="cvLoginValidator" runat="server" Display="None" ErrorMessage="CustomValidator"></asp:CustomValidator>

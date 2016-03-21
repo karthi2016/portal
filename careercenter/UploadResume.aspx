@@ -8,7 +8,7 @@
 <asp:Content ID="Content3" ContentPlaceHolderID="BreadcrumbBar" runat="Server">
 </asp:Content>
 <asp:Content ID="Content4" ContentPlaceHolderID="PageTitle" runat="Server">
-    <asp:Literal runat="server" ID="litTitle" />
+    <asp:Literal runat="server" ID="litTitle"></asp:Literal>
 </asp:Content>
 <asp:Content ID="Content5" ContentPlaceHolderID="TopRightContent" runat="Server">
 </asp:Content>
@@ -69,7 +69,7 @@
             </p>
             <div style="text-align: center">
                 <asp:Button runat="server" ID="btnSave" Text="Save" OnClick="btnSave_Click" />
-                <asp:Button runat="server" ID="btnCancel" Text="Cancel" OnClick="btnCancel_Click" />
+                <asp:Button runat="server" ID="btnCancel" Text="Cancel" OnClick="btnCancel_Click" CausesValidation="False" />
             </div>
         </div>
     </div>

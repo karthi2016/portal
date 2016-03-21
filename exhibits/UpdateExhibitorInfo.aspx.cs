@@ -24,16 +24,23 @@ public partial class exhibits_UpdateExhibitorInfo : PortalPage
        
     }
 
+    protected override void InitializePage()
+    {
+        base.InitializePage();
+
+        CustomTitle.Text = string.Format("{0} Exhibitor - {1}", targetShow.Name, targetExhibitor.Name);
+    }
+
     protected override void InstantiateCustomFields(IConciergeAPIService proxy)
     {
         CustomFieldSet1.MemberSuiteObject = targetExhibitor;
 
-        var pageLayout = GetAppropriatePageLayout(targetExhibitor);
+        var pageLayout = targetExhibitor.GetAppropriatePageLayout();
         if (pageLayout == null || pageLayout.Metadata == null || pageLayout.Metadata.IsEmpty())
             return;
 
         // setup the metadata
-        CustomFieldSet1.Metadata = proxy.DescribeObject(msExhibitor.CLASS_NAME).ResultValue;
+        CustomFieldSet1.Metadata = targetExhibitor.DescribeObject();
         CustomFieldSet1.PageLayout = pageLayout.Metadata;
 
 

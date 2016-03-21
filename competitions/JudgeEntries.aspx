@@ -8,9 +8,7 @@
 <asp:Content ID="Content3" ContentPlaceHolderID="BreadcrumbBar" runat="Server">
 </asp:Content>
 <asp:Content ID="Content4" ContentPlaceHolderID="PageTitle" runat="Server">
-    Judge
-    <%=targetCompetition.Name %>
-    Entries
+    Judge <asp:Label runat="server" ID="PageTitleExtension"></asp:Label>
 </asp:Content>
 <asp:Content ID="Content5" ContentPlaceHolderID="TopRightContent" runat="Server">
 </asp:Content>
@@ -45,7 +43,7 @@
                                     <asp:BoundField DataField="Individual.PrimaryOrganization._Preferred_Address_State" HeaderStyle-HorizontalAlign="Left" HeaderText="Organization State" />
                                     <asp:TemplateField HeaderStyle-HorizontalAlign="Left" HeaderText="Score">
                                         <ItemTemplate>
-                                            <asp:Label runat="server" ID="lblScore" ForeColor="Green" Text='<%# DataBinder.Eval(Container.DataItem, "Score") %>'
+                                            <asp:Label runat="server" ID="lblScore" CssClass="hlte" Text='<%# DataBinder.Eval(Container.DataItem, "Score") %>'
                                                 Visible='<%# DataBinder.Eval(Container.DataItem, "HasScore") %>' />
                                         </ItemTemplate>
                                     </asp:TemplateField>

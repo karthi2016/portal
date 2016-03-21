@@ -13,8 +13,7 @@
         > </a>
 </asp:Content>
 <asp:Content ID="Content4" ContentPlaceHolderID="PageTitle" runat="Server">
-    <%=targetShow.Name%>
-    Registration
+    <asp:Literal runat="server" ID="CustomTitle"></asp:Literal>
 </asp:Content>
 <asp:Content ID="Content5" ContentPlaceHolderID="TopRightContent" runat="Server">
 </asp:Content>
@@ -25,6 +24,7 @@
     <asp:HyperLink ID="lShowFloor" runat="server" Text="Download Show Floor Layout<br /><br />" />
     <h2>
     <asp:Literal ID="lSelectBooths" runat="server">Select Your Booth(s) Below:</asp:Literal></h2>
+    <asp:CustomValidator ID="cvAtLeastOneBooth" runat="server" ForeColor="Red" ErrorMessage="Error: You must select at least one booth." Display="Dynamic" /><br/>
     <cc1:DualListBox runat="server" ID="dlbCategories" Width="400" />
       <div id="divOtherProducts" runat="server" style="padding-top: 20px" visible="false">
         <h2>
@@ -55,15 +55,15 @@
             </asp:Repeater>
         </table>
     </div>
-    <h2>
-        Special Requests</h2>
-    <asp:Literal ID="lSpecialRequestInstructions" runat="server" >Use the space below to enter any special request you have for your exhibit.</asp:Literal>
- <br />
-    <asp:TextBox ID="tbSpecialRequest" Columns="125" Rows="10" TextMode="MultiLine" runat="server" />
+    <asp:PlaceHolder runat="server" ID="secSpecialRequests">
+        <h2>
+            <asp:Literal ID="lSpecialRequests" runat="server">Special Requests</asp:Literal></h2>
+        <asp:Literal ID="lSpecialRequestInstructions" runat="server" >Use the space below to enter any special request you have for your exhibit.</asp:Literal>
+        <br />
+        <asp:TextBox ID="tbSpecialRequest" Columns="125" Rows="10" TextMode="MultiLine" runat="server" />
+    </asp:PlaceHolder>
     <div style="padding-top: 30px">
-    <asp:Literal ID="lAfterRegComplete" runat="server">
-    After your registration is complete, you will have a chance to upload your booth
-    logo and bio.</asp:Literal>
+    <asp:Literal ID="lAfterRegComplete" runat="server">After your registration is complete, you will have a chance to upload your booth logo and bio.</asp:Literal>
     </div>
     <hr />
     <div align="center">

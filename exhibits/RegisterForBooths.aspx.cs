@@ -75,6 +75,8 @@ public partial class exhibits_RegisterForBooths : PortalPage
 
         bindExhibitorMerchandise();
 
+        CustomTitle.Text = string.Format("{0} Registration", targetShow.Name);
+
     }
 
     protected void btnContinue_Click(object sender, EventArgs e)
@@ -82,31 +84,32 @@ public partial class exhibits_RegisterForBooths : PortalPage
         if (!IsValid)
             return;
 
-        List<string> boothProductsToPurchase = new List<string>();
+        var boothProductsToPurchase = new List<string>();
         foreach (RadListBoxItem item in dlbCategories.Destination.Items)
             boothProductsToPurchase.Add(item.Value);
 
         if (boothProductsToPurchase.Count == 0)
         {
-            QueueBannerError("You must select at least one booth.");
+            cvAtLeastOneBooth.IsValid = false;
             return;
         }
 
         var o = unbindOrder(boothProductsToPurchase);
 
-         
-
-        ExhibitorConfirmationPacket p = new ExhibitorConfirmationPacket();
-        p.SpecialRequests = tbSpecialRequest.Text;
-        MultiStepWizards.PlaceAnOrder.OrderConfirmaionPacket = p;
+        var p = new ExhibitorConfirmationPacket
+        {
+            SpecialRequests = tbSpecialRequest.Text,
+            ConfirmationInstructions = targetWindow.RegistrationConfirmationInstructions
+        };
+        MultiStepWizards.PlaceAnOrder.OrderConfirmationPacket = p;
         MultiStepWizards.PlaceAnOrder.OrderCompleteUrl = "/exhibits/ViewShow.aspx?contextID=" + targetShow.ID ;
         MultiStepWizards.PlaceAnOrder.InitiateOrderProcess(o);
     }
 
     private msOrder unbindOrder(List<string> boothProductsToPurchase)
     {
-// ok, let's create our order
-        msOrder o = new msOrder();
+        // ok, let's create our order
+        var o = new msOrder();
         o.ShipTo = o.BillTo = targetEntity.ID;
         o.LineItems = new List<msOrderLineItem>();
 
@@ -139,7 +142,7 @@ public partial class exhibits_RegisterForBooths : PortalPage
         s.AddSortColumn("Name");
 
         List<string> products = new List<string>();
-        foreach (System.Data.DataRow dr in ExecuteSearch(s, 0, null).Table.Rows)
+        foreach (System.Data.DataRow dr in APIExtensions.GetSearchResult(s, 0, null).Table.Rows)
             products.Add(Convert.ToString(dr["ID"]));
 
         if (products.Count > 0)
@@ -170,7 +173,7 @@ public partial class exhibits_RegisterForBooths : PortalPage
             HiddenField hfProductID = (HiddenField)ri.FindControl("hfProductID");
 
             msOrderLineItem li = new msOrderLineItem();
-            li.Quantity = decimal.Parse(tbQuantity.Text);
+            li.Quantity = int.Parse(tbQuantity.Text);
             if (li.Quantity <= 0)
                 continue; // don't add
 

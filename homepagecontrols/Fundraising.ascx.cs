@@ -12,7 +12,7 @@ public partial class homepagecontrols_Fundraising : HomePageUserControl
     {
         var fields = base.GetFieldsNeededForMainSearch();
         fields.Add ("Fundraising_LastGift.Date");
-        fields.Add("Fundraising_LastGift.Amount");
+        fields.Add("Fundraising_LastGift.Total");
         return fields;
     }
 
@@ -22,7 +22,7 @@ public partial class homepagecontrols_Fundraising : HomePageUserControl
         if (!Visible) return;
 
         lblLastDonation.Text = Convert.IsDBNull(drMainRecord["Fundraising_LastGift.Date"]) ? "No Records Found" : string.Format("{0} for {1:c}",
-            ((DateTime)drMainRecord["Fundraising_LastGift.Date"]).ToString("d"), drMainRecord["Fundraising_LastGift.Amount"]);
+            ((DateTime)drMainRecord["Fundraising_LastGift.Date"]).ToString("d"), drMainRecord["Fundraising_LastGift.Total"]);
   
     }
 }

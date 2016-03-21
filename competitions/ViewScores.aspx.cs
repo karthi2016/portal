@@ -99,6 +99,12 @@ public partial class competitions_ViewScores : PortalPage
         generateScoresGrid();
 
         hlReviewEntries.NavigateUrl = "/competitions/JudgeEntries.aspx?contextID=" + JudgingTeamId;
+
+        PageTitleExtension.Text = string.Format(
+            "{0} Scores for {1} {2} Round",
+            targetCompetitionEntry.Name,
+            targetEntrant.Name,
+            targetJudgingRound.Name);
     }
 
     #endregion
@@ -107,8 +113,8 @@ public partial class competitions_ViewScores : PortalPage
 
     protected void loadDataFromConcierge()
     {
-        //Load either all team members or the current team member based on the portal settings
-        Search sTeamMembers = new Search("JudgingTeamMember");
+        // Load either all team members or the current team member based on the portal settings
+        var sTeamMembers = new Search("JudgingTeamMember");
         sTeamMembers.AddOutputColumn("Member");
         sTeamMembers.AddOutputColumn("Member.Name");
         sTeamMembers.AddCriteria(Expr.Equals("Team", JudgingTeamId));
@@ -116,14 +122,14 @@ public partial class competitions_ViewScores : PortalPage
             sTeamMembers.AddCriteria(Expr.Equals("Member", ConciergeAPI.CurrentEntity.ID));
         sTeamMembers.AddSortColumn("Member.Name");
 
-        dtTeamMembers = ExecuteSearch(sTeamMembers, 0, null).Table;
+        dtTeamMembers = APIExtensions.GetSearchResult(sTeamMembers, 0, null).Table;
 
 
-        //Set up a multi-search
-        List<Search> searches = new List<Search>();
+        // Set up a multi-search
+        var searches = new List<Search>();
 
-        //Load all score cards along with the total
-        Search sScoreCards = new Search { Type = msScoreCard.CLASS_NAME, Context = targetCompetitionEntry.ID };
+        // Load all score cards along with the total
+        var sScoreCards = new Search { Type = msScoreCard.CLASS_NAME, Context = targetCompetitionEntry.ID };
         sScoreCards.AddOutputColumn("Judge");
         sScoreCards.AddOutputColumn("Judge.Name");
         sScoreCards.AddOutputColumn("TotalScore");
@@ -133,8 +139,8 @@ public partial class competitions_ViewScores : PortalPage
         sScoreCards.AddCriteria(CreateJudgingTeamCriteria("Judge"));
         searches.Add(sScoreCards);
 
-        //Load all score cards for all team members
-        Search sScoreCardScores = new Search(msScoreCardScore.CLASS_NAME);
+        // Load all score cards for all team members
+        var sScoreCardScores = new Search(msScoreCardScore.CLASS_NAME);
         sScoreCardScores.AddOutputColumn("Score");
         sScoreCardScores.AddOutputColumn("Criterion.Name");
         sScoreCardScores.AddOutputColumn("ScoreCard.Judge");
@@ -146,15 +152,15 @@ public partial class competitions_ViewScores : PortalPage
         searches.Add(sScoreCardScores);
 
 
-        //Load the competition entry summary information
-        Search sCompetitionEntry = new Search(msCompetitionEntry.CLASS_NAME);
+        // Load the competition entry summary information
+        var sCompetitionEntry = new Search(msCompetitionEntry.CLASS_NAME);
         sCompetitionEntry.AddOutputColumn("JudgingRoundCombinedScore");
         sCompetitionEntry.AddOutputColumn("JudgingRoundAvgScore");
         sCompetitionEntry.AddOutputColumn("JudgingRoundScoreSpread");
         sCompetitionEntry.AddCriteria(Expr.Equals("ID",targetCompetitionEntry.ID));
         searches.Add(sCompetitionEntry);
 
-        List<SearchResult> searchResults = ExecuteSearches(searches, 0, null);
+        var searchResults = APIExtensions.GetMultipleSearchResults(searches, 0, null);
 
         //Handle the search results
         dtScoreCards = searchResults[0].Table;

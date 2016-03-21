@@ -9,7 +9,6 @@ using MemberSuite.SDK.Searching;
 using MemberSuite.SDK.Searching.Operations;
 using MemberSuite.SDK.Types;
 using MemberSuite.SDK.Utilities;
-using MemberSuite.SDK.WCF;
 
 public partial class donations_MakeDonation : CreditCardLogic
 {
@@ -70,8 +69,8 @@ public partial class donations_MakeDonation : CreditCardLogic
             divPayment.Visible = true;
             rfvProducts.Enabled = true;
             spnNameRequired.Visible = rfvCCNameOnCard.Enabled = true;
-            spnCreditCardRequired.Visible = rfvCreditCardNumber.Enabled = true;
-            spnCVVRequired.Visible = rfvCardSecurity.Enabled = true;
+            spnCreditCardRequired.Visible = rfvCreditCardNumber.Enabled =  true;
+            //spnCVVRequired.Visible = rfvCardSecurity.Enabled = revCCV.Enabled=true;
             spnExpirationRequired.Visible = true;
 
             hfOrderBillToId.Value = targetIndividual.ID;
@@ -83,7 +82,7 @@ public partial class donations_MakeDonation : CreditCardLogic
             divPayment.Visible = false;
             rfvProducts.Enabled = false;
             spnNameRequired.Visible = rfvCCNameOnCard.Enabled = false;
-            spnCreditCardRequired.Visible = rfvCreditCardNumber.Enabled = false;
+            spnCreditCardRequired.Visible = rfvCreditCardNumber.Enabled  = revCCV.Enabled = false;
             spnCVVRequired.Visible = rfvCardSecurity.Enabled = false;
             spnExpirationRequired.Visible = false;
         }
@@ -118,7 +117,10 @@ public partial class donations_MakeDonation : CreditCardLogic
         sDonationProducts.AddCriteria(Expr.Equals("ProductType", "Fundraising"));
         sDonationProducts.AddCriteria(Expr.Equals("SellOnline", true));
 
-        SearchResult srDonationProducts = ExecuteSearch(serviceProxy, sDonationProducts, 0, null);
+        sDonationProducts.AddSortColumn("DisplayOrder");
+        sDonationProducts.AddSortColumn("Name");
+
+        SearchResult srDonationProducts = APIExtensions.GetSearchResult(serviceProxy, sDonationProducts, 0, null);
         srDonationProducts.Table.PrimaryKey = new[] { srDonationProducts.Table.Columns["ID"] };
         dvProducts = new DataView(srDonationProducts.Table);
     }
@@ -172,7 +174,7 @@ public partial class donations_MakeDonation : CreditCardLogic
 
         targetOrder.Total = lineItem.Total = unbindAmountToDonate();
         hfOrderBillToId.Value = targetOrder.BillTo = targetOrder.ShipTo = targetIndividual.ID;
-        targetOrder.BillingEmailAddress = tbEmailAddress.Text;
+        //targetOrder.BillingEmailAddress = tbEmailAddress.Text;
         targetOrder.BillingAddress = targetOrder.ShippingAddress = acBillingAddress.Address;
         targetOrder.LineItems = new List<msOrderLineItem>
                                     {
@@ -202,7 +204,7 @@ public partial class donations_MakeDonation : CreditCardLogic
         {
             CardNumber = tbCreditCardNumber.Text,
             CardExpirationDate = myExpiration.Date.Value,
-            CCVCode = tbCVV.Text,
+            CCVCode = tbCCV.Text,
             NameOnCard = tbName.Text,
             BillingAddress = acBillingAddress.Address
         };
@@ -229,12 +231,12 @@ public partial class donations_MakeDonation : CreditCardLogic
         sIndividualByEmail.AddCriteria(emailFilter);
 
         //Search for individuals by email
-        SearchResult srIndividualByEmail = ExecuteSearch(serviceProxy, sIndividualByEmail, 0, null);
+        SearchResult srIndividualByEmail = APIExtensions.GetSearchResult(sIndividualByEmail, 0, null);
         if (srIndividualByEmail.Table != null && srIndividualByEmail.Table.Rows.Count == 1)
         {
             DataRow drIndividual = srIndividualByEmail.Table.Rows[0];
             targetIndividual =
-                LoadObjectFromAPI<msIndividual>(serviceProxy, drIndividual["ID"].ToString());
+                serviceProxy.LoadObjectFromAPI<msIndividual>(drIndividual["ID"].ToString());
         }
         else
         {
@@ -248,7 +250,7 @@ public partial class donations_MakeDonation : CreditCardLogic
         ConciergeAPI.CurrentEntity = targetIndividual;
     }
 
-    protected msAuditLog processOrder(IConciergeAPIService api)
+    protected LongRunningTaskStatusInfo processOrder(IConciergeAPIService api)
     {
         var processedOrderPacket = api.PreProcessOrder(targetOrder).ResultValue;
         cleanOrder = processedOrderPacket.FinalizedOrder.ConvertTo<msOrder>();
@@ -266,13 +268,13 @@ public partial class donations_MakeDonation : CreditCardLogic
 
 
         cleanOrder.BillingAddress = acBillingAddress.Address;
-        cleanOrder.BillingEmailAddress = tbEmailAddress.Text;
+       // cleanOrder.BillingEmailAddress = tbEmailAddress.Text;
 
-        string antiDupeKey = (string)ViewState["AntiDupeKey"];
-        var trackingKey = api.ProcessOrder(cleanOrder, antiDupeKey).ResultValue;
+         
+        var info = api.ProcessOrder(cleanOrder, null).ResultValue;
 
         // let's wait
-        return OrderUtilities.WaitForOrderToComplete(api, trackingKey);
+        return OrderUtilities.WaitForOrderToComplete(api, info);
 
 
     }
@@ -357,6 +359,9 @@ public partial class donations_MakeDonation : CreditCardLogic
         {
             targetIndividual["Home_Address"] = acBillingAddress.Address;
             targetIndividual = SaveObject(targetIndividual).ConvertTo<msIndividual>();
+			
+            // Have to update this in case it needs to be updated again (MS-1083)
+            ConciergeAPI.CurrentEntity = targetIndividual;
         }
 
         unbindOrder();
@@ -364,17 +369,17 @@ public partial class donations_MakeDonation : CreditCardLogic
 
         using (IConciergeAPIService proxy = ConciergeAPIProxyGenerator.GenerateProxy())
         {
-            var log = processOrder(proxy);
+            var info = processOrder(proxy);
 
-            if (log == null)
+            if (info.Status == LongRunningTaskStatus.Running )
                 GoTo("/orders/OrderQueued.aspx");
 
-            if (log.Type == AuditLogType.OrderFailure)
-                throw new ConciergeClientException(ConciergeErrorCode.IllegalOperation, log.Description);
+            if (info.Status == LongRunningTaskStatus.Failed)
+                throw new ConciergeClientException(ConciergeErrorCode.IllegalOperation, info.AdditionalInfo);
 
             QueueBannerMessage(string.Format("Your donation was processed successfully.",
                                              targetOrder.LocalID));
-            GoTo(string.Format("~/donations/DonationComplete.aspx?contextID={0}", log.AffectedRecord_ID));
+            GoTo(string.Format("~/donations/DonationComplete.aspx?contextID={0}", info.WorkflowID));
         }
     }
 

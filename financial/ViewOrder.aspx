@@ -12,8 +12,7 @@
     <a href="AccountHistory.aspx">Account History</a>
 </asp:Content>
 <asp:Content ID="Content4" ContentPlaceHolderID="PageTitle" runat="Server">
-    View Order #
-    <%=GetSearchResult( targetOrder, "LocalID",null ) %>
+    View Order #<asp:Literal runat="server" ID="PageTitleExtenstion"></asp:Literal>
 </asp:Content>
 <asp:Content ID="Content5" ContentPlaceHolderID="TopRightContent" runat="Server">
 </asp:Content>
@@ -128,7 +127,7 @@
     </div>
     <h2>
         <asp:Literal ID="lLineItems" runat="server">Line Items</asp:Literal></h2>
-    <asp:GridView ID="gvOrderItems" AutoGenerateColumns="false" EmptyDataText="No items in this order."
+    <asp:GridView ID="gvOrderItems" AutoGenerateColumns="false" EmptyDataText="<i>No items in this order.</i>"
         GridLines="None" runat="server">
         <Columns>
             <asp:BoundField DataField="Product.Name" HeaderText="Product" HeaderStyle-HorizontalAlign="Left" />
@@ -143,7 +142,7 @@
     </asp:GridView>
     <h2>
         <asp:Literal ID="lInvoices" runat="server">Invoices</asp:Literal></h2>
-    <asp:GridView ID="gvInvoices" AutoGenerateColumns="false" EmptyDataText="No invoices are tied to this order."
+    <asp:GridView ID="gvInvoices" AutoGenerateColumns="false" EmptyDataText="<i>No invoices are tied to this order.</i>"
         GridLines="None" runat="server">
         <Columns>
             <asp:BoundField DataField="Date" HeaderText="Date" HeaderStyle-HorizontalAlign="Left"
@@ -162,13 +161,13 @@
     <h2>
         <asp:Literal ID="lPayments" runat="server">Payments</asp:Literal></h2>
     <div style="padding-top: 10px">
-        <asp:GridView ID="gvPayments" AutoGenerateColumns="false" EmptyDataText="No payments are tied to this order."
+        <asp:GridView ID="gvPayments" AutoGenerateColumns="false" EmptyDataText="<i>No payments are tied to this order.</i>"
             GridLines="None" runat="server">
             <Columns>
                 <asp:BoundField DataField="Payment.Date" HeaderText="Date" HeaderStyle-HorizontalAlign="Left"
                     DataFormatString="{0:d}" />
                 <asp:BoundField DataField="Payment.Name" HeaderText="Name" HeaderStyle-HorizontalAlign="Left" />
-                <asp:BoundField DataField="Amount" HeaderText="Total" HeaderStyle-HorizontalAlign="Left"
+                <asp:BoundField DataField="Total" HeaderText="Total" HeaderStyle-HorizontalAlign="Left"
                     DataFormatString="{0:C}" />
                 <asp:HyperLinkField Text="(view)" DataNavigateUrlFormatString="/financial/ViewPayment.aspx?contextID={0}"
                     DataNavigateUrlFields="Payment" />
@@ -176,32 +175,27 @@
         </asp:GridView>
     </div>
     
-        <h2>
-            <asp:Literal ID="lInstallments" runat="server">Installments</asp:Literal></h2>
-        
-      
+    <h2>
+        <asp:Literal ID="lInstallments" runat="server">Installments</asp:Literal></h2>
     <telerik:RadGrid BorderWidth="0px" EnableAjax="true"   Width="100%"
         ID="rgInstallments" runat="server" GridLines="None" OnNeedDataSource="rgInstallments_NeedDataSource"
-        AutoGenerateColumns="false" SelectedItemStyle-CssClass="rgSelectedRow" 
-        
-        >
-        
+        AutoGenerateColumns="false" SelectedItemStyle-CssClass="rgSelectedRow">
         <MasterTableView DataKeyNames="ID">
             <Columns>
-                
-                <telerik:GridBoundColumn DataField="Product.Name" HeaderText="Item"   />
-                <telerik:GridBoundColumn DataField="PastBillingAmount" HeaderText="Amount Already Billed" DataFormatString="{0:C}"   />
-                <telerik:GridBoundColumn DataField="FutureBillingAmount" HeaderText="Amount to be Billed" DataFormatString="{0:C}"   />
+                <telerik:GridBoundColumn DataField="Product.Name" HeaderText="Item" />
+                <telerik:GridBoundColumn DataField="PastBillingAmount" HeaderText="Amount Already Billed" DataFormatString="{0:C}" />
+                <telerik:GridBoundColumn DataField="FutureBillingAmount" HeaderText="Amount to be Billed" DataFormatString="{0:C}" />
                 <telerik:GridHyperLinkColumn Text="(view)" DataNavigateUrlFields="ID" DataNavigateUrlFormatString="ViewInstallmentPlan.aspx?contextID={0}" ItemStyle-Width="90px"/>
                 <telerik:GridHyperLinkColumn Text="(update billing)" DataNavigateUrlFields="ID" DataNavigateUrlFormatString="RectifySuspendedBillingSchedule.aspx?contextID={0}" ItemStyle-Width="90px"/>
             </Columns>
         </MasterTableView>
     </telerik:RadGrid>
     <asp:Literal ID="lNoIntallmentPlans" runat="server">
-       <i>There are no installment plans linked to this order.</i> 
+       <div style="padding-top: 10px">
+           <i>There are no installment plans linked to this order.</i> 
+       </div>
     </asp:Literal>
 
-  
     <hr />
     <div style="text-align: center">
         <asp:Button ID="Button1" runat="server" CausesValidation="false" Text="Account History"

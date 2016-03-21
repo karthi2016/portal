@@ -77,7 +77,7 @@ public partial class events_ViewCompetition : PortalPage
             {
                 lblDraftEntries.Text =
                     string.Format(
-                        "You currently have {0} entries in draft status. If you do not sumbit these by {1:d} at {2:t}, these entries will be discarded.",
+                        "You currently have {0} entries in draft status. If you do not submit these by {1:d} at {2:t}, these entries will be discarded.",
                         targetEntryInfo.NumberOfDraftEntries, targetCompetition.CloseDate,
                         targetCompetition.CloseDate);
                 lblDraftEntries.Visible = hlViewMyCompetitionEntries.Visible = true;
@@ -98,7 +98,7 @@ public partial class events_ViewCompetition : PortalPage
 
     protected void loadDataFromConcierge(IConciergeAPIService serviceProxy )
     {
-        targetCompetition = LoadObjectFromAPI<msCompetition>(serviceProxy, ContextID);
+        targetCompetition = serviceProxy.LoadObjectFromAPI<msCompetition>(ContextID);
 
         if (targetCompetition == null)
         {
@@ -106,11 +106,9 @@ public partial class events_ViewCompetition : PortalPage
             return;
         }
 
-        targetEntryInfo =
-                serviceProxy.GetCompetitionEntryInformation(targetCompetition.ID, ConciergeAPI.CurrentEntity != null ? ConciergeAPI.CurrentEntity.ID : null ).ResultValue;
+        targetEntryInfo = targetCompetition.GetCompetitionEntryInformation();
 
         // now check judging
-
         if (ConciergeAPI.CurrentEntity == null)
             return;
 
@@ -118,7 +116,7 @@ public partial class events_ViewCompetition : PortalPage
         s.AddOutputColumn("Team.ID");
         s.AddCriteria(Expr.Equals("Team.Competition.ID", targetCompetition.ID));
         s.AddCriteria(Expr.Equals("Member.ID", ConciergeAPI.CurrentEntity.ID));
-        SearchResult sr = ExecuteSearch(s, 0, 1);
+        SearchResult sr = APIExtensions.GetSearchResult(s, 0, 1);
 
         if (sr.TotalRowCount > 0 && sr.Table != null && sr.Table.Rows.Count > 0)
             judgingTeamID = sr.Table.Rows[0]["Team.ID"].ToString();

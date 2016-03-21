@@ -12,8 +12,7 @@
             Group Registration</a>
 </asp:Content>
 <asp:Content ID="Content4" ContentPlaceHolderID="PageTitle" runat="Server">
-    Register an Individual for
-    <%=targetOrganization.Name%>
+    Register an Individual for <asp:Literal runat="server" ID="PageTitleExtension"></asp:Literal>
 </asp:Content>
 <asp:Content ID="Content5" ContentPlaceHolderID="TopRightContent" runat="Server">
 </asp:Content>
@@ -47,7 +46,7 @@ a new individual. If you do not see the person for whom you want to create a reg
     </table>
     <div id="divRegInfo" style="display: none;">
         <h2>
-            Registrant Information</h2>
+            <asp:Literal runat="server" ID="lRegistrantInfo">Registrant Information</asp:Literal></h2>
         <asp:Literal ID="lContactInfo" runat="server">
     Enter the information below for the person you are registering. This individual will be created and linked to this organization.
         </asp:Literal>

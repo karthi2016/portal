@@ -58,7 +58,7 @@ public partial class volunteers_ViewOpenJobs : PortalPage
 
         s.AddSortColumn("StartDateTime");
 
-        gvJobs.DataSource = ExecuteSearch(s, 0, null).Table;
+        gvJobs.DataSource = APIExtensions.GetSearchResult(s, 0, null).Table;
         gvJobs.DataBind();
     }
 

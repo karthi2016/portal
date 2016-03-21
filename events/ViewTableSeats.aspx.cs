@@ -26,7 +26,7 @@ public partial class events_ViewTableSeats : PortalPage
     {
         base.InitializeTargetObject();
 
-        targetEvent = LoadObjectFromAPI(ContextID).ConvertTo<msEvent>();
+        targetEvent = LoadObjectFromAPI<msEvent>(ContextID);
         if (targetEvent == null)
         {
             GoToMissingRecordPage();
@@ -49,7 +49,7 @@ public partial class events_ViewTableSeats : PortalPage
 
         using (var api = GetServiceAPIProxy())
         {
-            Search s = new Search(msEventTableReservation.CLASS_NAME);
+            var s = new Search(msEventTableReservation.CLASS_NAME);
             s.AddCriteria(Expr.Equals("Event", targetEvent.ID));
             s.AddCriteria(Expr.Equals(msEventTableReservation.FIELDS.Owner, targetEntity.ID));
             s.AddCriteria(Expr.IsBlank(msEventTableReservation.FIELDS.CancellationDate));
@@ -59,7 +59,7 @@ public partial class events_ViewTableSeats : PortalPage
             s.AddOutputColumn(msEventTableReservation.FIELDS.TableType + ".Name");
             s.AddOutputColumn(msEventTableReservation.FIELDS.Fee + ".Name");
 
-            var results = api.ExecuteSearch(s, 0, null).ResultValue;
+            var results = api.GetSearchResult(s, 0, null);
 
             if (results.TotalRowCount == 0)
                 lNoRecords.Visible = true;

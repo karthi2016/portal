@@ -31,10 +31,10 @@
 <asp:Content ID="Content6" ContentPlaceHolderID="PageContent" runat="Server">
 <asp:Panel ID="pnlGroupRegistration" runat="server" Visible="false">
         <asp:Literal ID="lGroupRegNotice" runat="server">
- <font color=green><B>GROUP REGISTRATION MODE</B></font>
+            <span class="hlte"><B>GROUP REGISTRATION MODE</B></span>
         </asp:Literal>
-        <table style="width: 500px; margin-top: 5px">
-            <tr>
+        <table style="width: 500px; margin-top: 5px" id="GroupRegHeader">
+            <tr id="EventRegistrantNameRow">
                 <td class="columnHeader" style="width: 100px">
                     <asp:Literal ID="lGroup" runat="Server">Group:</asp:Literal>
                 </td>
@@ -42,7 +42,7 @@
                     <asp:Label ID="lblGroup" runat="server" />
                 </td>
             </tr>
-            <tr>
+            <tr id="EventRegistrantFeeRow">
                 <td class="columnHeader">
                     <asp:Literal ID="lRegistrant" runat="Server">Registrant:</asp:Literal>
                 </td>
@@ -68,8 +68,8 @@
             <hr width="100%" />
             <div align="center" style="padding-top: 20px">
                 <asp:Button ID="btnContinue" OnClick="btnContinue_Click" Text="Continue" runat="server" />
-                <asp:Button ID="btnBack" OnClick="btnBack_Click" Text="Back" runat="server" />
-                <asp:Button ID="btnCancel" OnClick="btnCancel_Click" Text="Cancel" runat="server" />
+                <asp:Button ID="btnBack" OnClick="btnBack_Click" Text="Back" runat="server" CausesValidation="False" />
+                <asp:Button ID="btnCancel" OnClick="btnCancel_Click" Text="Cancel" runat="server" CausesValidation="False" />
                 <div class="clearBothNoSPC">
                 </div>
             </div>

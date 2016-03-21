@@ -36,6 +36,8 @@ public partial class exhibits_PurchaseAdditionalExhibitorProducts : PortalPage
     {
         base.InitializePage();
         bindExhibitorMerchandise();
+
+        CustomTitle.Text = string.Format("{0} - Purchase Additional Products", targetShow.Name);
     }
 
     protected void btnContinue_Click(object sender, EventArgs e)
@@ -87,7 +89,7 @@ public partial class exhibits_PurchaseAdditionalExhibitorProducts : PortalPage
         s.AddSortColumn("Name");
 
         List<string> products = new List<string>();
-        foreach (System.Data.DataRow dr in ExecuteSearch(s, 0, null).Table.Rows)
+        foreach (System.Data.DataRow dr in APIExtensions.GetSearchResult(s, 0, null).Table.Rows)
             products.Add(Convert.ToString(dr["ID"]));
 
         if (products.Count > 0)
@@ -118,7 +120,7 @@ public partial class exhibits_PurchaseAdditionalExhibitorProducts : PortalPage
             HiddenField hfProductID = (HiddenField)ri.FindControl("hfProductID");
 
             msOrderLineItem li = new msOrderLineItem();
-            li.Quantity = decimal.Parse(tbQuantity.Text);
+            li.Quantity = int.Parse(tbQuantity.Text);
             if (li.Quantity <= 0)
                 continue; // don't add
 

@@ -45,9 +45,9 @@
             <div align="center" style="padding-top: 20px">
                 <asp:Button ID="btnSaveAsDraft" OnClick="btnSaveAsDraft_Click" Text="Save As Draft" runat="server" />
                 <asp:Button ID="btnContinue" OnClick="btnContinue_Click" Text="Continue" runat="server" />
-                <asp:Button ID="btnBack" OnClick="btnBack_Click" Text="Back" runat="server" />
-                <asp:Button ID="btnCancel" OnClick="btnCancel_Click" Text="Cancel" runat="server" />
-                <div class="clearBothNoSPC">
+                <asp:Button ID="btnBack" OnClick="btnBack_Click" Text="Back" runat="server" CausesValidation="false" />
+                <asp:Button ID="btnCancel" OnClick="btnCancel_Click" Text="Cancel" runat="server" CausesValidation="false" />
+               <div class="clearBothNoSPC">
                 </div>
             </div>
         </div>

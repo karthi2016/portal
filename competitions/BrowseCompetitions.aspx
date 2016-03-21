@@ -39,7 +39,6 @@
                <ASP:Literal ID="lTasks" runat="server">Tasks</ASP:Literal></h2>
         </div>
         <ul>
-        <li id="liCreateResume" runat="server" />
             <li><asp:HyperLink ID="hlGoHome" runat="server" NavigateUrl="/">Go Home</asp:HyperLink>
             </li>
         </ul>

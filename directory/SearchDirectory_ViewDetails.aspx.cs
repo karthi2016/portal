@@ -16,10 +16,11 @@ public partial class directory_SearchDirectory_ViewDetails : PortalPage
 {
     #region Fields
 
+    private const string DetailLabelOverridePrefix = "DetailLabel.";
+
     protected SearchManifest targetManifest;
     protected DataView dvDetailsFields;
     protected DataRow targetDetailsRow;
-    protected DataRow drMembership;
 
     #endregion
 
@@ -42,23 +43,6 @@ public partial class directory_SearchDirectory_ViewDetails : PortalPage
         {
             GoToMissingRecordPage();
             return;
-        }
-
-        using (IConciergeAPIService proxy = GetConciegeAPIProxy())
-        {
-            Search sMembership = new Search(msEntity.CLASS_NAME) { ID = msMembership.CLASS_NAME };
-            sMembership.AddOutputColumn("ID");
-            sMembership.AddOutputColumn("Membership");
-            sMembership.AddOutputColumn("Membership.ReceivesMemberBenefits");
-            sMembership.AddOutputColumn("Membership.TerminationDate");
-            sMembership.AddCriteria(Expr.Equals("ID", ConciergeAPI.CurrentEntity.ID));
-            sMembership.AddSortColumn("ID");
-
-            SearchResult srMembership = proxy.ExecuteSearch(sMembership, 0, 1).ResultValue;
-            drMembership = srMembership != null && srMembership.Table != null &&
-                           srMembership.Table.Rows.Count > 0
-                               ? srMembership.Table.Rows[0]
-                               : null;
         }
     }
 
@@ -83,6 +67,11 @@ public partial class directory_SearchDirectory_ViewDetails : PortalPage
         generateFieldsDataView();
         rptDirectoryFields.DataSource = dvDetailsFields;
         rptDirectoryFields.DataBind();
+
+        if (Master != null)
+        {
+            ((App_Master_GeneralPage) Master).AddCustomOverrideEligibleControls += AddCustomOverrideEligibleControls;
+        }
     }
 
     protected override bool CheckSecurity()
@@ -103,37 +92,7 @@ public partial class directory_SearchDirectory_ViewDetails : PortalPage
             return true;
 
         //Directory is for members only
-        return isActiveMember();
-    }
-
-    protected bool isActiveMember()
-    {
-        if (drMembership == null)
-            return false;
-
-        //Check if the appropriate fields exist - if they do not then the membership module is inactive
-        if (
-            !(drMembership.Table.Columns.Contains("Membership") &&
-              drMembership.Table.Columns.Contains("Membership.ReceivesMemberBenefits") &&
-              drMembership.Table.Columns.Contains("Membership.TerminationDate")))
-            return false;
-
-        //Check there is a membership
-        if (string.IsNullOrWhiteSpace(Convert.ToString(drMembership["Membership"])))
-            return false;
-
-        //Check the membership indicates membership benefits
-        if (!drMembership.Field<bool>("Membership.ReceivesMemberBenefits"))
-            return false;
-
-        //At this point if the termination date is null the member should be able to see the restricted directory
-        DateTime? terminationDate = drMembership.Field<DateTime?>("Membership.TerminationDate");
-
-        if (terminationDate == null)
-            return true;
-
-        //There is a termination date so check if it's future dated
-        return terminationDate > DateTime.Now;
+        return MembershipLogic.IsActiveMember();
     }
 
     #endregion
@@ -145,7 +104,7 @@ public partial class directory_SearchDirectory_ViewDetails : PortalPage
         Search s = Search.FromManifest(targetManifest);
         s.AddCriteria(Expr.Equals("Owner.ID", ContextID));
 
-        SearchResult searchResult = ExecuteSearch(s, 0, null);
+        SearchResult searchResult = APIExtensions.GetSearchResult(s, 0, null);
         if (searchResult.Table != null && searchResult.Table.Rows.Count > 0)
             targetDetailsRow = searchResult.Table.Rows[0];
     }
@@ -156,7 +115,7 @@ public partial class directory_SearchDirectory_ViewDetails : PortalPage
 
         using (IConciergeAPIService proxy = GetServiceAPIProxy())
         {
-            result = proxy.DescribeSearch(msMembership.CLASS_NAME, null).ResultValue;
+            result = proxy.DescribeSearch("MembershipWithFlowdown", null).ResultValue;
             result.Fields.Clear();
             result.Fields =
                 proxy.GetSearchFieldMetadataFromFullPath(msMembership.CLASS_NAME, null, PortalConfiguration.Current.MembershipDirectoryDetailsFields).ResultValue;
@@ -186,11 +145,35 @@ public partial class directory_SearchDirectory_ViewDetails : PortalPage
             
             DataRow row = fieldTable.NewRow();
             row["FieldName"] = fieldName;
+
+            var labelOverride = PortalConfiguration.GetOverrideFor(
+                Request.Url.LocalPath, DetailLabelOverridePrefix + (field != null ? field.Name : column.ColumnName), "Text");
+            if (labelOverride != null)
+            {
+                row["FieldName"] = labelOverride.Value;
+            }
+
             row["FieldValue"] = targetDetailsRow[column].ToString();
             fieldTable.Rows.Add(row);
         }   
 
         dvDetailsFields = new DataView(fieldTable);
+    }
+
+    protected override void AddCustomOverrideEligibleControls(List<msPortalControlPropertyOverride> eligibleControls)
+    {
+        base.AddCustomOverrideEligibleControls(eligibleControls);
+
+        foreach (var targetField in targetManifest.Fields)
+        {
+            eligibleControls.Add(new msPortalControlPropertyOverride
+            {
+                PageName = Request.Url.LocalPath,
+                ControlName = DetailLabelOverridePrefix + targetField.Name,
+                PropertyName = "Text",
+                Value = Convert.ToString(targetField.Label)
+            });
+        }
     }
 
     #endregion

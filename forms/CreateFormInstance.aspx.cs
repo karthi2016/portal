@@ -55,8 +55,15 @@ public partial class forms_CreateFormInstance : PortalPage
         }
         else
         {
-            targetInstance = LoadObjectFromAPI(CurrentFormID.Value);
+            targetInstance = APIExtensions.LoadObjectFromAPI(CurrentFormID.Value);
         }        
+    }
+
+    protected override void InitializePage()
+    {
+        base.InitializePage();
+
+        CustomTitle.Text = string.Format("{0}", targetForm.Name);
     }
 
     protected override bool CheckSecurity()
@@ -158,11 +165,13 @@ public partial class forms_CreateFormInstance : PortalPage
             }
 
             // ok, send an email
-            if (targetForm.ConfirmationEmail != null)
+            if (!string.IsNullOrWhiteSpace(targetForm.ConfirmationEmail))
             {
                 using (var api = GetServiceAPIProxy())
-                    api.SendEmail(targetForm.ConfirmationEmail, new List<string> { targetInstance.SafeGetValue<string>("ID") }, null);
-                
+                {
+                    var emailTemplate = api.Get(targetForm.ConfirmationEmail).ResultValue.ConvertTo<msEmailTemplateContainer>();
+                    api.SendTransactionalEmail(emailTemplate.Name, CurrentEntity.ID, null);
+                }
             }
         }
     }

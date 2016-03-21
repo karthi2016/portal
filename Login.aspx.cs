@@ -15,6 +15,7 @@ using MemberSuite.SDK.Concierge;
 using MemberSuite.SDK.Results;
 using MemberSuite.SDK.Types;
 using MemberSuite.SDK.Utilities;
+using MemberSuite.SDK.Web.Controls;
 
 public partial class Login : PortalPage
 {
@@ -60,7 +61,16 @@ public partial class Login : PortalPage
         ((App_Master_GeneralPage)Page.Master).HideHomeBreadcrumb = true;
 
         if (PortalConfiguration.Current.PortalLoginRedirect != null) // MS-3932 we need to be somewhere else
-            GoTo(PortalConfiguration.Current.PortalLoginRedirect);
+        {
+            var url = PortalConfiguration.Current.PortalLoginRedirect;
+            if (!string.IsNullOrEmpty(Request.QueryString["redirectURL"]))
+            {
+                url += url.Contains("?") ? "&" : "?";
+                url += "returnUrl=" + Request.QueryString["redirectURL"];
+            }
+
+            GoTo(url);
+        }
 
         setupForms();
     }
@@ -103,34 +113,38 @@ public partial class Login : PortalPage
 
     private void loginWithToken()
     {
-        string tokenString = Request.Form["Token"];
+        var tokenString = Request.Form["Token"];
         if (string.IsNullOrWhiteSpace(tokenString))
             return;
 
-        byte[] token = Convert.FromBase64String(tokenString);
+        var token = Convert.FromBase64String(tokenString);
 
-        //Sign the data using the portal's private key.  Concierge API will use this to authenticate the originator of the request
-        byte[] portalTokenSignature = Sign(token);
+        // Sign the data using the portal's private key.  Concierge API will use this to authenticate the originator of the request
+        var portalTokenSignature = Sign(token);
 
-        ConciergeResult<LoginResult> result;
-
-        using (IConciergeAPIService proxy = GetConciegeAPIProxy())
+        LoginResult loginResult;
+        using (var proxy = GetConciegeAPIProxy())
         {
-            result = proxy.LoginWithToken(token,
-                                          ConfigurationManager.AppSettings[
-                                              "SigningCertificateId"],
-                                          portalTokenSignature);
+            // Completely clear the previous session before starting a new one
+            SessionManager.Clear(false);
+
+            var result = proxy.LoginWithToken(
+                token,
+                ConfigurationManager.AppSettings["SigningCertificateId"],
+                portalTokenSignature);
+
+            if (result == null || !result.Success)
+                return;
+
+            loginResult = result.ResultValue;
         }
 
-        if (result == null || !result.Success)
-            return;
-
-        //Set the return URL to be used when the user wishes to return to the Console
+        // Set the return URL to be used when the user wishes to return to the Console
         ConciergeAPI.ConsoleReturnText = Request.Form["ReturnText"];
         ConciergeAPI.ConsoleReturnUrl = Request.Form["ReturnUrl"];
         ConciergeAPI.LogoutUrl = Request.Form["LogoutUrl"];
 
-        setSessionAndForward(result.ResultValue);
+        setSessionAndForward(loginResult);
     }
 
     private byte[] Sign(byte[] data)
@@ -196,7 +210,7 @@ public partial class Login : PortalPage
         ConciergeAPI.SetSession(loginResult); // set the session
         SessionManager.Set<object>("PortalLinks", null ); // force portal link reload, so non-public links now show
 
-        checkToSeeIfMultipleIdentitiesAreAccessible();
+        CRMLogic.CheckToSeeIfMultipleIdentitiesAreAccessible();
 
         //If this login was initiated by a Single Sign On then check for the next URL to show the user
         if (!string.IsNullOrWhiteSpace(Request.Form["NextUrl"]))
@@ -215,39 +229,6 @@ public partial class Login : PortalPage
         
 
         GoHome(); // go home
-    }
-
-    private void checkToSeeIfMultipleIdentitiesAreAccessible()
-    {
-        // now - are there alternate accessible entities?
-        var entities = ConciergeAPI.AccessibleEntities;
-        if (entities == null || entities.Count == 0) // well, what entity do we login as?
-            return;
-        
-        // automatically insert the current entity
-        if (!entities.Exists(x => x.ID == ConciergeAPI.CurrentEntity.ID))
-        {
-            entities.Insert(0, new LoginResult.AccessibleEntity
-                {
-                    ID = ConciergeAPI.CurrentEntity.ID,
-                    Name = ConciergeAPI.CurrentEntity.Name,
-                    Type = ConciergeAPI.CurrentEntity.ClassType
-                });
-
-            ConciergeAPI.AccessibleEntities = entities;
-                // remember, the session is out of proc, so we need to restore it
-        }
-
-        msPortalUser currentUser = ConciergeAPI.CurrentUser;
-        if (currentUser.LastLoggedInAs != null && entities.Exists(x => x.ID == currentUser.LastLoggedInAs))
-        {
-            // use this one
-            ConciergeAPI.CurrentEntity = LoadObjectFromAPI<msEntity>(currentUser.LastLoggedInAs);
-            return;
-        }
-
-        // we have multiple identiites
-        Response.Redirect("/MultipleEntitiesDetected.aspx?redirectURL=" + Request.QueryString["redirectURL"]);
     }
 
     #endregion
@@ -280,6 +261,9 @@ public partial class Login : PortalPage
 
     private void loginToPortal()
     {
+        // Clear the previous session before starting a new one (like cached Online Store data), but keep the exceptions (like Shopping Cart)
+        SessionManager.Clear(false);
+
         using (var api = GetConciegeAPIProxy())
         {
             var result = api.LoginToPortal(tbLoginID.Text, tbPassword.Text);

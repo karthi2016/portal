@@ -53,7 +53,7 @@ public partial class careercenter_ViewMyJobPostings : PortalPage
         sJobPostings.AddSortColumn("PostOn", true );
 
 
-        SearchResult srJobPostings = ExecuteSearch(sJobPostings, 0, null);
+        SearchResult srJobPostings = APIExtensions.GetSearchResult(sJobPostings, 0, null);
         dvJobPostings = new DataView(srJobPostings.Table);
     }
 

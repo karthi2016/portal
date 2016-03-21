@@ -199,7 +199,7 @@
                                     Address</u></b>
                                 <br />
                                 <asp:HiddenField ID="hfAddressCode" runat="server" />
-                                <cc1:AddressControl ID="acAddress" EnableValidation="false" runat="server" />
+                                <cc1:AddressControl ID="acAddress" EnableValidation="True" runat="server" />
                             </td>
                             <asp:Literal ID="lNewRowTag" runat="server" />
                         </ItemTemplate>

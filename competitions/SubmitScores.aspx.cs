@@ -86,7 +86,7 @@ public partial class competitions_SubmitScores : PortalPage
         sScoreCard.AddCriteria(Expr.Equals("Entry", targetCompetitionEntry.ID));
         sScoreCard.AddCriteria(Expr.Equals("Round", targetJudgingRound.ID));
 
-        SearchResult srScoreCard = ExecuteSearch(sScoreCard, 0, 1);
+        SearchResult srScoreCard = APIExtensions.GetSearchResult(sScoreCard, 0, 1);
         targetScoreCard = srScoreCard.Table != null && srScoreCard.Table.Rows.Count > 0
                               ? LoadObjectFromAPI<msScoreCard>(srScoreCard.Table.Rows[0]["ID"].ToString())
                               : new msScoreCard
@@ -99,6 +99,13 @@ public partial class competitions_SubmitScores : PortalPage
                                             string.Format("{0} Scores for {1} {2} Round", targetCompetition.Name,
                                                           targetEntrant.Name, targetJudgingRound.Name)
                                     };
+    }
+
+    protected override void InitializePage()
+    {
+        base.InitializePage();
+
+        PageTitleExtension.Text = targetCompetitionEntry.Name;
     }
 
 
@@ -135,7 +142,7 @@ public partial class competitions_SubmitScores : PortalPage
         sScoringCriterion.AddCriteria(Expr.Equals("Competition",targetCompetitionEntry.Competition));
         sScoringCriterion.AddSortColumn("DisplayOrder");
 
-        SearchResult srScoringCriterion = ExecuteSearch(sScoringCriterion, 0, null);
+        SearchResult srScoringCriterion = APIExtensions.GetSearchResult(sScoringCriterion, 0, null);
         dtScoringCriterion = srScoringCriterion.Table;
         DataColumn scScore = dtScoringCriterion.Columns.Add("Score", typeof (decimal));
 

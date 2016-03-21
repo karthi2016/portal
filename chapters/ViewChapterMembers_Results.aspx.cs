@@ -13,17 +13,13 @@ using MemberSuite.SDK.Types;
 
 public partial class chapters_ViewChapterMembers_Results : PortalPage
 {
-    #region Fields
+    private const string ColumnHeaderOverridePrefix = "ColumnHeader.";
 
     protected msChapter targetChapter;
     protected DataView dvResults;
     protected Search targetSearch;
 
     protected msMembershipLeader leader;
-
-    #endregion
-
-    #region Properties
 
     protected bool Download
     {
@@ -52,8 +48,6 @@ public partial class chapters_ViewChapterMembers_Results : PortalPage
         }
     }
 
-    #endregion
-
     #region Initialization
 
     /// <summary>
@@ -81,6 +75,14 @@ public partial class chapters_ViewChapterMembers_Results : PortalPage
 
         //Has to be in the InitializeTargetObject to have the leader before running the CheckSecurity
         getLeader();
+
+    }
+
+    protected override void InitializePage()
+    {
+        base.InitializePage();
+
+        CustomTitle.Text = string.Format("{0} Members", targetChapter.Name);
     }
 
     protected override bool CheckSecurity()
@@ -97,7 +99,7 @@ public partial class chapters_ViewChapterMembers_Results : PortalPage
     protected void getLeader()
     {
         Search sLeaders = GetChapterLeaderSearch(targetChapter.ID);
-        SearchResult srLeaders = ExecuteSearch(sLeaders, 0, 1);
+        SearchResult srLeaders = APIExtensions.GetSearchResult(sLeaders, 0, 1);
 
         leader = ConvertLeaderSearchResult(srLeaders);
     }
@@ -160,10 +162,26 @@ public partial class chapters_ViewChapterMembers_Results : PortalPage
 
     protected void loadDataFromConcierge()
     {
-        SearchResult sr = ExecuteSearch(targetSearch, 0, null);
+        SearchResult sr = APIExtensions.GetSearchResult(targetSearch, 0, null);
         dvResults = new DataView(sr.Table);
 
         lblSearchResultCount.Text = string.Format("Search returned {0} result(s).", sr.TotalRowCount);
+    }
+
+    protected override void AddCustomOverrideEligibleControls(List<msPortalControlPropertyOverride> eligibleControls)
+    {
+        base.AddCustomOverrideEligibleControls(eligibleControls);
+
+        foreach (var column in targetSearch.OutputColumns)
+        {
+            eligibleControls.Add(new msPortalControlPropertyOverride
+            {
+                PageName = Request.Url.LocalPath,
+                ControlName = ColumnHeaderOverridePrefix + column.Name,
+                PropertyName = "Text",
+                Value = Convert.ToString(column.DisplayName)
+            });
+        }
     }
 
     #endregion

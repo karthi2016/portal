@@ -1,7 +1,7 @@
 ﻿<%@ Control Language="C#" AutoEventWireup="true" CodeFile="CareerCenter.ascx.cs"
     Inherits="homepagecontrols_CareerCenter" %>
 <%@ Import Namespace="MemberSuite.SDK.Types" %>
-<div class="sectCont" runat="server" id="divCompetitions">
+<div class="sectCont" runat="server" id="divCareerCenter">
     <div class="sectHeaderTitle hIconCommittees">
         <h2>
             <asp:Literal ID="Widget_CareerCenter_Title" runat="server">Career Center</asp:Literal></h2>

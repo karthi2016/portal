@@ -15,7 +15,7 @@
 </asp:Content>
 <asp:Content ID="Content6" ContentPlaceHolderID="PageContent" runat="Server">
     <asp:Literal ID="PageText" runat="server" />
-    <asp:Label ID="lblMustChange" runat="server" Font-Bold="true" ForeColor="Green" Visible="false">Welcome! Because this is your first time logging in, we will need you to change your password.</asp:Label>
+    <asp:Label ID="lblMustChange" runat="server" Font-Bold="true" CssClass="hlte" Visible="false">Welcome! Because this is your first time logging in, we will need you to change your password.</asp:Label>
     <table width="100%" cellpadding="0" cellspacing="0">
         <tr>
             <td>

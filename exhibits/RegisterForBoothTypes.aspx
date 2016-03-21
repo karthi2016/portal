@@ -13,8 +13,7 @@
         > </a>
 </asp:Content>
 <asp:Content ID="Content4" ContentPlaceHolderID="PageTitle" runat="Server">
-    <%=targetShow.Name%>
-    Registration
+    <asp:Literal runat="server" ID="CustomTitle"></asp:Literal>
 </asp:Content>
 <asp:Content ID="Content5" ContentPlaceHolderID="TopRightContent" runat="Server">
 </asp:Content>
@@ -83,29 +82,19 @@
                         </ItemTemplate>
                     </asp:Repeater>
                 </table>
-                <h2>
-                    Special Requests</h2>
-                <asp:Literal ID="lSpecialRequestInstructions" runat="server">Use the space below to enter any special request you have for your exhibit.</asp:Literal>
-                <br />
-                <asp:TextBox ID="tbSpecialRequest" Columns="125" Rows="10" TextMode="MultiLine" runat="server" />
+                <asp:PlaceHolder runat="server" ID="secSpecialRequests">
+                    <h2>
+                        <asp:Literal ID="lSpecialRequests" runat="server">Special Requests</asp:Literal></h2>
+                    <asp:Literal ID="lSpecialRequestInstructions" runat="server">Use the space below to enter any special request you have for your exhibit.</asp:Literal>
+                    <br />
+                    <asp:TextBox ID="tbSpecialRequest" Columns="125" Rows="10" TextMode="MultiLine" runat="server" />
+                </asp:PlaceHolder>
                 <div style="padding-top: 30px">
-                    <asp:Literal ID="lAfterRegComplete" runat="server">
-    After your registration is complete, you will have a chance to upload your booth
-    logo and bio.</asp:Literal>
+                    <asp:Literal ID="lAfterRegComplete" runat="server">After your registration is complete, you will have a chance to upload your booth logo and bio.</asp:Literal>
                 </div>
             </asp:WizardStep>
         </WizardSteps>
     </asp:Wizard>
-    <%--<h2>
-        Special Requests</h2>
-    <asp:Literal ID="lSpecialRequestInstructions" runat="server">Use the space below to enter any special request you have for your exhibit.</asp:Literal>
-    <br />
-    <asp:TextBox ID="tbSpecialRequest" Columns="125" Rows="10" TextMode="MultiLine" runat="server" />
-    <div style="padding-top: 30px">
-        <asp:Literal ID="lAfterRegComplete" runat="server">
-    After your registration is complete, you will have a chance to upload your booth
-    logo and bio.</asp:Literal>
-    </div>--%>
 </asp:Content>
 <asp:Content ID="Content7" ContentPlaceHolderID="FooterContent" runat="Server">
 </asp:Content>

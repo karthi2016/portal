@@ -10,8 +10,16 @@
             display: none;
         }
     </style>
-    <script type="text/javascript" src="/js/priorityPaymentsScript/jquery-2.1.3.min.js"></script>
-    <script type="text/javascript" src="/js/priorityPaymentsScript/membersuite.payment-processor.min.js"></script>
+    
+    <script type="text/javascript" src="/js/priorityPaymentsScript/payment-processor-jquery.js"></script>
+    
+    <script type="text/javascript" src="/js/priorityPaymentsScript/membersuite.payment-processor.API.js"></script>
+    <script type="text/javascript" src="/js/priorityPaymentsScript/priorityPayment.logger.js"></script>
+    <script type="text/javascript" src="/js/priorityPaymentsScript/cardType-util.js"></script>
+    <script type="text/javascript" src="/js/priorityPaymentsScript/priorityPayment.ajaxAPI.js"></script>
+    <script type="text/javascript" src="/js/priorityPaymentsScript/membersuite.payment-processor-1.0.js"></script>
+
+<%--    <script type="text/javascript" src="/js/priorityPaymentsScript/membersuite.payment-processor.min.js"></script>--%>
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="TopMenu" runat="Server">
 </asp:Content>
@@ -68,7 +76,7 @@
     <div class="sectionContent">
         <div align="center" style="padding-top: 20px">
             <asp:Button ID="btnUpdatePaymentInfo" Text="Update Payment Info" runat="server" OnClick="btnUpdatePaymentInfo_Click" CssClass="save-token none"/>
-            <input onclick="javascript: requestToken()" type="button" value="Update Payment Info" />
+            <input onclick="javascript: requestToken();" type="button" value="Update Payment Info" />
             <asp:Button ID="btnCancel" Text="Cancel" runat="server" OnClick="btnCancel_Click"
                 CausesValidation="false" />
             <div class="clearBothNoSPC">
@@ -77,7 +85,7 @@
     </div>
 </asp:Content>
 <asp:Content ID="Content7" ContentPlaceHolderID="FooterContent" runat="Server">
-    <script type="text/javascript">
+    <script type="text/javascript">        
         function requestToken() {
             var config = JSON.parse($('.pp-config').text());
             var isPP = config.IsPreferredConfigured;
@@ -95,17 +103,24 @@
                 return false;
             };
 
-            var hasCCNum = $('[id$="tbCardNumber"]').val() != '';
+            var hasCCNum = !!($('.cc-number').val()) && $('.cc-number').val() != '';
+            var hasBANum = !!($('.ba-number').val()) && $('.ba-number').val() != '';
 
-            if (!hasCCNum || !isPP) {
+            if (!(hasCCNum || hasBANum) || !isPP) {
                 $(saveBtnId).trigger('click');
                 return false;
             };
 
-            var $cardNumberElem = $('.cc-number');
-            var $expiryMonthElem = $('.mypMonth');
-            var $expiryYearElem = $('.mypYear');
-            var id = $('[id$="hfOrderBillToId"').val();
+            if (!config.State) {
+                config.State = 'No State/Province';
+            }
+
+            var id = $('[id$="hfOrderBillToId"]').val();
+
+            if (hasCCNum) {
+                var $cardNumberElem = $('.cc-number');
+                var $expiryMonthElem = $('.mypMonth');
+                var $expiryYearElem = $('.mypYear');
 
             var parms = {
                 ppConfig: config,
@@ -118,7 +133,34 @@
                 }
             }
 
-            membersuite.paymentProcessor.init(parms);
+                membersuite.paymentProcessor.init(parms);
+            } else if (hasBANum) {
+                var $bankAccElement = $('.ba-number');
+                var $bankAccElementConfirm = $('.ba-number-confirm');
+                var $rtnNumElement = $('.rtn-number');
+                var $bankAccTypeElement = $('.ba-type');
+
+                if ($bankAccElementConfirm.length > 0 && ($bankAccElement.val() != $bankAccElementConfirm.val())) {
+                    $(saveBtnId).trigger('click');
+
+                    return false;
+                }
+
+                var parms = {
+                    ppConfig: config,
+                    msConfig: {
+                        guid: id,
+                        $bankAccElement: $bankAccElement,
+                        $rtnNumElement: $rtnNumElement,
+                        $bankAccTypeElement: $bankAccTypeElement,
+                        $bankAccElementConfirm: $bankAccElementConfirm,
+                        saveBtnId: saveBtnId                        
+                    }
+                }
+
+                membersuite.paymentProcessor.init(parms);
+            }
+
             return false;
         };
     </script>

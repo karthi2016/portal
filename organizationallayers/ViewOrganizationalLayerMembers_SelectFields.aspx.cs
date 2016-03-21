@@ -142,6 +142,8 @@ public partial class organizationalLayers_ViewOrganizationalLayerMembers_SelectF
 
         populateAvailableOutputFields();
         bindSearchOutputsToPage();
+
+        CustomTitle.Text = string.Format("{0} Members", targetOrganizationalLayer.Name);
     }
 
     protected override bool CheckSecurity()
@@ -235,7 +237,7 @@ public partial class organizationalLayers_ViewOrganizationalLayerMembers_SelectF
     protected void loadDataFromConcierge()
     {
         Search sLeaders = GetOrganizationalLayerLeaderSearch(targetOrganizationalLayer.ID);
-        SearchResult srLeaders = ExecuteSearch(sLeaders, 0, 1);
+        SearchResult srLeaders = APIExtensions.GetSearchResult(sLeaders, 0, 1);
 
         leader = ConvertLeaderSearchResult(srLeaders);
     }

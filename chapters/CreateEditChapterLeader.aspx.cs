@@ -110,15 +110,20 @@ public partial class chapters_CreateEditChapterLeader : PortalPage
             lblMember.Visible = IsInEditMode;
             ddlMember.Visible = !lblMember.Visible;
 
-            if (IsInEditMode)
-                lblTitleAction.Text = "Edit";
-            else
+            if (!IsInEditMode)
             {
                 ddlMember.DataSource = dvAvailableMembers;
                 ddlMember.DataBind();
             }
 
         setVisiblePermissions();
+
+        if (!IsInEditMode)
+            CustomTitle.Text = string.Format("Create {0} Chapter Leader", targetChapter.Name);
+        else
+            CustomTitle.Text = string.Format("Edit {0} Chapter Leader", targetChapter.Name);
+
+ 
     }
 
     protected override bool CheckSecurity()
@@ -155,7 +160,7 @@ public partial class chapters_CreateEditChapterLeader : PortalPage
 
         sAvailableLeaders.AddSortColumn("Membership.Owner.Name");
 
-        SearchResult srAvailableLeaders = ExecuteSearch(sAvailableLeaders, 0, null);
+        SearchResult srAvailableLeaders = APIExtensions.GetSearchResult(sAvailableLeaders, 0, null);
 
         //Use toTable to make sure we have distinct values
         DataView dvTempAvailableLeaders = new DataView(srAvailableLeaders.Table);

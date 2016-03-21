@@ -8,7 +8,7 @@
     
 </asp:Content>
 <asp:Content ID="Content4" ContentPlaceHolderID="PageTitle" Runat="Server">
-Order #<%=targetOrder.LocalID %> Completed Successfully
+    Order #<asp:Literal runat="server" ID="PageTitleExtension"></asp:Literal>
 </asp:Content>
 <asp:Content ID="Content5" ContentPlaceHolderID="TopRightContent" Runat="Server">
 </asp:Content>

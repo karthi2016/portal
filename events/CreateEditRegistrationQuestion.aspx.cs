@@ -62,7 +62,7 @@ public partial class events_CreateEditRegistrationQuestion : PortalPage
             customFieldFieldMetadata = customFieldClassMetadata.GenerateFieldDictionary();
         }
 
-        MemberSuiteObject contextObject = LoadObjectFromAPI(ContextID);
+        var contextObject = APIExtensions.LoadObjectFromAPI(ContextID);
 
         if (contextObject.ClassType == msEvent.CLASS_NAME)
         {
@@ -175,7 +175,7 @@ public partial class events_CreateEditRegistrationQuestion : PortalPage
         sLookupTable.AddOutputColumn("Name");
         sLookupTable.AddSortColumn("Name");
 
-        SearchResult srLookupTable = ExecuteSearch(sLookupTable, 0, null);
+        SearchResult srLookupTable = APIExtensions.GetSearchResult(sLookupTable, 0, null);
         dvLookupTables = new DataView(srLookupTable.Table);
 
         //Load Reference Types

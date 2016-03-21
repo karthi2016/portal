@@ -77,6 +77,13 @@ public partial class sections_ViewSectionMembers_Results : PortalPage
         targetSearch = getSearch();
     }
 
+    protected override void InitializePage()
+    {
+        base.InitializePage();
+
+        CustomTitle.Text = string.Format("{0} Members", targetSection.Name);
+    }
+
     protected override bool CheckSecurity()
     {
         if (!base.CheckSecurity()) return false;
@@ -154,7 +161,7 @@ public partial class sections_ViewSectionMembers_Results : PortalPage
 
     protected void loadDataFromConcierge()
     {
-        SearchResult sr = ExecuteSearch(targetSearch, 0, null);
+        SearchResult sr = APIExtensions.GetSearchResult(targetSearch, 0, null);
         dvResults = new DataView(sr.Table);
 
         lblSearchResultCount.Text = string.Format("Search returned {0} result(s).", sr.TotalRowCount);

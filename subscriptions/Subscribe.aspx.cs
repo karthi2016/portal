@@ -36,7 +36,7 @@ public partial class subscriptions_Subscribe : PortalPage
         s.AddCriteria(Expr.Equals("SellOnline", true));
         s.AddCriteria(Expr.DoesNotEqual("Type", "Renew Subscription"));
 
-        var dtProducts = ExecuteSearch(s, 0, null).Table;
+        var dtProducts = APIExtensions.GetSearchResult(s, 0, null).Table;
 
         List<string> productIDs = new List<string>();
         foreach (DataRow dr in dtProducts.Rows)
@@ -54,7 +54,7 @@ public partial class subscriptions_Subscribe : PortalPage
         {
             foreach (var p in describedProducts)
             {
-                string text = string.Format("{0} - <font color=green>{1}</font>", p.ProductName,
+                string text = string.Format("{0} - <span class=\"hlteMon\">{1}</span>", p.ProductName,
                                             p.DisplayPriceAs ?? p.Price.ToString("C"));
                 rbSubscriptionPlans.Items.Add(new ListItem(text, p.ProductID));
             }

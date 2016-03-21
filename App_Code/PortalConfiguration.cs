@@ -195,14 +195,10 @@ public class PortalConfiguration : IConciergeAPIAssociationIdProvider
         sOrganizationalLayerTypes.AddOutputColumn("MembershipOrganization");
         sOrganizationalLayerTypes.AddOutputColumn("ParentType");
         sOrganizationalLayerTypes.AddOutputColumn("IsDefault");
-        
-        using(IConciergeAPIService proxy = ConciergeAPIProxyGenerator.GenerateProxy())
-        {
-            ConciergeResult<SearchResult> srOrganizationalLayerTypes = proxy.ExecuteSearch(sOrganizationalLayerTypes, 0, null);
-            DataTable result = srOrganizationalLayerTypes.ResultValue.Table;
-            result.PrimaryKey = new[] {result.Columns["ID"]};
-            return result;
-        }
+
+        var result = APIExtensions.GetSearchResult(sOrganizationalLayerTypes, 0, null).Table;
+        result.PrimaryKey = new[] {result.Columns["ID"]};
+        return result;
     }
 
     #endregion
@@ -211,7 +207,7 @@ public class PortalConfiguration : IConciergeAPIAssociationIdProvider
     {
         if (Current == null) return null;
         if (Current.ControlOverrides == null) return null;
-        return Current.ControlOverrides.Find( x=> x.PageName == pageName && x.ControlName == controlName && x.PropertyName == propertyName );
+        return Current.ControlOverrides.Find( x=> x.PageName.Equals(pageName, StringComparison.InvariantCultureIgnoreCase) && x.ControlName == controlName && x.PropertyName == propertyName);
     }
 
     #region IConciergeAPIAssociationIDProvider

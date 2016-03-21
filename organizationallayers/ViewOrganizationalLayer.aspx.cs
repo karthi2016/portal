@@ -92,6 +92,8 @@ public partial class chapters_ViewOrganizationalLayer : PortalPage
 
         hlDiscussionBoard.Visible = IsModuleActive("Discussions");
         hlDiscussionBoard.NavigateUrl += ContextID;
+
+        CustomTitle.Text = string.Format("{0} {1}", GetSearchResult(drTargetOrganizationalLayer, "Name", null), GetSearchResult(drTargetOrganizationalLayerType, "Name", null));
     }
 
 
@@ -142,7 +144,7 @@ public partial class chapters_ViewOrganizationalLayer : PortalPage
     {
         cfsOrganizationalLayerFields.MemberSuiteObject = targetOrganizationalLayer;
 
-        var pageLayout = GetAppropriatePageLayout(targetOrganizationalLayer);
+        var pageLayout = targetOrganizationalLayer.GetAppropriatePageLayout();
         if (pageLayout == null || pageLayout.Metadata == null || pageLayout.Metadata.IsEmpty())
         {
             divOtherInformation.Visible = false;
@@ -150,7 +152,7 @@ public partial class chapters_ViewOrganizationalLayer : PortalPage
         }
 
         // setup the metadata
-        cfsOrganizationalLayerFields.Metadata = proxy.DescribeObject(msOrganizationalLayer.CLASS_NAME).ResultValue;
+        cfsOrganizationalLayerFields.Metadata = targetOrganizationalLayer.DescribeObject();
         cfsOrganizationalLayerFields.PageLayout = pageLayout.Metadata;
 
         cfsOrganizationalLayerFields.AddReferenceNamesToTargetObject(proxy);
@@ -165,10 +167,10 @@ public partial class chapters_ViewOrganizationalLayer : PortalPage
 
     protected void loadDataFromConcierge()
     {
-        List<Search> searches = new List<Search>();
+        var searches = new List<Search>();
 
         // Search for the organizational layer to get aggregate information
-        Search sOrganizationalLayer = new Search
+        var sOrganizationalLayer = new Search
                                           {
                                               Type = msOrganizationalLayer.CLASS_NAME,
                                               ID = targetOrganizationalLayer.ID
@@ -182,8 +184,8 @@ public partial class chapters_ViewOrganizationalLayer : PortalPage
         sOrganizationalLayer.AddCriteria(Expr.Equals("ID", ContextID));
         searches.Add(sOrganizationalLayer);
 
-        //Search for related committees
-        Search sOrganizationalLayerCommittees = new Search {Type = msCommittee.CLASS_NAME, ID = msCommittee.CLASS_NAME};
+        // Search for related committees
+        var sOrganizationalLayerCommittees = new Search {Type = msCommittee.CLASS_NAME, ID = msCommittee.CLASS_NAME};
         sOrganizationalLayerCommittees.AddOutputColumn("ID");
         sOrganizationalLayerCommittees.AddOutputColumn("Name");
         sOrganizationalLayerCommittees.AddOutputColumn("CurrentMemberCount");
@@ -191,8 +193,8 @@ public partial class chapters_ViewOrganizationalLayer : PortalPage
         sOrganizationalLayerCommittees.AddCriteria(Expr.Equals("ShowInPortal", true));
         searches.Add(sOrganizationalLayerCommittees);
 
-        //Search for related events
-        Search sOrganizationalLayerEvents = new Search { Type = msEvent.CLASS_NAME, ID = msEvent.CLASS_NAME };
+        // Search for related events
+        var sOrganizationalLayerEvents = new Search { Type = msEvent.CLASS_NAME, ID = msEvent.CLASS_NAME };
         sOrganizationalLayerEvents.AddOutputColumn("ID");
         sOrganizationalLayerEvents.AddOutputColumn("Name");
         sOrganizationalLayerEvents.AddOutputColumn("StartDate");
@@ -204,20 +206,22 @@ public partial class chapters_ViewOrganizationalLayer : PortalPage
         sOrganizationalLayerEvents.AddSortColumn("Name");
         searches.Add(sOrganizationalLayerEvents);
 
-        //Get all the chapters for the chapter & member counts
-        //Setup the clause to recursively find chapters that are somewhere nested under the current organizational layer
-        SearchOperationGroup organizationalLayerChapterClause = new SearchOperationGroup { GroupType = SearchOperationGroupType.Or };
+        // Get all the chapters for the chapter & member counts
+        // Setup the clause to recursively find chapters that are somewhere nested under the current organizational layer
+        var organizationalLayerChapterClause = new SearchOperationGroup { GroupType = SearchOperationGroupType.Or };
         organizationalLayerChapterClause.Criteria.Add(Expr.Equals("Layer", ContextID));
-        //Add the recursive query for all the parent organizational layers
-        StringBuilder sbChapter = new StringBuilder("Layer");
-        //Add Organizational Layers
+
+        // Add the recursive query for all the parent organizational layers
+        var sbChapter = new StringBuilder("Layer");
+
+        // Add Organizational Layers
         for (int i = 0; i < PortalConfiguration.OrganizationalLayerTypes.Rows.Count - 1; i++)
         {
             sbChapter.Append(".{0}");
             organizationalLayerChapterClause.Criteria.Add(Expr.Equals(string.Format(sbChapter.ToString(), "ParentLayer"), ContextID));
         }
 
-        Search sChapters = new Search(msChapter.CLASS_NAME) {ID = msChapter.CLASS_NAME};
+        var sChapters = new Search(msChapter.CLASS_NAME) {ID = msChapter.CLASS_NAME};
         sChapters.AddOutputColumn("ID");
         sChapters.AddOutputColumn("Name");
         sChapters.AddOutputColumn("ActiveMemberCount");
@@ -226,8 +230,8 @@ public partial class chapters_ViewOrganizationalLayer : PortalPage
         sChapters.AddSortColumn("Name");
         searches.Add(sChapters);
 
-        //Search for child layers
-        Search sOrganizationalLayers = new Search(msOrganizationalLayer.CLASS_NAME)
+        // Search for child layers
+        var sOrganizationalLayers = new Search(msOrganizationalLayer.CLASS_NAME)
                                            {ID = msOrganizationalLayer.CLASS_NAME};
         sOrganizationalLayers.AddOutputColumn("ID");
         sOrganizationalLayers.AddOutputColumn("Name");
@@ -238,11 +242,11 @@ public partial class chapters_ViewOrganizationalLayer : PortalPage
         sOrganizationalLayers.AddSortColumn("Name");
         searches.Add(sOrganizationalLayers);
 
-        //Search for leaders (by searching it will include inherited leaders not included in the targetOrganizationalLayer.Leaders property)
-        Search sLeaders = GetOrganizationalLayerLeaderSearch(targetOrganizationalLayer.ID);
+        // Search for leaders (by searching it will include inherited leaders not included in the targetOrganizationalLayer.Leaders property)
+        var sLeaders = GetOrganizationalLayerLeaderSearch(targetOrganizationalLayer.ID);
         searches.Add(sLeaders);
 
-        var searchResults = ExecuteSearches(searches, 0, null);
+        var searchResults = APIExtensions.GetMultipleSearchResults(searches, 0, null);
 
         var targetOrganizationalLayerSearchResult = searchResults.Single(x => x.ID == targetOrganizationalLayer.ID);
         if (targetOrganizationalLayerSearchResult.TotalRowCount == 0) GoToMissingRecordPage();
@@ -251,12 +255,12 @@ public partial class chapters_ViewOrganizationalLayer : PortalPage
         dvOrganizationalLayerCommittees = new DataView(searchResults.Single(x => x.ID == msCommittee.CLASS_NAME).Table);
         dvOrganizationalLayerEvents = new DataView(searchResults.Single(x => x.ID == msEvent.CLASS_NAME ).Table);
 
-        //Determine chapter counts
+        // Determine chapter counts
         var chapterSearchResult = searchResults.Single(x => x.ID == msChapter.CLASS_NAME);
 
         chapterCount = chapterSearchResult.Table.Rows.Count;
 
-        //Determine member counts
+        // Determine member counts
         foreach (DataRow chapterRow in chapterSearchResult.Table.Rows)
         {
             activeMemberCount += !chapterRow.Table.Columns.Contains("ActiveMemberCount") || chapterRow["ActiveMemberCount"] == DBNull.Value ? 0 : (int)chapterRow["ActiveMemberCount"];
@@ -279,40 +283,42 @@ public partial class chapters_ViewOrganizationalLayer : PortalPage
 
     protected bool hasPermissionsToView(string organizationalLayerId)
     {
-        //Organizational Layer Leadership
-        Search sOrganizationalLayerLeadership = new Search { Type = "OrganizationalLayerLeader" };
+        // Organizational Layer Leadership
+        var sOrganizationalLayerLeadership = new Search { Type = "OrganizationalLayerLeader" };
         sOrganizationalLayerLeadership.AddOutputColumn("OrganizationalLayer.ID");
         sOrganizationalLayerLeadership.AddCriteria(Expr.Equals("Individual.ID", ConciergeAPI.CurrentEntity.ID));
         sOrganizationalLayerLeadership.AddCriteria(Expr.Equals("OrganizationalLayer.ID", organizationalLayerId));
         sOrganizationalLayerLeadership.AddSortColumn("OrganizationalLayer.Name");
 
-        SearchResult srOrganizationalLayerLeadership = ExecuteSearch(sOrganizationalLayerLeadership, 0, 1);
+        var srOrganizationalLayerLeadership = APIExtensions.GetSearchResult(sOrganizationalLayerLeadership, 0, 1);
         if (srOrganizationalLayerLeadership.Table.Rows.Count > 0)
             return true;
 
-        List<Search> searches = new List<Search>();
+        var searches = new List<Search>();
 
-        //Setup the clause to recursively determine if the user has a membership somewhere nested under the supplied organizational layer
-        SearchOperationGroup organizationalLayerMembershipClause = new SearchOperationGroup { GroupType = SearchOperationGroupType.Or };
+        // Setup the clause to recursively determine if the user has a membership somewhere nested under the supplied organizational layer
+        var organizationalLayerMembershipClause = new SearchOperationGroup { GroupType = SearchOperationGroupType.Or };
         organizationalLayerMembershipClause.Criteria.Add(Expr.Equals("Chapter.Layer", organizationalLayerId));
-        //Add the recursive query for all the parent organizational layers
-        StringBuilder sbOrganizationalLayer = new StringBuilder("Chapter.Layer");
-        //Add Organizational Layers
+
+        // Add the recursive query for all the parent organizational layers
+
+        var sbOrganizationalLayer = new StringBuilder("Chapter.Layer");
+        // Add Organizational Layers
         for (int i = 0; i < PortalConfiguration.OrganizationalLayerTypes.Rows.Count - 1; i++)
         {
             sbOrganizationalLayer.Append(".{0}");
             organizationalLayerMembershipClause.Criteria.Add(Expr.Equals(string.Format(sbOrganizationalLayer.ToString(), "ParentLayer"), organizationalLayerId));
         }
 
-        //Organizational Layer Membership
-        Search sOrganizationalLayerMembership = new Search(msChapterMembership.CLASS_NAME);
+        // Organizational Layer Membership
+        var sOrganizationalLayerMembership = new Search(msChapterMembership.CLASS_NAME);
         sOrganizationalLayerMembership.AddOutputColumn("Chapter.ID");
         sOrganizationalLayerMembership.AddCriteria(organizationalLayerMembershipClause);
         sOrganizationalLayerMembership.AddCriteria(Expr.Equals("Membership.Owner.ID", ConciergeAPI.CurrentEntity.ID));
         sOrganizationalLayerMembership.AddSortColumn("Chapter.Name");
         searches.Add(sOrganizationalLayerMembership);
 
-        List<SearchResult> srOrganizationalLayerMembership = ExecuteSearches(searches, 0, 1);
+        var srOrganizationalLayerMembership = APIExtensions.GetMultipleSearchResults(searches, 0, 1);
         return srOrganizationalLayerMembership.Any(searchResult => searchResult.Table.Rows.Count > 0);
     }
 

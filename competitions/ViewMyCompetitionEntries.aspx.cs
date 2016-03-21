@@ -8,7 +8,7 @@ using System.Web.UI.WebControls;
 using MemberSuite.SDK.Concierge;
 using MemberSuite.SDK.Results;
 using MemberSuite.SDK.Searching;
-using MemberSuite.SDK.Searching.Operations;
+using MemberSuite.SDK.Searching.Operations; 
 using MemberSuite.SDK.Types;
 
 public partial class competitions_ViewMyCompetitionEntries : PortalPage
@@ -16,7 +16,6 @@ public partial class competitions_ViewMyCompetitionEntries : PortalPage
     #region Fields
 
     protected DataView dvCompetitionEntries;
-    protected Dictionary<string, CompetitionEntryInformation> competitionEntryInfo;
 
     #endregion
 
@@ -26,7 +25,7 @@ public partial class competitions_ViewMyCompetitionEntries : PortalPage
     {
         base.Page_Load(sender, e);
 
-        //This has to happen on Page_Load not InitializePage for the row commands to work properly
+        // This has to happen on Page_Load not InitializePage for the row commands to work properly
         loadDataFromConcierge();
 
         gvCompetitionEntries.DataSource = dvCompetitionEntries;
@@ -39,7 +38,7 @@ public partial class competitions_ViewMyCompetitionEntries : PortalPage
 
     protected void loadDataFromConcierge()
     {
-        Search sCompetitionEntries = new Search { Type = msCompetitionEntry.CLASS_NAME };
+        var sCompetitionEntries = new Search { Type = msCompetitionEntry.CLASS_NAME };
         sCompetitionEntries.AddOutputColumn("ID");
         sCompetitionEntries.AddOutputColumn("Competition");
         sCompetitionEntries.AddOutputColumn("Competition.Name");
@@ -50,24 +49,9 @@ public partial class competitions_ViewMyCompetitionEntries : PortalPage
         sCompetitionEntries.AddCriteria(Expr.Equals("Entrant",ConciergeAPI.CurrentEntity.ID));
         sCompetitionEntries.AddSortColumn("Competition.Name");
         sCompetitionEntries.AddSortColumn("Competition.CloseDate");
-        
 
-        SearchResult srCompetitionEntries = ExecuteSearch(sCompetitionEntries, 0, null);
+        var srCompetitionEntries = APIExtensions.GetSearchResult(sCompetitionEntries, 0, null);
         dvCompetitionEntries = new DataView(srCompetitionEntries.Table);
-
-        competitionEntryInfo = new Dictionary<string, CompetitionEntryInformation>();
-
-        using (IConciergeAPIService proxy = GetConciegeAPIProxy())
-        {
-            foreach (DataRowView dvCompetitionEntry in dvCompetitionEntries)
-            {
-                string competitionID = dvCompetitionEntry["Competition"].ToString();
-                if(competitionEntryInfo.ContainsKey(competitionID))
-                    continue;
-                
-                competitionEntryInfo.Add(competitionID, proxy.GetCompetitionEntryInformation(competitionID, ConciergeAPI.CurrentEntity.ID).ResultValue);
-            }
-        }
     }
 
     #endregion
@@ -76,29 +60,29 @@ public partial class competitions_ViewMyCompetitionEntries : PortalPage
 
     protected void gvCompetitionEntries_RowDataBound(object sender, GridViewRowEventArgs e)
     {
-        DataRowView drv = (DataRowView)e.Row.DataItem;
-
         switch (e.Row.RowType)
         {
-            case DataControlRowType.Header:
-                break;
-
-            case DataControlRowType.Footer:
-                break;
-
-
-
             case DataControlRowType.DataRow:
-                LinkButton lbComplete = (LinkButton)e.Row.FindControl("lbComplete");
+                var drv = (DataRowView)e.Row.DataItem;
+                var competitionEntryInfo = CompetitionLogic.GetCompetitionEntryInformation(
+                    drv["Competition"].ToString(),
+                    CurrentEntity.ID);
+                var lbComplete = (LinkButton)e.Row.FindControl("lbComplete");
 
-                if (drv["Status"] != DBNull.Value && drv["Status"].ToString() == competitionEntryInfo[drv["Competition"].ToString()].DraftStatusId)
+                if (competitionEntryInfo == null) 
+                {
+                    lbComplete.Visible = false;
+                    break;
+                }
+
+                if (drv["Status"] != DBNull.Value && drv["Status"].ToString() == competitionEntryInfo.DraftStatusId)
                 {
                     gvCompetitionEntries.Columns[4].Visible = true;
                     lbComplete.Visible = true;
                     lbComplete.CommandName = "completedraft";
                 }
 
-                if (drv["Status"] != DBNull.Value && drv["Status"].ToString() == competitionEntryInfo[drv["Competition"].ToString()].PendingPaymentStatusId)
+                if (drv["Status"] != DBNull.Value && drv["Status"].ToString() == competitionEntryInfo.PendingPaymentStatusId)
                 {
                     gvCompetitionEntries.Columns[4].Visible = true;
                     lbComplete.Visible = true;
@@ -118,31 +102,34 @@ public partial class competitions_ViewMyCompetitionEntries : PortalPage
                 break;
 
             case "completepayment":
-                msCompetitionEntry entry = LoadObjectFromAPI<msCompetitionEntry>((string) e.CommandArgument);
+                var entry = LoadObjectFromAPI<msCompetitionEntry>((string) e.CommandArgument);
+                var competitionEntryInfo = CompetitionLogic.GetCompetitionEntryInformation(
+                    entry.Competition);
 
                 if(entry.EntryFee == null)
                 {
-                    entry.Status = competitionEntryInfo[entry.Competition].SubmittedStatusId;
+                    entry.Status = competitionEntryInfo.SubmittedStatusId;
                     using(IConciergeAPIService proxy = GetConciegeAPIProxy())
                     {
                         proxy.Save(entry);
                     }
+
                     QueueBannerMessage(string.Format("Competition entry {0} successfully processed.", entry.LocalID));
                     GoHome();
                 }
 
-                msOrder newOrder = new msOrder();
+                var newOrder = new msOrder();
                 newOrder.BillTo = newOrder.ShipTo = ConciergeAPI.CurrentEntity.ID;
                 newOrder.LineItems = new List<msOrderLineItem>
-                                         {
-                                             new msOrderLineItem
-                                                 {
-                                                     Quantity = 1,
-                                                     Product = entry.EntryFee,
-                                                     Options = new List<NameValueStringPair>(){ new NameValueStringPair("CompetitionEntryId",entry.ID)}
-                                                 }
-                                         };
-
+                {
+                    new msOrderLineItem
+                    {
+                        Quantity = 1,
+                        Product = entry.EntryFee,
+                        Options =
+                            new List<NameValueStringPair>() {new NameValueStringPair("CompetitionEntryId", entry.ID)}
+                    }
+                };
 
                 //Add the order as the "shopping cart" for the order processing wizard
                 MultiStepWizards.PlaceAnOrder.InitiateOrderProcess(newOrder);

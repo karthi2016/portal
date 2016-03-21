@@ -15,10 +15,7 @@
         ></a>
 </asp:Content>
 <asp:Content ID="Content4" ContentPlaceHolderID="PageTitle" runat="Server">
-    <%=targetEvent.Name %>
-    -
-    <%=targetEntity.Name %>
-    Registration
+    <asp:Literal runat="server" ID="CustomTitle"></asp:Literal>
 </asp:Content>
 <asp:Content ID="Content5" ContentPlaceHolderID="TopRightContent" runat="Server">
 </asp:Content>
@@ -98,11 +95,29 @@
         </div>
     </div>
     <div class="section" style="margin-top: 10px">
-         
         <div class="sectionContent">
             <uc1:CustomFieldSet ID="cfsRegistrationFields" runat="server" EditMode="false" />
         </div>
     </div>
+
+    <div class="section" style="margin-top: 10px" id="divSessions" runat="server">
+        <div class="sectionHeaderTitle">
+            <h2>
+                <asp:Literal ID="lSessions" runat="server">Sessions</asp:Literal></h2>
+        </div>
+        <div class="sectionContent">
+            <asp:GridView ID="gvSessions" runat="server" GridLines="None" AutoGenerateColumns="false"
+                EmptyDataText="No sessions found.">
+                <Columns>
+                    <asp:BoundField DataField="Event.StartDate" HeaderStyle-HorizontalAlign="Left" HeaderText="Date" DataFormatString="{0:M/dd/yyy}"/>
+                    <asp:BoundField DataField="Event.TimeSlot.StartTime" HeaderStyle-HorizontalAlign="Left" HeaderText="Time" DataFormatString="{0:h:mm tt}"/>
+                    <asp:BoundField DataField="Event.TimeSlot.Name" HeaderStyle-HorizontalAlign="Left" HeaderText="Time Slot" />
+                    <asp:BoundField DataField="Event.Name" HeaderStyle-HorizontalAlign="Left" HeaderText="Session" />
+                </Columns>
+            </asp:GridView>
+        </div>
+    </div>
+
     <div class="section" style="margin-top: 10px" id="divPayments" runat="server">
         <div class="sectionHeaderTitle">
             <h2>
@@ -116,12 +131,13 @@
                         HeaderStyle-HorizontalAlign="Left" HeaderText="Name" DataNavigateUrlFields="Payment.ID"
                         DataTextField="Payment.Name" />
                     <asp:BoundField DataField="Payment.Date" HeaderStyle-HorizontalAlign="Left" HeaderText="Date" />
-                    <asp:BoundField DataField="Amount" HeaderStyle-HorizontalAlign="Left" HeaderText="Amount"
+                    <asp:BoundField DataField="Total" HeaderStyle-HorizontalAlign="Left" HeaderText="Amount"
                         DataFormatString="{0:C}" />
                 </Columns>
             </asp:GridView>
         </div>
     </div>
+
     <div class="section" style="margin-top: 10px" id="divHistoricalTransactions" runat="server">
         <div class="sectionHeaderTitle">
             <h2>
@@ -171,7 +187,7 @@
         </div>
         <div class="sectionContent">
             <ul>
-                <li> <asp:HyperLink ID="hlPrintAgenda" runat="server">Print Agenda</asp:HyperLink></li>
+                <li runat="server" id="liPrintAgenda"> <asp:HyperLink ID="hlPrintAgenda" runat="server">Print Agenda</asp:HyperLink></li>
               
                 <li runat="server" id="liEditRegistration">
                     <a href="/events/EditEventRegistration.aspx?contextID=<%=targetRegistration.ID %>">Edit Registration</a></li>

@@ -28,7 +28,7 @@
                 <asp:Literal ID="Widget_MyMembership_Expiration" runat="Server">Expiration:</asp:Literal>
             </td>
             <td>
-                <asp:Label ID="lblMembershipExpiration" ForeColor="Green" runat="server">-</asp:Label>
+                <asp:Label ID="lblMembershipExpiration" CssClass="hlte" runat="server">-</asp:Label>
             </td>
         </tr>
         <tr ID="Widget_MyMembership_Type_Row" runat="server">

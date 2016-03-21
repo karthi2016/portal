@@ -72,6 +72,8 @@ public partial class discussions_ViewDiscussionTopic : DiscussionsPage
 
         rptTopics.DataSource = dtDiscussionPosts;
         rptTopics.DataBind();
+
+        PageTitleExtension.Text = targetDiscussionTopic.Name;
     }
 
     #endregion
@@ -98,7 +100,7 @@ public partial class discussions_ViewDiscussionTopic : DiscussionsPage
         sDiscussionPosts.AddSortColumn("CreatedDate", true);
         sDiscussionPosts.AddSortColumn("Name");
 
-        SearchResult srDiscussionPosts = ExecuteSearch(proxy, sDiscussionPosts, PageStart, PAGE_SIZE);
+        SearchResult srDiscussionPosts = proxy.GetSearchResult(sDiscussionPosts, PageStart, PAGE_SIZE);
         dtDiscussionPosts = srDiscussionPosts.Table;
 
         for (int i = 0; i < dtDiscussionPosts.Columns.Count; i++)

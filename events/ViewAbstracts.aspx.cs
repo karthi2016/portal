@@ -53,12 +53,14 @@ public partial class events_ViewAbstracts : PortalPage
         s.AddOutputColumn("Status.Name");
         s.AddOutputColumn("CreatedDate");
 
-        gvAbstracts.DataSource = ExecuteSearch(s, 0, null).Table;
+        gvAbstracts.DataSource = APIExtensions.GetSearchResult(s, 0, null).Table;
         gvAbstracts.DataBind();
 
         
         //Set the visibility on the edit column
         gvAbstracts.Columns[6].Visible = CanEdit();
+
+        CustomTitle.Text = string.Format("My {0} Abstracts", targetEvent.Name);
     }
 
     #endregion

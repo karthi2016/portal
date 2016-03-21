@@ -46,7 +46,7 @@
     <hr />
      
             <div align="center" style="padding-top: 20px">
-                <asp:Button ID="btnAddManual" OnClick="btnAddManual_Click" Text="Manually Add Control Property Override" CausesValidation="false" runat="server" />
+                <asp:Button ID="btnAddManual" OnClick="btnAddManual_Click" Text="Manually Add Control Property Override" CausesValidation="false" runat="server" Width="250"/>
                 <asp:Button ID="btnCancel" OnClick="btnCancel_Click" Text="Go Back" CausesValidation="false" runat="server" />
                 <div class="clearBothNoSPC">
                 </div>

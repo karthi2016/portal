@@ -49,7 +49,7 @@ public partial class homepagecontrols_Membership : HomePageUserControl
             s.Criteria.Add(Expr.Equals("ReceivesMemberBenefits", true));
             s.AddCriteria(Expr.Equals("Owner", ConciergeAPI.CurrentEntity.ID));
 
-            var members = proxy.ExecuteSearch(s, 0, null).ResultValue;
+            var members = proxy.GetSearchResult(s, 0, null);
             if (members.TotalRowCount > 0)
             {
                 foreach (DataRow dr in members.Table.Rows)

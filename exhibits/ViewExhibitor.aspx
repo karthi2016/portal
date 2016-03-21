@@ -11,9 +11,7 @@
         <%=targetShow.Name  %></a>
 </asp:Content>
 <asp:Content ID="Content4" ContentPlaceHolderID="PageTitle" runat="Server">
-    <%=targetShow.Name%>
-    Exhibitor -
-    <%=targetExhibitor.Name %>
+    <asp:Literal runat="server" ID="CustomTitle"></asp:Literal>
 </asp:Content>
 <asp:Content ID="Content5" ContentPlaceHolderID="TopRightContent" runat="Server">
 </asp:Content>
@@ -127,15 +125,17 @@
             </asp:GridView>
         </div>
     </div>
+    <asp:PlaceHolder runat="server" ID="secSpecialRequests">
     <div class="section" style="margin-top: 10px">
         <div class="sectionHeaderTitle">
             <h2>
-                <asp:Literal ID="Literal2" runat="server">Notes/Special Requests</asp:Literal></h2>
+                <asp:Literal ID="lSpecialRequest" runat="server">Notes/Special Requests</asp:Literal></h2>
         </div>
         <div class="sectionContent">
             <%=targetExhibitor.Notes?? "No notes/special requests."%>
         </div>
     </div>
+    </asp:PlaceHolder>
     <div class="section" style="margin-top: 10px">
         <div class="sectionHeaderTitle">
             <h2>

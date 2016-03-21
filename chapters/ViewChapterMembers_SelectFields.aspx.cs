@@ -17,7 +17,7 @@ using Telerik.Web.UI;
 
 public partial class chapters_ViewChapterMembers_SelectFields : PortalPage
 {
-    #region Fields
+    private const string ColumnHeaderOverridePrefix = "ColumnHeader.";
 
     protected SearchManifest targetSearchManifest;
     protected msChapter targetChapter;
@@ -25,10 +25,6 @@ public partial class chapters_ViewChapterMembers_SelectFields : PortalPage
     protected List<FieldMetadata> targetCriteriaFields;
     protected msMembershipLeader leader;
     private readonly List<string> defaultFieldFullPaths = new List<string> { "Membership.Individual.FirstName", "Membership.Individual.LastName", "Membership.Individual.EmailAddress" };
-
-    #endregion
-
-    #region Properties
 
     protected bool Download
     {
@@ -70,8 +66,6 @@ public partial class chapters_ViewChapterMembers_SelectFields : PortalPage
             return Request.QueryString["filter"].ToLower();
         }
     }
-
-    #endregion
 
     #region Initialization
 
@@ -122,6 +116,28 @@ public partial class chapters_ViewChapterMembers_SelectFields : PortalPage
             targetCriteriaFields = proxy.GetSearchFieldMetadataFromFullPath(msChapterMembership.CLASS_NAME, null, availableFields).ResultValue;
         }
 
+        foreach (var f in targetCriteriaFields)
+        {
+            var labelOverride = PortalConfiguration.GetOverrideFor(
+                Request.Url.LocalPath, ColumnHeaderOverridePrefix + f.Name, "Text");
+
+            if (labelOverride != null)
+            {
+                f.Label = labelOverride.Value;
+            }
+        }
+
+        foreach (var f in targetSearchManifest.Fields)
+        {
+            var labelOverride = PortalConfiguration.GetOverrideFor(
+                Request.Url.LocalPath, ColumnHeaderOverridePrefix + f.Name, "Text");
+
+            if (labelOverride != null)
+            {
+                f.Label = labelOverride.Value;
+            }
+        }
+
         //Has to be in the InitializeTargetObject to have the leader before running the CheckSecurity
         loadDataFromConcierge();
     }
@@ -138,6 +154,8 @@ public partial class chapters_ViewChapterMembers_SelectFields : PortalPage
 
         populateAvailableOutputFields();
         bindSearchOutputsToPage();
+
+        CustomTitle.Text = string.Format("{0} Members", targetChapter.Name);
     }
 
     protected override void Page_Load(object sender, EventArgs e)
@@ -163,6 +181,7 @@ public partial class chapters_ViewChapterMembers_SelectFields : PortalPage
         cfsSearchCriteria.Render();
 
         rblOutputFormat.Visible = leader.CanDownloadRoster;
+        OutputFormatSection.Visible = leader.CanDownloadRoster;
 
         if (Continue)
             goToResults();
@@ -232,7 +251,7 @@ public partial class chapters_ViewChapterMembers_SelectFields : PortalPage
     protected void loadDataFromConcierge()
     {
         Search sLeaders = GetChapterLeaderSearch(targetChapter.ID);
-        SearchResult srLeaders = ExecuteSearch(sLeaders, 0, 1);
+        SearchResult srLeaders = APIExtensions.GetSearchResult(sLeaders, 0, 1);
 
         leader = ConvertLeaderSearchResult(srLeaders);
     }
@@ -307,6 +326,38 @@ public partial class chapters_ViewChapterMembers_SelectFields : PortalPage
             nextUrl += "&filter=" + Filter;
 
         GoTo(nextUrl);
+    }
+
+    protected override void AddCustomOverrideEligibleControls(List<msPortalControlPropertyOverride> eligibleControls)
+    {
+        base.AddCustomOverrideEligibleControls(eligibleControls);
+
+        // Add in all the fields from the Criteria List
+        foreach (var targetCriteriaField in targetCriteriaFields)
+        {
+            eligibleControls.Add(new msPortalControlPropertyOverride
+            {
+                PageName = Request.Url.LocalPath,
+                ControlName = ColumnHeaderOverridePrefix + targetCriteriaField.Name,
+                PropertyName = "Text",
+                Value = Convert.ToString(targetCriteriaField.Label)
+            });
+        }
+
+        // Also add in the Column Names if they are not already included
+        foreach (var column in targetSearchManifest.Fields)
+        {
+            if (eligibleControls.All(o => o.ControlName != ColumnHeaderOverridePrefix + column.Name))
+            {
+                eligibleControls.Add(new msPortalControlPropertyOverride
+                {
+                    PageName = Request.Url.LocalPath,
+                    ControlName = ColumnHeaderOverridePrefix + column.Name,
+                    PropertyName = "Text",
+                    Value = Convert.ToString(column.Label)
+                });
+            }
+        }
     }
 
     #endregion

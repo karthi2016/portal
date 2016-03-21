@@ -63,7 +63,7 @@
         <div class="sectionContent">
             <asp:UpdatePanel ID="upCommitteeMembership" runat="server" UpdateMode="Conditional">
                 <ContentTemplate>
-                <asp:GridView ID="gvCommitteeMembership" runat="server" GridLines="None" AutoGenerateColumns="false" EmptyDataText="No committeed members found.">
+                <asp:GridView ID="gvCommitteeMembership" runat="server" GridLines="None" AutoGenerateColumns="false" EmptyDataText="No committee members found.">
                     <Columns>
                         <asp:BoundField DataField="Member.Name" HeaderStyle-HorizontalAlign="Left" HeaderText="Name" />
                         <asp:BoundField DataField="Position.Name" HeaderStyle-HorizontalAlign="Left" HeaderText="Position" />

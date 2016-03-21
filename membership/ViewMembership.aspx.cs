@@ -99,7 +99,7 @@ public partial class membership_ViewMembership : PortalPage
 
     private void _runSearch()
     {
-        Search sMembership = new Search { Type = msMembership.CLASS_NAME, ID=msMembership.CLASS_NAME };
+        var sMembership = new Search { Type = msMembership.CLASS_NAME, ID=msMembership.CLASS_NAME };
         sMembership.AddCriteria(Expr.Equals("ID", ContextID));
 
         // output columns
@@ -120,7 +120,7 @@ public partial class membership_ViewMembership : PortalPage
         sMembership.AddOutputColumn("ReceivesMemberBenefits");
         sMembership.AddOutputColumn("MembershipDirectoryOptOut");
 
-        Search sChapters = new Search { Type = msChapterMembership.CLASS_NAME, ID=msChapterMembership.CLASS_NAME };
+        var sChapters = new Search { Type = msChapterMembership.CLASS_NAME, ID=msChapterMembership.CLASS_NAME };
         sChapters.AddCriteria(Expr.Equals("Membership", ContextID));
         sChapters.AddOutputColumn("Chapter");
         sChapters.AddOutputColumn("Chapter.Name");
@@ -129,7 +129,7 @@ public partial class membership_ViewMembership : PortalPage
         sChapters.AddSortColumn("ExpirationDate", true);
         sChapters.AddSortColumn("JoinDate", true);
 
-        Search sSections = new Search { Type = msSectionMembership.CLASS_NAME, ID=msSectionMembership.CLASS_NAME };
+        var sSections = new Search { Type = msSectionMembership.CLASS_NAME, ID=msSectionMembership.CLASS_NAME };
         sSections.AddCriteria(Expr.Equals("Membership", ContextID));
         sSections.AddOutputColumn("Section.Name");
         sSections.AddOutputColumn("JoinDate");
@@ -137,7 +137,7 @@ public partial class membership_ViewMembership : PortalPage
         sSections.AddSortColumn("ExpirationDate", true);
         sSections.AddSortColumn("JoinDate", true);
 
-        Search sAuditLogs = new Search { Type = msAuditLog.CLASS_NAME, ID=msAuditLog.CLASS_NAME };
+        var sAuditLogs = new Search { Type = msAuditLog.CLASS_NAME, ID=msAuditLog.CLASS_NAME };
         sAuditLogs.AddCriteria(Expr.Equals(msAuditLog.FIELDS.AffectedRecord_ID, ContextID));
         sAuditLogs.AddCriteria(Expr.IsOneOfTheFollowing(msAuditLog.FIELDS.Type, new List<string> {"Renewal", "Drop"} ));
         sAuditLogs.AddOutputColumn("Type_Name");
@@ -145,7 +145,7 @@ public partial class membership_ViewMembership : PortalPage
         sAuditLogs.AddOutputColumn("CreatedDate");
         sAuditLogs.AddSortColumn("CreatedDate", true);
 
-        Search sAddOns = new Search("MembershipAddOn");
+        var sAddOns = new Search("MembershipAddOn");
         sAddOns.ID = "AddOns";
         sAddOns.AddCriteria(Expr.Equals("Membership", ContextID));
         sAddOns.AddOutputColumn("Merchandise.Name");
@@ -154,9 +154,9 @@ public partial class membership_ViewMembership : PortalPage
         sAddOns.AddOutputColumn("Renewable");
         sAddOns.AddSortColumn("ListIndex");
 
-        List<Search> searchesToRun = new List<Search> { sMembership, sChapters, sSections, sAuditLogs, sAddOns  };
+        var searchesToRun = new List<Search> { sMembership, sChapters, sSections, sAuditLogs, sAddOns  };
 
-        var searchResults = ExecuteSearches(searchesToRun, 0, null);
+        var searchResults = APIExtensions.GetMultipleSearchResults(searchesToRun, 0, null);
 
         drMembership = searchResults[0].Table.Rows[0];
 
@@ -213,17 +213,18 @@ public partial class membership_ViewMembership : PortalPage
     {
         CustomFieldSet1.MemberSuiteObject = targetMembership;
 
-        var pageLayout = GetAppropriatePageLayout(targetMembership);
+        var pageLayout = targetMembership.GetAppropriatePageLayout();
         if (pageLayout == null || pageLayout.Metadata == null || pageLayout.Metadata.IsEmpty())
             return;
 
         // setup the metadata
-        CustomFieldSet1.Metadata = proxy.DescribeObject(msMembership.CLASS_NAME).ResultValue;
+        CustomFieldSet1.Metadata = targetMembership.DescribeObject();
         CustomFieldSet1.PageLayout = pageLayout.Metadata;
 
         CustomFieldSet1.AddReferenceNamesToTargetObject(proxy);
 
         CustomFieldSet1.Render();
+        divCustomFields.Visible = true;
     }
 
     #endregion
@@ -271,7 +272,7 @@ public partial class membership_ViewMembership : PortalPage
 
         sLeaders.AddCriteria(chapterGroup);
 
-        SearchResult srLeaders = ExecuteSearch(sLeaders, 0, null);
+        SearchResult srLeaders = APIExtensions.GetSearchResult(sLeaders, 0, null);
 
         leaders = new Dictionary<string, msMembershipLeader>();
         foreach (DataRow drLeader in srLeaders.Table.Rows)
@@ -297,7 +298,7 @@ public partial class membership_ViewMembership : PortalPage
         s.AddOutputColumn("Membership");
         s.AddCriteria(Expr.Equals("ID", CurrentEntity.ID));
 
-        SearchResult sr = ExecuteSearch(s, 0, 1);
+        SearchResult sr = APIExtensions.GetSearchResult(s, 0, 1);
         return sr.TotalRowCount > 0 && sr.Table.Rows[0]["Membership"] != DBNull.Value && string.Equals(sr.Table.Rows[0]["Membership"].ToString(), targetMembership.ID, StringComparison.CurrentCultureIgnoreCase);
     }
 

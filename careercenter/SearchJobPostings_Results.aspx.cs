@@ -78,7 +78,7 @@ public partial class careercenter_SearchJobPostings_Results : PortalPage
 
     protected void loadDataFromConcierge(IConciergeAPIService proxy)
     {
-        SearchResult srJobPostings = ExecuteSearch(proxy, targetSearch, 0, null);
+        SearchResult srJobPostings = proxy.GetSearchResult(targetSearch, 0, null);
         dvJobPostings = new DataView(srJobPostings.Table);
 
         lblSearchResultCount.Text = string.Format("Search returned {0} result(s).", srJobPostings.TotalRowCount);

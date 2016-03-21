@@ -39,9 +39,9 @@
         runat="server" />
     <asp:Panel ID="pnlGroupRegistration" runat="server" Visible="false">
         <asp:Literal ID="lGroupRegNotice" runat="server">
- <font color=green><B>GROUP REGISTRATION MODE</B></font>
+            <span class="hlte"><B>GROUP REGISTRATION MODE</B></span>
         </asp:Literal>
-        <table style="width: 500px; margin-top: 5px">
+        <table style="width: 500px; margin-top: 5px" id="GroupRegHeader">
             <tr>
                 <td class="columnHeader" style="width: 100px">
                     <asp:Literal ID="lGroup" runat="Server">Group:</asp:Literal>
@@ -50,23 +50,21 @@
                     <asp:Label ID="lblGroup" runat="server" />
                 </td>
             </tr>
-        </table>
-    </asp:Panel>
-    <div class="killTablePadding">
-        <table>
-            <tr>
-                <td style="width: 200px">
-                    <h3>
-                        <asp:Literal ID="lRegistrant" runat="server">Registrant:</asp:Literal></h3>
+            <tr id="EventRegistrantNameRow">
+                <td class="columnHeader" style="width: 100px">
+                    <asp:Literal ID="lRegistrant" runat="server">Registrant:</asp:Literal>
                 </td>
                 <td>
                     <asp:Label ID="lblRegistrant" runat="server"> </asp:Label>
                 </td>
             </tr>
-            <tr>
-                <td>
-                    <h3>
-                        <asp:Literal ID="lFee" runat="server">Fee:</asp:Literal></h3>
+        </table>
+    </asp:Panel>
+    <div class="killTablePadding">
+        <table id="EventRegistrantHeader">
+            <tr id="EventRegistrantFeeRow">
+                <td class="columnHeader">
+                    <asp:Literal ID="lFee" runat="server">Fee:</asp:Literal>
                 </td>
                 <td>
                     <asp:Label ID="lblFee" runat="server"> </asp:Label>
@@ -75,7 +73,7 @@
         </table>
     </div>
 
-    <asp:Panel ID="pnlSessions" CssClass="section" Visible="false" runat="server" Style="padding-top: 10px">
+    <asp:Panel ID="pnlSessions" CssClass="section" Visible="false" runat="server" Style="margin-top: 10px">
         <div class="sectionContent">
             <div class="sectionHeaderTitle">
                 <h2>
@@ -84,7 +82,9 @@
             <div class="sectionContent">
                 <asp:CustomValidator ID="cvMaxSession" runat="server" Display="None" ValidationGroup="Custom"
                     />
+                <asp:Literal runat="server" ID="lSessionHint">
                 Hint: You can hover over a session to see its description.
+                </asp:Literal>
                 <asp:Repeater ID="rptSessions" runat="server" OnItemDataBound="rptSessions_OnItemDataBound">
                     <ItemTemplate>
                         <div style="padding-top: 15px">
@@ -95,7 +95,7 @@
                         <div class="killAutoWidth">
                             <asp:GridView ID="gvSessions" runat="server" AutoGenerateColumns="false" DataKeyNames="SessionID"
                                 GridLines="None" AlternatingRowStyle-CssClass="even" HeaderStyle-CssClass="tableHeaderRow"
-                                ShowHeader="false" OnRowDataBound="gvSessions_RowDataBound">
+                                ShowHeader="false" OnRowDataBound="gvSessions_RowDataBound" CssClass="sessionsTable">
                                 <Columns>
                                     <asp:TemplateField HeaderStyle-Width="60px">
                                         <ItemTemplate>
@@ -112,7 +112,7 @@
                                         <ItemTemplate>
                                             <asp:Label ID="lblSessionName" runat="server" />
                                             <telerik:RadToolTip ID="rtpSessionDescription" runat="server" AutoCloseDelay="20000"
-                                                TargetControlID="lblSessionName" />
+                                                TargetControlID="lblSessionName" CssClass="SessionDescriptionPopupWrapper" />
                                         </ItemTemplate>
                                     </asp:TemplateField>
                                     <asp:BoundField DataField="Tracks" HeaderText="Tracks" />
@@ -130,7 +130,7 @@
             </div>
         </div>
     </asp:Panel>
-    <asp:Panel ID="pnlGuests" CssClass="section" runat="server" Visible="false" Style="padding-top: 10px">
+    <asp:Panel ID="pnlGuests" CssClass="section" runat="server" Visible="false" Style="margin-top: 10px">
         <div class="sectionContent">
             <div class="sectionHeaderTitle">
                 <h2>
@@ -161,7 +161,7 @@
         </div>
     </asp:Panel>
     <asp:Panel ID="pnlMerchandise" CssClass="section" runat="server" Visible="false"
-        Style="padding-top: 10px">
+        Style="margin-top: 10px">
         <div class="sectionContent">
             <div class="sectionHeaderTitle">
                 <h2>
@@ -194,9 +194,10 @@
     <div class="sectionContent">
         <hr width="100%" />
         <div align="center" style="padding-top: 20px">
+            <asp:Button ID="btnSave" OnClick="btnSave_Click" Text="Save" runat="server" Visible="False" />
             <asp:Button ID="btnContinue" OnClick="btnContinue_Click" Text="Continue" runat="server" />
-            <asp:Button ID="btnBack" OnClick="btnBack_Click" Text="Back" runat="server" />
-            <asp:Button ID="btnCancel" OnClick="btnCancel_Click" Text="Cancel" runat="server" />
+            <asp:Button ID="btnBack" OnClick="btnBack_Click" Text="Back" runat="server" CausesValidation="False" />
+            <asp:Button ID="btnCancel" OnClick="btnCancel_Click" Text="Cancel" runat="server" CausesValidation="False" />
             <div class="clearBothNoSPC">
             </div>
         </div>

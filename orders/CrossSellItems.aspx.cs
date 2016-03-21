@@ -195,8 +195,8 @@ public partial class orders_CrossSellItems : PortalPage
         msOrderLineItem li = new msOrderLineItem();
         li.Product = hfProductID.Value;
 
-        decimal qty;
-        if (!decimal.TryParse(tbQuantity.Text, out qty))
+        int qty;
+        if (!int.TryParse(tbQuantity.Text, out qty))
             qty = 1;
         li.Quantity = qty;
         li.UnitPrice = decimal.Parse(hfPrice.Value);

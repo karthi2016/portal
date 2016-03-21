@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Amazon.ElasticBeanstalk.Model;
 using MemberSuite.SDK.Constants;
 using MemberSuite.SDK.Manifests.Command;
 using MemberSuite.SDK.Manifests.Command.Views;
@@ -41,10 +42,9 @@ public partial class events_Register_RegistrationForm : PortalPage
 
         if (MultiStepWizards.RegisterForEvent.Order == null || targetRegistrationFee == null)
         {
-            GoTo(string.Format("~/events/Register_SelectFee.aspx?contextID={0}", ContextID));
+            Restart();
             return;
         }
-
 
         targetEvent = LoadObjectFromAPI<msEvent>(targetRegistrationFee.Event);
 
@@ -70,7 +70,6 @@ public partial class events_Register_RegistrationForm : PortalPage
     {
         base.InitializePage();
 
-
         if (targetChapter != null)
             setOwnerBackLinks(targetChapter.ID, targetChapter.Name, "~/chapters/ViewChapter.aspx", "~/chapters/ManageChapterEvents.aspx");
 
@@ -79,7 +78,6 @@ public partial class events_Register_RegistrationForm : PortalPage
 
         if (targetOrganizationalLayer != null)
             setOwnerBackLinks(targetOrganizationalLayer.ID, targetOrganizationalLayer.Name, "~/organizationallayers/ViewOrganizationalLayer.aspx", "~/organizationallayers/ManageOrganizationalLayerEvents.aspx");
-
 
         divAcknowledgement.Visible = cvAcknowledgement.Enabled = !string.IsNullOrWhiteSpace(targetEvent.AcknowledgementText);
 
@@ -120,12 +118,27 @@ public partial class events_Register_RegistrationForm : PortalPage
     {
         msOrder newOrder = MultiStepWizards.RegisterForEvent.Order.Clone().ConvertTo<msOrder>();
         newOrder.LineItems = new List<msOrderLineItem>(); // this is NECESSARY b/c clone doesn't work with lists!
+
         // add the main fee
-        var mode = Request.QueryString["mode"];
-        if (mode == "group")
-            newOrder.LineItems.Add(new msOrderLineItem { Product = targetRegistrationFee.ID, Quantity = 1, OrderLineItemID = new Guid().ToString(), OverrideMemberPricingTo = Request.QueryString["individualID"] });
-        else
-            newOrder.LineItems.Add(new msOrderLineItem { Product = targetRegistrationFee.ID, Quantity = 1, OrderLineItemID = Guid.NewGuid().ToString() });
+        if (!MultiStepWizards.RegisterForEvent.IsSessionSwap)
+        {
+            var mode = Request.QueryString["mode"];
+            if (mode == "group")
+                newOrder.LineItems.Add(new msOrderLineItem
+                {
+                    Product = targetRegistrationFee.ID,
+                    Quantity = 1,
+                    OrderLineItemID = new Guid().ToString(),
+                    OverrideMemberPricingTo = Request.QueryString["individualID"]
+                });
+            else
+                newOrder.LineItems.Add(new msOrderLineItem
+                {
+                    Product = targetRegistrationFee.ID,
+                    Quantity = 1,
+                    OrderLineItemID = Guid.NewGuid().ToString()
+                });
+        }
 
         if (targetAdditionalItems != null)
             foreach (var item in targetAdditionalItems)
@@ -406,6 +419,12 @@ public partial class events_Register_RegistrationForm : PortalPage
       
         GoToOrderForm();
     }
+
+    private void Restart()
+    {
+        GoTo(string.Format("~/events/Register_SelectFee.aspx?contextID={0}", ContextID));
+    }
+
     private void initializeGroupRegistration()
     {
         var group = MultiStepWizards.GroupRegistration.Group;
@@ -421,7 +440,6 @@ public partial class events_Register_RegistrationForm : PortalPage
         
         var individual = GetServiceAPIProxy().GetName(MultiStepWizards.GroupRegistration.RegistrantID).ResultValue;
         lblRegistrant.Text = individual;
-
     }
 
     #endregion

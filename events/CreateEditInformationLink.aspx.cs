@@ -46,7 +46,7 @@ public partial class events_CreateEditInformationLink : PortalPage
             eventInformationLinkFieldMetadata = eventInformationLinkClassMetadata.GenerateFieldDictionary();
         }
 
-        MemberSuiteObject contextObject = LoadObjectFromAPI(ContextID);
+        var contextObject = APIExtensions.LoadObjectFromAPI(ContextID);
 
         if (contextObject.ClassType == msEvent.CLASS_NAME)
         {

@@ -61,7 +61,10 @@ public partial class profile_CreateAccount_BasicInfo : PortalPage
         base.InitializePage();
 
         if (PortalConfiguration.Current.PortalLoginRedirect != null) // MS-3932 we need to be somewhere else
-            GoTo(PortalConfiguration.Current.PortalLoginRedirect);
+        {
+            // Instead of redirecting, just do not allow login, but keep the Create Account form
+            tdExistingAccount.Visible = false;
+        }
 
         MultiStepWizards.CreateAccount.InitiatedByLeader = InitiatedByLeader;
 
@@ -102,9 +105,19 @@ public partial class profile_CreateAccount_BasicInfo : PortalPage
         if (completeUrl != null)
             MultiStepWizards.CreateAccount.CompleteUrl = completeUrl;
 
-        //If there is a logged in user and it isn't a leader creating a new member then bypass the whole user creation process and go directly to the completion URL
-        if(!MultiStepWizards.CreateAccount.InitiatedByLeader && ConciergeAPI.CurrentEntity != null)
+        // If there is a logged in user and it isn't a leader creating a new member then bypass the whole user creation process and go directly to the completion URL
+        if (!MultiStepWizards.CreateAccount.InitiatedByLeader && ConciergeAPI.CurrentEntity != null && !ConciergeAPI.HasBackgroundConsoleUser)
             GoTo(MultiStepWizards.CreateAccount.CompleteUrl ?? "~/");
+
+        // If we have a forwarding URL, be sure to pass this along to the Login page and ultimately any SSO pages
+        if (!string.IsNullOrEmpty(MultiStepWizards.CreateAccount.CompleteUrl))
+        {
+            var masterPage = Master as App_Master_GeneralPage;
+            if (masterPage != null)
+            {
+                masterPage.UpdateLoginLinkTab(string.Format("/Login.aspx?redirectURL={0}", Server.UrlEncode(MultiStepWizards.CreateAccount.CompleteUrl)));
+            }
+        }
     }
 
     #endregion
@@ -120,7 +133,11 @@ public partial class profile_CreateAccount_BasicInfo : PortalPage
     {
         base.Page_Load(sender, e);
 
-        tdExistingAccount.Visible = !InitiatedByLeader;
+        if (InitiatedByLeader)
+        {
+            // Deactivate login if part of the Leader wizard, but do not reactivate if previously removed.
+            tdExistingAccount.Visible = false;
+        }
     }
 
     protected void btnNewContinue_Click(object sender, EventArgs e)
@@ -154,6 +171,9 @@ public partial class profile_CreateAccount_BasicInfo : PortalPage
 
         using (var api = GetConciegeAPIProxy())
         {
+            // Clear the previous session before starting a new one (like cached Online Store data), but keep the exceptions (like Shopping Cart)
+            SessionManager.Clear(false);
+
             var result = api.LoginToPortal(
                 tbLoginID.Text,
                 tbPassword.Text);
@@ -182,7 +202,7 @@ public partial class profile_CreateAccount_BasicInfo : PortalPage
         if (result.ResultValue == null)
             return;
 
-        msPortalUser portalUser = result.ResultValue.ConvertTo<msPortalUser>();
+        var portalUser = result.ResultValue.ConvertTo<msPortalUser>();
 
         if (MultiStepWizards.CreateAccount.InitiatedByLeader)
         {

@@ -14,13 +14,10 @@ using MemberSuite.SDK.Types;
 
 public partial class directory_SearchDirectory_Results : PortalPage
 {
-    #region Fields
+    private const string ColumnHeaderOverridePrefix = "ColumnHeader.";
 
     protected Search targetSearch;
     protected DataView dvMembers;
-    protected DataRow drMembership;
-
-    #endregion
 
     #region Initialization
 
@@ -49,24 +46,18 @@ public partial class directory_SearchDirectory_Results : PortalPage
             return;
         }
 
-        addRequiredSearchParameters();
-
-        using(IConciergeAPIService proxy = GetConciegeAPIProxy())
+        foreach (var column in targetSearch.OutputColumns)
         {
-            Search sMembership = new Search(msEntity.CLASS_NAME) { ID = msMembership.CLASS_NAME };
-            sMembership.AddOutputColumn("ID");
-            sMembership.AddOutputColumn("Membership");
-            sMembership.AddOutputColumn("Membership.ReceivesMemberBenefits");
-            sMembership.AddOutputColumn("Membership.TerminationDate");
-            sMembership.AddCriteria(Expr.Equals("ID", ConciergeAPI.CurrentEntity.ID));
-            sMembership.AddSortColumn("ID");
+            var labelOverride = PortalConfiguration.GetOverrideFor(
+                Request.Url.LocalPath, ColumnHeaderOverridePrefix + column.Name, "Text");
 
-            SearchResult srMembership = proxy.ExecuteSearch(sMembership, 0, 1).ResultValue;
-            drMembership = srMembership != null && srMembership.Table != null &&
-                           srMembership.Table.Rows.Count > 0
-                               ? srMembership.Table.Rows[0]
-                               : null;   
+            if (labelOverride != null)
+            {
+                column.DisplayName = labelOverride.Value;
+            }
         }
+
+        addRequiredSearchParameters();
     }
 
     /// <summary>
@@ -102,37 +93,7 @@ public partial class directory_SearchDirectory_Results : PortalPage
             return true;
 
         //Directory is for members only
-        return isActiveMember();
-    }
-
-    protected bool isActiveMember()
-    {
-        if (drMembership == null)
-            return false;
-
-        //Check if the appropriate fields exist - if they do not then the membership module is inactive
-        if (
-            !(drMembership.Table.Columns.Contains("Membership") &&
-              drMembership.Table.Columns.Contains("Membership.ReceivesMemberBenefits") &&
-              drMembership.Table.Columns.Contains("Membership.TerminationDate")))
-            return false;
-
-        //Check there is a membership
-        if (string.IsNullOrWhiteSpace(Convert.ToString(drMembership["Membership"])))
-            return false;
-
-        //Check the membership indicates membership benefits
-        if (!drMembership.Field<bool>("Membership.ReceivesMemberBenefits"))
-            return false;
-
-        //At this point if the termination date is null the member should be able to see the restricted directory
-        DateTime? terminationDate = drMembership.Field<DateTime?>("Membership.TerminationDate");
-
-        if (terminationDate == null)
-            return true;
-
-        //There is a termination date so check if it's future dated
-        return terminationDate > DateTime.Now;
+        return MembershipLogic.IsActiveMember();
     }
 
     #endregion
@@ -188,12 +149,28 @@ public partial class directory_SearchDirectory_Results : PortalPage
 
     protected void loadDataFromConcierge()
     {
-        SearchResult srMembers = ExecuteSearch(targetSearch, PageStart, PAGE_SIZE);
+        SearchResult srMembers = APIExtensions.GetSearchResult(targetSearch, PageStart, PAGE_SIZE);
 
         SetCurrentPageFromResults(srMembers, hlFirstPage, hlPrevPage, hlNextPage, lNumPages, lNumResults, lStartResult,
                                   lEndResult, lCurrentPage);
         
         dvMembers = new DataView(srMembers.Table);
+    }
+
+    protected override void AddCustomOverrideEligibleControls(List<msPortalControlPropertyOverride> eligibleControls)
+    {
+        base.AddCustomOverrideEligibleControls(eligibleControls);
+
+        foreach (var column in targetSearch.OutputColumns)
+        {
+            eligibleControls.Add(new msPortalControlPropertyOverride
+            {
+                PageName = Request.Url.LocalPath,
+                ControlName = ColumnHeaderOverridePrefix + column.Name,
+                PropertyName = "Text",
+                Value = Convert.ToString(column.DisplayName)
+            });
+        }
     }
 
     #endregion

@@ -68,6 +68,9 @@ public partial class chapters_BrowseChapters : PortalPage
 
         gvChapters.DataSource = dvChapters;
         gvChapters.DataBind();
+
+      
+        PageTitleExtension.Text = string.Format(" {0} Chapters", targetOrganizationalLayer.Name);
     }
 
     protected override bool CheckSecurity()
@@ -84,22 +87,24 @@ public partial class chapters_BrowseChapters : PortalPage
 
     protected void loadDataFromConcierge()
     {
-        List<Search> searches = new List<Search>();
+        var searches = new List<Search>();
 
-        //Get all the chapters for the chapter & member counts
-        //Setup the clause to recursively find chapters that are somewhere nested under the current organizational layer
-        SearchOperationGroup organizationalLayerChapterClause = new SearchOperationGroup { GroupType = SearchOperationGroupType.Or };
+        // Get all the chapters for the chapter & member counts
+        // Setup the clause to recursively find chapters that are somewhere nested under the current organizational layer
+        var organizationalLayerChapterClause = new SearchOperationGroup { GroupType = SearchOperationGroupType.Or };
         organizationalLayerChapterClause.Criteria.Add(Expr.Equals("Layer", ContextID));
-        //Add the recursive query for all the parent organizational layers
-        StringBuilder sbChapter = new StringBuilder("Layer");
-        //Add Organizational Layers
+
+        // Add the recursive query for all the parent organizational layers
+        var sbChapter = new StringBuilder("Layer");
+
+        // Add Organizational Layers
         for (int i = 0; i < PortalConfiguration.OrganizationalLayerTypes.Rows.Count - 1; i++)
         {
             sbChapter.Append(".{0}");
             organizationalLayerChapterClause.Criteria.Add(Expr.Equals(string.Format(sbChapter.ToString(), "ParentLayer"), ContextID));
         }
 
-        Search sChapters = new Search(msChapter.CLASS_NAME) { ID = msChapter.CLASS_NAME };
+        var sChapters = new Search(msChapter.CLASS_NAME) { ID = msChapter.CLASS_NAME };
         sChapters.AddOutputColumn("ID");
         sChapters.AddOutputColumn("Name");
         sChapters.AddOutputColumn("LinkedOrganization._Preferred_Address");
@@ -107,10 +112,10 @@ public partial class chapters_BrowseChapters : PortalPage
         sChapters.AddSortColumn("Name");
         searches.Add(sChapters);
 
-        Search sLeaders = GetOrganizationalLayerLeaderSearch(targetOrganizationalLayer.ID);
+        var sLeaders = GetOrganizationalLayerLeaderSearch(targetOrganizationalLayer.ID);
         searches.Add(sLeaders);
 
-        List<SearchResult> searchResults = ExecuteSearches(searches, 0, null);
+        var searchResults = APIExtensions.GetMultipleSearchResults(searches, 0, null);
         dvChapters = new DataView(searchResults.Single(x => x.ID == msChapter.CLASS_NAME).Table);
         
         leader = ConvertLeaderSearchResult(searchResults.Single(x => x.ID == "OrganizationalLayerLeader"));

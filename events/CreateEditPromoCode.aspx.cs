@@ -46,7 +46,7 @@ public partial class events_CreateEditPromoCode : PortalPage
             eventDiscountCodeFieldMetadata = eventDiscountCodeClassMetadata.GenerateFieldDictionary();
         }
 
-        MemberSuiteObject contextObject = LoadObjectFromAPI(ContextID);
+        var contextObject = APIExtensions.LoadObjectFromAPI(ContextID);
 
         if (contextObject.ClassType == msEvent.CLASS_NAME)
         {

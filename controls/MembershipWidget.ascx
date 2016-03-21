@@ -28,7 +28,7 @@
                 Expiration:
             </td>
             <td>
-                <asp:Label ID="lblMembershipExpiration" ForeColor="Green" runat="server" Text='<%# ExpirationLabelText  %>' />
+                <asp:Label ID="lblMembershipExpiration" CssClass="hlte" runat="server" Text='<%# ExpirationLabelText  %>' />
             </td>
         </tr>
         <tr>

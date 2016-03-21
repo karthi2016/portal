@@ -19,7 +19,6 @@ public partial class careercenter_ViewJobPosting : PortalPage
     protected msJobPosting targetJobPosting;
     protected DataView dvResumes;
     protected msJobPostingLocation targetJobPostingLocation;
-    protected DataRow drMembership;
 
     #endregion
 
@@ -91,12 +90,12 @@ public partial class careercenter_ViewJobPosting : PortalPage
     {
         CustomFieldSet1.MemberSuiteObject = targetJobPosting;
 
-        var pageLayout = GetAppropriatePageLayout(targetJobPosting);
+        var pageLayout = targetJobPosting.GetAppropriatePageLayout();
         if (pageLayout == null || pageLayout.Metadata == null || pageLayout.Metadata.IsEmpty())
             return;
 
         // setup the metadata
-        CustomFieldSet1.Metadata = proxy.DescribeObject(msJobPosting.CLASS_NAME).ResultValue;
+        CustomFieldSet1.Metadata = targetJobPosting.DescribeObject();
         CustomFieldSet1.PageLayout = pageLayout.Metadata;
 
         CustomFieldSet1.AddReferenceNamesToTargetObject(proxy);
@@ -125,9 +124,6 @@ public partial class careercenter_ViewJobPosting : PortalPage
             liApply.Visible = false;
             return;
         }
-
-
-
     }
 
     protected override bool CheckSecurity()
@@ -144,7 +140,7 @@ public partial class careercenter_ViewJobPosting : PortalPage
             case JobPostingAccess.AnyRegisteredUser:
                 return ConciergeAPI.CurrentEntity != null;
             case JobPostingAccess.MembersOnly:
-                return isActiveMember();
+                return MembershipLogic.IsActiveMember();
         }
 
         return false;
@@ -154,61 +150,13 @@ public partial class careercenter_ViewJobPosting : PortalPage
 
     #region Methods
 
-    public bool isActiveMember()
-    {
-        if (drMembership == null)
-            return false;
-
-        //Check if the appropriate fields exist - if they do not then the membership module is inactive
-        if (
-            !(drMembership.Table.Columns.Contains("Membership") &&
-              drMembership.Table.Columns.Contains("Membership.ReceivesMemberBenefits") &&
-              drMembership.Table.Columns.Contains("Membership.TerminationDate")))
-            return false;
-
-        //Check there is a membership
-        if (string.IsNullOrWhiteSpace(Convert.ToString(drMembership["Membership"])))
-            return false;
-
-        //Check the membership indicates membership benefits
-        if (!drMembership.Field<bool>("Membership.ReceivesMemberBenefits"))
-            return false;
-
-        //At this point if the termination date is null the member should be able to see the restricted directory
-        DateTime? terminationDate = drMembership.Field<DateTime?>("Membership.TerminationDate");
-
-        if (terminationDate == null)
-            return true;
-
-        //There is a termination date so check if it's future dated
-        return terminationDate > DateTime.Now;
-    }
-
     protected void loadTargetObject(IConciergeAPIService proxy)
     {
         targetJobPosting = LoadObjectFromAPI<msJobPosting>(ContextID);
 
         if (targetJobPosting != null && !string.IsNullOrWhiteSpace(targetJobPosting.Location))
             targetJobPostingLocation = LoadObjectFromAPI<msJobPostingLocation>(targetJobPosting.Location);
-
-        if (ConciergeAPI.CurrentEntity != null &&
-            PortalConfiguration.Current.JobPostingAccessMode == JobPostingAccess.MembersOnly)
-        {
-            Search sMembership = new Search(msEntity.CLASS_NAME);
-            sMembership.AddOutputColumn("ID");
-            sMembership.AddOutputColumn("Membership");
-            sMembership.AddOutputColumn("Membership.ReceivesMemberBenefits");
-            sMembership.AddOutputColumn("Membership.TerminationDate");
-            sMembership.AddCriteria(Expr.Equals("ID", ConciergeAPI.CurrentEntity.ID));
-            sMembership.AddSortColumn("ID");
-
-            SearchResult srMembership = ExecuteSearch(proxy, sMembership, 0, 1);
-            drMembership = srMembership != null && srMembership.Table != null && srMembership.Table.Rows.Count > 0
-                               ? srMembership.Table.Rows[0]
-                               : null;
-        }
     }
-
 
     #endregion
 
@@ -254,7 +202,4 @@ public partial class careercenter_ViewJobPosting : PortalPage
 
         Refresh();
     }
-
-
-
 }

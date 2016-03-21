@@ -1,6 +1,6 @@
 ﻿<%@ Application Language="C#" %>
+<%@ Import Namespace="System.Net" %>
 <%@ Import Namespace="MemberSuite.SDK.Concierge" %>
-<%@ Import Namespace="MemberSuite.SDK.WCF" %>
 <%@ Import Namespace="MemberSuite.SDK.Web.ControlManagers" %>
 <%@ Import Namespace="System.ServiceModel" %>
 
@@ -36,7 +36,6 @@
     {
         var httpContext = HttpContext.Current;
 
-          
         ConciergeAPI.ClearSession();
         
         // are we dealing with a portal page?
@@ -55,13 +54,10 @@
 
     void ConciergeClientExtensions_OnResultError(object sender, ConciergeResultErrorArgs e)
     {
-        if (ConfigurationManager.AppSettings["ExposeRawErrors"] == "true")
-            return;
-        
         var cnt = HttpContext.Current;
 
-        //if (e.Code == ConciergeErrorCode.LoginInvalid && cnt.Request.CurrentExecutionFilePath != "/profile/ResetPassword.aspx")
-        //    throw new ApplicationException("Login credentials invalid. The API username/login is invalid for this portal - unable to proceed. You must select a valid API user and update the web.config with the login/password. Make sure the user is API enabled! Message: " + e.Message);
+        ////if (e.Code == ConciergeErrorCode.LoginInvalid && cnt.Request.CurrentExecutionFilePath != "/profile/ResetPassword.aspx")
+        ////    throw new ApplicationException("Login credentials invalid. The API username/login is invalid for this portal - unable to proceed. You must select a valid API user and update the web.config with the login/password. Make sure the user is API enabled! Message: " + e.Message);
 
         if (cnt == null)
             // we're going to throw a client exception on errorsGr
@@ -81,8 +77,8 @@
         if (e.Code == ConciergeErrorCode.LoginInvalid)
             cnt.Response.Redirect("/loginFailure.html");
 
-        //If we're on the login page and we're not in a postback (would have thrown an exception by now) and it's a login error
-        //Then the API user is invalid or API Access is disabled - this causes all kinds of problems so abort to a plain aspx page with an error message.
+        // If we're on the login page and we're not in a postback (would have thrown an exception by now) and it's a login error
+        // Then the API user is invalid or API Access is disabled - this causes all kinds of problems so abort to a plain aspx page with an error message.
         if (string.Equals(cnt.Request.Url.AbsolutePath, "/Login.aspx", StringComparison.CurrentCultureIgnoreCase) && e.Code == ConciergeErrorCode.IllegalParameter && e.Message.EndsWith("Unknown association ID supplied."))
             cnt.Response.Redirect("/SystemUnavailable.html?AdditionalInfo=Unknown association ID supplied."); 
 
@@ -112,14 +108,14 @@
 
     void Application_End(object sender, EventArgs e) 
     {
-        //  Code that runs on application shutdown
-
+        // Code that runs on application shutdown
     }
         
-    void Application_Error(object sender, EventArgs e) 
+    void Application_Error(object sender, EventArgs e)
     {
         if (ConfigurationManager.AppSettings["ExposeRawErrors"] == "true")
             return;
+        
         // Code that runs when an unhandled error occurs
         HttpContext context = HttpContext.Current;
         Exception ex = Server.GetLastError();
@@ -149,7 +145,6 @@
     void Session_Start(object sender, EventArgs e) 
     {
         // Code that runs when a new session is started
-
     }
 
     void Session_End(object sender, EventArgs e) 
@@ -158,7 +153,6 @@
         // Note: The Session_End event is raised only when the sessionstate mode
         // is set to InProc in the Web.config file. If session mode is set to StateServer 
         // or SQLServer, the event is not raised.
-
     }
        
 </script>

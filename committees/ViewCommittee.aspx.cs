@@ -123,10 +123,10 @@ public partial class committee_ViewCommittee : PortalPage
     /// </summary>
     private void loadDataFromConcierge()
     {
-        List<Search> searchesToRun = new List<Search>();
+        var searchesToRun = new List<Search>();
 
         //Committee terms related to target committee
-        Search sCommitteeTerm = new Search { Type = msCommitteeTerm.CLASS_NAME };
+        var sCommitteeTerm = new Search { Type = msCommitteeTerm.CLASS_NAME };
         sCommitteeTerm.AddOutputColumn("ID");
         sCommitteeTerm.AddOutputColumn("Name");
         sCommitteeTerm.AddCriteria(Expr.Equals("Committee.ID", ContextID));
@@ -134,7 +134,7 @@ public partial class committee_ViewCommittee : PortalPage
         searchesToRun.Add(sCommitteeTerm);
 
         //Committee Memberships related to target committee
-        Search sCommitteeMembership = new Search { Type = msCommitteeMembership.CLASS_NAME };
+        var sCommitteeMembership = new Search { Type = msCommitteeMembership.CLASS_NAME };
         sCommitteeMembership.AddOutputColumn("Member.ID");
         sCommitteeMembership.AddOutputColumn("Member.Name");
         sCommitteeMembership.AddOutputColumn("Position.Name");
@@ -143,9 +143,14 @@ public partial class committee_ViewCommittee : PortalPage
         sCommitteeMembership.AddOutputColumn("IsCurrent");
         sCommitteeMembership.AddOutputColumn("Term.ID");
         sCommitteeMembership.AddCriteria(Expr.Equals("Committee.ID", ContextID));
+
+        ////sCommitteeMembership.AddSortColumn("Position.DisplayOrder");
+        ////sCommitteeMembership.AddSortColumn("Position.Name");
+        sCommitteeMembership.AddSortColumn("Member.Name");
+
         searchesToRun.Add(sCommitteeMembership);
 
-        var results = ExecuteSearches(searchesToRun, 0, null);
+        var results = APIExtensions.GetMultipleSearchResults(searchesToRun, 0, null);
 
         // now, assign the search results
         dvCommitteeTerms = new DataView(results[0].Table);
@@ -157,7 +162,7 @@ public partial class committee_ViewCommittee : PortalPage
     /// </summary>
     private void bindCommitteeMembers()
     {
-        //Filter based on Drop Down List selection
+        // Filter based on Drop Down List selection
         dvCommitteeMembers.RowFilter = buildCommitteeMemberFilter();
 
         gvCommitteeMembership.DataSource = dvCommitteeMembers;
@@ -189,10 +194,10 @@ public partial class committee_ViewCommittee : PortalPage
         if (!targetCommittee.RestrictByMembershipType)
             return true;    // ok, we're good
 
-        Search s = new Search { Type = msMembership.CLASS_NAME };
+        Search s = new Search { Type = "MembershipWithFlowDown" };
         s.AddOutputColumn("Type");
         s.AddCriteria(Expr.Equals("Owner", ConciergeAPI.CurrentEntity.ID));
-        var searchReult = ExecuteSearch(s, 0, null);
+        var searchReult = APIExtensions.GetSearchResult(s, 0, null);
         if (searchReult.TotalRowCount > 0)
         {
             var aMembershipTypes = targetCommittee["ApplicableOpenMembershipTypes"] as List<string>;
@@ -241,7 +246,7 @@ public partial class committee_ViewCommittee : PortalPage
         using (var api = GetServiceAPIProxy())
         {
             // let's send the welcome email
-            api.SendEmail(EmailTemplates.Committees.OpenCommitteeWelcome, new List<string> { cm.SafeGetValue<string>("ID") }, null);
+            api.SendTransactionalEmail(EmailTemplates.Committees.OpenCommitteeWelcome, cm.SafeGetValue<string>("ID") , null);
         }
 
         QueueBannerMessage("You have successfully joined this committee.");
@@ -256,7 +261,7 @@ public partial class committee_ViewCommittee : PortalPage
 
         // find all instances of myself and delete them
         using (var api = GetServiceAPIProxy())
-            foreach (DataRow dr in ExecuteSearch(s, 0, null).Table.Rows)
+            foreach (DataRow dr in APIExtensions.GetSearchResult(s, 0, null).Table.Rows)
                 api.Delete(Convert.ToString(dr["ID"]));
 
         QueueBannerMessage("You have successfully removed yourself from this committee.");

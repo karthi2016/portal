@@ -108,7 +108,7 @@ public partial class careercenter_SearchResume_ViewDetails : PortalPage
         Search s = Search.FromManifest(targetManifest);
         s.AddCriteria(Expr.Equals("ID", ContextID));
 
-        SearchResult searchResult = ExecuteSearch(s, 0, null);
+        SearchResult searchResult = APIExtensions.GetSearchResult(s, 0, null);
         if (searchResult.Table != null && searchResult.Table.Rows.Count > 0)
             targetResumeDetailsRow = searchResult.Table.Rows[0];
     }

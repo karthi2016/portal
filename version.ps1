@@ -15,7 +15,8 @@ else
 }
 
 $Parts = $Version.Split(".")
- 
+ # I keep getting "Access to the path ...\version.xml' is denied." error.. remove readonly
+ sp $Path IsReadOnly $false
 # get an XMLTextWriter to create the XML
 $XmlWriter = New-Object System.XMl.XmlTextWriter($Path,$Null)
  

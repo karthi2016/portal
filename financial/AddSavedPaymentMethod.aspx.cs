@@ -34,6 +34,8 @@ public partial class financial_AddSavedPaymentMethod : CreditCardLogic
     protected override void InitializePage()
     {
         base.InitializePage();
+
+        PageTitleExtension.Text = targetObject.Name;
     }
 
     protected void lbCancel_Click(object sender, EventArgs e)
@@ -112,10 +114,7 @@ public partial class financial_AddSavedPaymentMethod : CreditCardLogic
             targetObject["SavedPaymentMethod"] = id;
 
             if (shouldSaveTargetObject)
-                if (targetObject.ClassType == msGift.CLASS_NAME)
-                    api.SaveDetails(targetObject);
-                else
-                    api.Save(targetObject);
+                api.Save(targetObject);
         }
 
         QueueBannerMessage("Payment information has been updated successfully.");

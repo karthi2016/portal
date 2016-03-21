@@ -35,6 +35,8 @@ public partial class donations_DonationComplete : PortalPage
     {
         base.InitializePage();
         divTasks.Visible = ConciergeAPI.CurrentUser != null;
+
+        PageTitleExtension.Text = string.Format("{0} Completed Successfully", targetOrder.LocalID);
     }
 
     #region Initialization
@@ -58,7 +60,7 @@ public partial class donations_DonationComplete : PortalPage
 
             // If an Order found, try to get a related Gift object
             var giftSearch = new Search(msGift.CLASS_NAME);
-            giftSearch.AddCriteria(Expr.Equals(msGift.FIELDS.Order, ContextID));
+            giftSearch.AddCriteria(Expr.Equals(msFinancialTransaction.FIELDS.Order, ContextID));
 
             var result = proxy.GetObjectsBySearch(giftSearch, msAggregate.FIELDS.ID, 0, 1);
             if (result.Success && result.ResultValue.TotalRowCount > 0)
@@ -80,7 +82,7 @@ public partial class donations_DonationComplete : PortalPage
 
     protected void loadTargetOrder(IConciergeAPIService serviceProxy)
     {
-        targetOrder = LoadObjectFromAPI<msOrder>(serviceProxy, ContextID);
+        targetOrder = serviceProxy.LoadObjectFromAPI<msOrder>(ContextID);
     }
 
     #endregion

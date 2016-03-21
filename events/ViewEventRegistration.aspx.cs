@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
+using System.Diagnostics;
 using System.Linq;
 using System.Web;
 using System.Web.UI;
@@ -35,6 +36,7 @@ public partial class events_ViewEventRegistration : PortalPage
     protected DataView dvPayments;
     protected DataView dvHistoricalTransactions;
     protected DataView dvOrderLineItems;
+    protected DataView dvSessions;
     protected string status;
 
     #endregion
@@ -75,6 +77,13 @@ public partial class events_ViewEventRegistration : PortalPage
         status = getStatus();
 
         loadEventOwners();
+    }
+
+    protected override void InitializePage()
+    {
+        base.InitializePage();
+
+        CustomTitle.Text = string.Format("{0} - {1} Registration", targetEvent.Name, targetEntity.Name);
     }
 
     /// <summary>
@@ -140,39 +149,47 @@ public partial class events_ViewEventRegistration : PortalPage
     {
         loadDataFromConcierge();
 
-        //Bind the payments
+        // Bind the payments
         gvPayments.DataSource = dvPayments;
         gvPayments.DataBind();
 
-        //Bind the historical transaction
+        // Bind the historical transaction
         gvHistoricalTransactions.DataSource = dvHistoricalTransactions;
         gvHistoricalTransactions.DataBind();
+
+        // Bind the payments
+        divSessions.Visible = dvSessions.Count > 0;
+        if (divSessions.Visible)
+        {
+            gvSessions.DataSource = dvSessions;
+            gvSessions.DataBind();
+        }
     }
 
     protected void loadDataFromConcierge()
     {
-        List<Search> searches = new List<Search>();
+        var searches = new List<Search>();
 
-        //Search for the order
-        Search sOrder = new Search { Type = msOrder.CLASS_NAME };
+        // Search for the order
+        var sOrder = new Search { Type = msOrder.CLASS_NAME };
         sOrder.AddOutputColumn("BalanceDue");
         sOrder.AddCriteria(Expr.Equals("ID", targetRegistration.Order));
         sOrder.AddSortColumn("ID");
         searches.Add(sOrder);
 
-        //Search for payments
-        Search sPayments = new Search { Type = msPaymentLineItem.CLASS_NAME };
+        // Search for payments
+        var sPayments = new Search { Type = msPaymentLineItem.CLASS_NAME };
         sPayments.AddOutputColumn("Payment.ID");
         sPayments.AddOutputColumn("Payment.Name");
         sPayments.AddOutputColumn("Payment.Date");
-        sPayments.AddOutputColumn("Amount");
+        sPayments.AddOutputColumn(msPaymentLineItem.FIELDS.Total);
         sPayments.AddCriteria(Expr.Equals("Invoice.Order", targetRegistration.Order));
         sPayments.AddSortColumn("Payment.ID");
         sPayments.AddSortColumn("Payment.Date");
         searches.Add(sPayments);
 
-        //Search for Historical Transactions
-        Search sHistoricalTransactions = new Search(msHistoricalTransaction.CLASS_NAME);
+        // Search for Historical Transactions
+        var sHistoricalTransactions = new Search(msHistoricalTransaction.CLASS_NAME);
         sHistoricalTransactions.AddOutputColumn("ID");
         sHistoricalTransactions.AddOutputColumn("Name");
         sHistoricalTransactions.AddOutputColumn("Date");
@@ -182,12 +199,25 @@ public partial class events_ViewEventRegistration : PortalPage
         sHistoricalTransactions.AddSortColumn("Date");
         searches.Add(sHistoricalTransactions);
 
-        List<SearchResult> searchResults = ExecuteSearches(searches, 0, null);
+        //Search for the order
+        var sSessions = new Search { Type = msSessionRegistration.CLASS_NAME };
+        sSessions.AddOutputColumn("Event");
+        sSessions.AddOutputColumn("Event.Name");
+        sSessions.AddOutputColumn("Event.StartDate");
+        sSessions.AddOutputColumn("Event.TimeSlot.Name");
+        sSessions.AddOutputColumn("Event.TimeSlot.StartTime");
+        sSessions.AddCriteria(Expr.Equals("ParentRegistration", targetRegistration.ID));
+        sSessions.AddSortColumn("Event.StartDate");
+        sSessions.AddSortColumn("Event.TimeSlot.StartTime");
+        searches.Add(sSessions);
+
+        List<SearchResult> searchResults = APIExtensions.GetMultipleSearchResults(searches, 0, null);
         if (searchResults[0].Table.Rows.Count > 0)
             drOrder = searchResults[0].Table.Rows[0];
 
         dvPayments = new DataView(searchResults[1].Table);
         dvHistoricalTransactions = new DataView(searchResults[2].Table);
+        dvSessions = new DataView(searchResults[3].Table);
     }
 
     protected void loadEventOwners()

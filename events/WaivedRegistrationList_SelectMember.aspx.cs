@@ -127,7 +127,7 @@ public partial class events_WaivedRegistrationList_SelectMember : PortalPage
             sChapterMembers.AddCriteria(Expr.Equals("IsCurrent", true));
             sChapterMembers.AddCriteria(terminationGroup);
 
-            SearchResult srChapterMembers = ExecuteSearch(sChapterMembers, 0, null);
+            SearchResult srChapterMembers = APIExtensions.GetSearchResult(sChapterMembers, 0, null);
             foreach (DataRow drChapterMember in srChapterMembers.Table.Rows)
             {
                 DataRow memberRow = dtMembers.NewRow();
@@ -153,7 +153,7 @@ public partial class events_WaivedRegistrationList_SelectMember : PortalPage
             sSectionMembers.AddCriteria(Expr.Equals("IsCurrent", true));
             sSectionMembers.AddCriteria(terminationGroup);
 
-            SearchResult srSectionMembership = ExecuteSearch(sSectionMembers, 0, null);
+            SearchResult srSectionMembership = APIExtensions.GetSearchResult(sSectionMembers, 0, null);
             foreach (DataRow drSectionMember in srSectionMembership.Table.Rows)
             {
                 DataRow memberRow = dtMembers.NewRow();
@@ -194,7 +194,7 @@ public partial class events_WaivedRegistrationList_SelectMember : PortalPage
             sOrganizationalLayerMembers.AddCriteria(Expr.Equals("IsCurrent", true));
 
 
-            SearchResult srOrganizationalLayerMembers = ExecuteSearch(sOrganizationalLayerMembers, 0, null);
+            SearchResult srOrganizationalLayerMembers = APIExtensions.GetSearchResult(sOrganizationalLayerMembers, 0, null);
             foreach (DataRow drOrganizationalLayerMember in srOrganizationalLayerMembers.Table.Rows)
             {
                 DataRow memberRow = dtMembers.NewRow();

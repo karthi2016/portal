@@ -175,7 +175,7 @@
                     </tr>
                     <tr>
                         <td colspan="5" style="text-align: center">
-                            <asp:Label ID="lblHint" runat="server" CssClass="hint" Text="If both Name and Description boxes are empty, all merchandises will be retrieved when you click on the Search button." />
+                            <asp:Label ID="lblHint" runat="server" CssClass="hint" Text="If both Name and Description boxes are empty, all merchandise will be retrieved when you click on the Search button." />
                         </td>
                     </tr>
                 </table>

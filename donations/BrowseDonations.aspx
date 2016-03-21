@@ -24,7 +24,7 @@
             <MasterTableView DataKeyNames="ID">
                 <Columns>
                     <telerik:GridBoundColumn DataField="LocalID" HeaderText="Gift #" />
-                    <telerik:GridBoundColumn DataField="Amount" HeaderText="Total Amount" DataFormatString="{0:C}"/>
+                    <telerik:GridBoundColumn DataField="Total" HeaderText="Total Amount" DataFormatString="{0:C}"/>
                     <telerik:GridBoundColumn DataField="NextTransactionAmount" HeaderText="Next Amount Due" DataFormatString="{0:C}" />
                     <telerik:GridBoundColumn DataField="NextTransactionDue" HeaderText="Next Due Date" DataFormatString="{0:D}"/>
            
@@ -49,7 +49,7 @@
             <MasterTableView DataKeyNames="ID">
                 <Columns>
                     <telerik:GridBoundColumn DataField="LocalID" HeaderText="Gift #" />
-                    <telerik:GridBoundColumn DataField="Amount" HeaderText="Total Amount" DataFormatString="{0:C}"/>
+                    <telerik:GridBoundColumn DataField="Total" HeaderText="Total Amount" DataFormatString="{0:C}"/>
                     <telerik:GridBoundColumn DataField="Fund.Name" HeaderText="Fund" />
            
                     <telerik:GridHyperLinkColumn DataNavigateUrlFields="ID" DataNavigateUrlFormatString="ViewGift.aspx?contextID={0}" Text="(view)" ItemStyle-Width="90px" />

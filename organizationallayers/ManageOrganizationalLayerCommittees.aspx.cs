@@ -46,6 +46,13 @@ public partial class organizationalLayers_ManageOrganizationalLayerCommittees : 
 PortalConfiguration.OrganizationalLayerTypes.Rows.Find(targetOrganizationalLayer.Type);
     }
 
+    protected override void InitializePage()
+    {
+        base.InitializePage();
+
+        PageTitleExtension.Text = string.Format("{0} Committees", GetSearchResult( drTargetOrganizationalLayerType, "Name", null));
+    }
+
     protected override bool CheckSecurity()
     {
         if (!base.CheckSecurity()) return false;
@@ -75,7 +82,7 @@ PortalConfiguration.OrganizationalLayerTypes.Rows.Find(targetOrganizationalLayer
         s.AddCriteria(Expr.Equals("OrganizationalLayer.ID", targetOrganizationalLayer.ID));
         s.AddCriteria(Expr.Equals("ShowInPortal", true));
         s.AddSortColumn("Name");
-        var searchResult = ExecuteSearch(s, 0, null);
+        var searchResult = APIExtensions.GetSearchResult(s, 0, null);
 
         dvCommittees = new DataView(searchResult.Table);
     }

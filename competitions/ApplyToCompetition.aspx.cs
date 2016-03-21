@@ -49,24 +49,20 @@ public partial class competitions_ApplyToCompetition : PortalPage
         }
 
         MultiStepWizards.EnterCompetition.EntryFee = null;
-        targetCompetition = LoadObjectFromAPI(ContextID).ConvertTo<msCompetition>();
+        targetCompetition = LoadObjectFromAPI<msCompetition>(ContextID);
         if (targetCompetition == null)
         {
             GoToMissingRecordPage();
             return;
         }
 
-        using (IConciergeAPIService proxy = GetConciegeAPIProxy())
-        {
-            targetCompetitionInfo = proxy.GetCompetitionEntryInformation(targetCompetition.ID, ConciergeAPI.CurrentEntity.ID).ResultValue;
-        }
+        targetCompetitionInfo = targetCompetition.GetCompetitionEntryInformation();
 
         if (targetCompetitionInfo == null)
         {
             GoToMissingRecordPage();
             return;
         }
-
     }
 
     /// <summary>
@@ -79,16 +75,16 @@ public partial class competitions_ApplyToCompetition : PortalPage
     {
         base.InitializePage();
 
-        setFeesAndContinueIfApplicable();
+        var feeDisplayList = setFeesAndContinueIfApplicable();
 
-        if(!targetCompetitionInfo.CanEnter)
+        if (!targetCompetitionInfo.CanEnter)
         {
             lblNoEntryFees.Visible = true;
             btnContinue.Enabled = false;
         }
         else
         {
-            rblEntryFees.DataSource = targetCompetitionInfo.CompetitionEntryFees;
+            rblEntryFees.DataSource = feeDisplayList;
             rblEntryFees.DataBind();
 
             if (MultiStepWizards.EnterCompetition.EntryFee != null)
@@ -96,18 +92,27 @@ public partial class competitions_ApplyToCompetition : PortalPage
         }
     }
 
-    protected void setFeesAndContinueIfApplicable()
+    protected List<CompetitionEntryFeeProductInfo> setFeesAndContinueIfApplicable()
     {
+        var feeDisplayList = new List<CompetitionEntryFeeProductInfo>();
         foreach (var fee in targetCompetitionInfo.CompetitionEntryFees)
         {
+            var clone = new CompetitionEntryFeeProductInfo
+            {
+                ProductName = string.Format(
+                    "{0} - <span class=\"hlteMon\">{1}</span>",
+                    fee.ProductName.Replace(string.Format("{0} - ", targetCompetition.Name), string.Empty),
+                    fee.DisplayPriceAs ?? fee.Price.ToString("C")),
+                ProductID = fee.ProductID
+            };
 
-            fee.ProductName = string.Format("{0} - <font color=green>{1}</font>", fee.ProductName,
-                                            fee.DisplayPriceAs ?? fee.Price.ToString("C"));
             if (fee.IsSoldOut)
-                fee.ProductName += " SOLD OUT";
+                clone.ProductName += " SOLD OUT";
 
             if (!fee.IsEligible)
-                fee.ProductName += " (ineligible)";
+                clone.ProductName += " (ineligible)";
+
+            feeDisplayList.Add(clone);
         }
 
         switch (targetCompetitionInfo.CompetitionEntryFees.Count)
@@ -122,6 +127,7 @@ public partial class competitions_ApplyToCompetition : PortalPage
                 break;
         }
 
+        return feeDisplayList;
     }
 
     protected void setExistingRegistrationCountLabel()
@@ -131,7 +137,7 @@ public partial class competitions_ApplyToCompetition : PortalPage
         {
             lblDraftEntries.Text =
                 string.Format(
-                        "You currently have {0} entries in draft status. If you do not sumbit these by {1:d} at {2:t}, these entries will be discarded.",
+                        "You currently have {0} entries in draft status. If you do not submit these by {1:d} at {2:t}, these entries will be discarded.",
                         targetCompetitionInfo.NumberOfDraftEntries, targetCompetition.CloseDate,
                         targetCompetition.CloseDate);
             lblDraftEntries.Visible = hlViewMyCompetitionEntries.Visible = true;
@@ -157,7 +163,7 @@ public partial class competitions_ApplyToCompetition : PortalPage
     protected void SetEntryFee(string entryFeeId)
     {
         MultiStepWizards.EnterCompetition.EntryFee =
-            LoadObjectFromAPI(entryFeeId).ConvertTo<msCompetitionEntryFee>();
+            LoadObjectFromAPI<msCompetitionEntryFee>(entryFeeId);
     }
 
     #endregion

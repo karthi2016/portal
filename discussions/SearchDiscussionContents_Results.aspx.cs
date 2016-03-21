@@ -34,7 +34,7 @@ public partial class discussions_SearchDiscussionContents_Results : DiscussionsP
     {
         base.InitializeTargetObject();
 
-        MemberSuiteObject targetObject = LoadObjectFromAPI(ContextID);
+        var targetObject = APIExtensions.LoadObjectFromAPI(ContextID);
 
         if (targetObject == null)
         {
@@ -75,6 +75,8 @@ public partial class discussions_SearchDiscussionContents_Results : DiscussionsP
 
         rptSearchResults.DataSource = dtSearchResults;
         rptSearchResults.DataBind();
+
+        CustomTitle.Text = getTitle();
     }
 
     #endregion
@@ -109,7 +111,7 @@ public partial class discussions_SearchDiscussionContents_Results : DiscussionsP
 
         s.AddCriteria(sogActive);
 
-        if(!isActiveMember())
+        if (!MembershipLogic.IsActiveMember())
         {
             SearchOperationGroup sogMembersOnly = new SearchOperationGroup()
             {
@@ -132,7 +134,7 @@ public partial class discussions_SearchDiscussionContents_Results : DiscussionsP
         if(!string.IsNullOrWhiteSpace(Keywords))
             s.AddCriteria(Expr.Contains("Keywords", Keywords));
 
-        SearchResult sr = ExecuteSearch(proxy, s, PageStart, PAGE_SIZE);
+        SearchResult sr = proxy.GetSearchResult(s, PageStart, PAGE_SIZE);
         dtSearchResults = sr.Table;
 
         for (int i = 0; i < dtSearchResults.Columns.Count; i++)

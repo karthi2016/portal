@@ -27,7 +27,7 @@ public partial class subscriptions_ViewMySubscriptions : PortalPage
         s.AddOutputColumn(msSubscription.FIELDS.ExpirationDate);
         s.AddOutputColumn("IsActive");
 
-        gvSubscriptions.DataSource = ExecuteSearch(s, 0, null).Table;
+        gvSubscriptions.DataSource = APIExtensions.GetSearchResult(s, 0, null).Table;
         gvSubscriptions.DataBind();
     }
 }

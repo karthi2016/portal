@@ -68,7 +68,7 @@ public partial class events_CreateEditEvent : PortalPage
         if (!string.IsNullOrWhiteSpace(ContextID))
         {
             //Load the context object and determine the owner from the class type
-            MemberSuiteObject contextobject = LoadObjectFromAPI(ContextID);
+            var contextobject = APIExtensions.LoadObjectFromAPI(ContextID);
             if (contextobject == null)
             {
                 GoToMissingRecordPage();
@@ -251,10 +251,10 @@ public partial class events_CreateEditEvent : PortalPage
 
     protected void loadDataFromConcierge()
     {
-        List<Search> searches = new List<Search>();
+        var searches = new List<Search>();
 
-        //Load Registration Fees
-        Search sFees = new Search(msRegistrationFee.CLASS_NAME);
+        // Load Registration Fees
+        var sFees = new Search(msRegistrationFee.CLASS_NAME);
         sFees.AddOutputColumn("ID");
         sFees.AddOutputColumn("DisplayOrder");
         sFees.AddOutputColumn("Code");
@@ -268,8 +268,8 @@ public partial class events_CreateEditEvent : PortalPage
 
         searches.Add(sFees);
 
-        //Load Registration Questions
-        Search sQuestions = new Search(msCustomField.CLASS_NAME);
+        // Load Registration Questions
+        var sQuestions = new Search(msCustomField.CLASS_NAME);
         sQuestions.AddOutputColumn("ID");
         sQuestions.AddOutputColumn("DisplayOrder");
         sQuestions.AddOutputColumn("Label");
@@ -282,8 +282,8 @@ public partial class events_CreateEditEvent : PortalPage
 
         searches.Add(sQuestions);
 
-        //Load Discounts/Promo Codes
-        Search sPromoCodes = new Search(msEventDiscountCode.CLASS_NAME);
+        // Load Discounts/Promo Codes
+        var sPromoCodes = new Search(msEventDiscountCode.CLASS_NAME);
         sPromoCodes.AddOutputColumn("ID");
         sPromoCodes.AddOutputColumn("Name");
         sPromoCodes.AddOutputColumn("Code");
@@ -296,8 +296,8 @@ public partial class events_CreateEditEvent : PortalPage
 
         searches.Add(sPromoCodes);
 
-        //Load Supplemental Information Links
-        Search sInformationLinks = new Search(msEventInformationLink.CLASS_NAME);
+        // Load Supplemental Information Links
+        var sInformationLinks = new Search(msEventInformationLink.CLASS_NAME);
         sInformationLinks.AddOutputColumn("ID");
         sInformationLinks.AddOutputColumn("DisplayOrder");
         sInformationLinks.AddOutputColumn("Name");
@@ -310,8 +310,8 @@ public partial class events_CreateEditEvent : PortalPage
 
         searches.Add(sInformationLinks);
 
-        //Load Waived Registration Lists
-        Search sWaivedRegistrationLists = new Search(msWaivedRegistrationList.CLASS_NAME);
+        // Load Waived Registration Lists
+        var sWaivedRegistrationLists = new Search(msWaivedRegistrationList.CLASS_NAME);
         sWaivedRegistrationLists.AddOutputColumn("ID");
         sWaivedRegistrationLists.AddOutputColumn("Name");
         sWaivedRegistrationLists.AddOutputColumn("MemberCount");
@@ -322,8 +322,8 @@ public partial class events_CreateEditEvent : PortalPage
 
         searches.Add(sWaivedRegistrationLists);
 
-        //Load Confirmation Emails
-        Search sConfirmationEmails = new Search(msEmailTemplateContainer.CLASS_NAME);
+        // Load Confirmation Emails
+        var sConfirmationEmails = new Search(msEmailTemplateContainer.CLASS_NAME);
         sConfirmationEmails.AddOutputColumn("ID");
         sConfirmationEmails.AddOutputColumn("Name");
         sConfirmationEmails.AddOutputColumn("ApplicableType");
@@ -332,8 +332,8 @@ public partial class events_CreateEditEvent : PortalPage
 
         searches.Add(sConfirmationEmails);
 
-        //Load Event Merchandise
-        Search sEventMerchandise = new Search(msEventMerchandise.CLASS_NAME);
+        // Load Event Merchandise
+        var sEventMerchandise = new Search(msEventMerchandise.CLASS_NAME);
         sEventMerchandise.AddOutputColumn("ID");
         sEventMerchandise.AddOutputColumn("Code");
         sEventMerchandise.AddOutputColumn("Name");
@@ -343,8 +343,8 @@ public partial class events_CreateEditEvent : PortalPage
 
         searches.Add(sEventMerchandise);
 
-        //Load External Merchant Accounts
-        Search sExternalMerchantAccounts = new Search(msMerchantAccount.CLASS_NAME);
+        // Load External Merchant Accounts
+        var sExternalMerchantAccounts = new Search(msMerchantAccount.CLASS_NAME);
         sExternalMerchantAccounts.AddOutputColumn("ID");
         sExternalMerchantAccounts.AddOutputColumn("Name");
         sExternalMerchantAccounts.AddCriteria(Expr.Equals("IsExternalAccount",true));
@@ -352,7 +352,7 @@ public partial class events_CreateEditEvent : PortalPage
 
         searches.Add(sExternalMerchantAccounts);
 
-        List<SearchResult> searchResults = ExecuteSearches(searches, 0, null);
+        var searchResults = APIExtensions.GetMultipleSearchResults(searches, 0, null);
 
         dvRegistrationFees = new DataView(searchResults[0].Table);
         dvRegistrationQuestions = new DataView(searchResults[1].Table);
@@ -416,7 +416,6 @@ public partial class events_CreateEditEvent : PortalPage
         dtpPreRegistration.SelectedDate = targetEvent.PreRegistrationCutOffDate;
         dtpEarlyRegistration.SelectedDate = targetEvent.EarlyRegistrationCutOffDate;
         dtpRegularRegistration.SelectedDate = targetEvent.RegularRegistrationCutOffDate;
-        dtpLateRegistration.SelectedDate = targetEvent.LateRegistrationCutOffDate;
 
         tbProjectedAttendance.Text = targetEvent.ProjectedAttendance.HasValue ? targetEvent.ProjectedAttendance.Value.ToString() : null;
         tbGuaranteedAttendance.Text = targetEvent.GuaranteedAttendance.HasValue ? targetEvent.GuaranteedAttendance.Value.ToString() : null;
@@ -457,7 +456,6 @@ public partial class events_CreateEditEvent : PortalPage
         targetEvent.PreRegistrationCutOffDate = dtpPreRegistration.SelectedDate;
         targetEvent.EarlyRegistrationCutOffDate = dtpEarlyRegistration.SelectedDate;
         targetEvent.RegularRegistrationCutOffDate = dtpRegularRegistration.SelectedDate;
-        targetEvent.LateRegistrationCutOffDate = dtpLateRegistration.SelectedDate;
 
         if (string.IsNullOrWhiteSpace(tbProjectedAttendance.Text))
             targetEvent.ProjectedAttendance = null;

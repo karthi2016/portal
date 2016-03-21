@@ -85,7 +85,7 @@ public partial class sections_EditSectionInfo : PortalPage
         // important - custom fields need to know who their context is
         cfsSectionFields.MemberSuiteObject = targetSection;
 
-        var pageLayout = GetAppropriatePageLayout(targetSection);
+        var pageLayout = targetSection.GetAppropriatePageLayout();
         if (pageLayout == null || pageLayout.Metadata == null || pageLayout.Metadata.IsEmpty())
         {
             divOtherInformation.Visible = false;
@@ -93,7 +93,7 @@ public partial class sections_EditSectionInfo : PortalPage
         }
 
         // setup the metadata
-        cfsSectionFields.Metadata = proxy.DescribeObject(msSection.CLASS_NAME).ResultValue;
+        cfsSectionFields.Metadata = targetSection.DescribeObject();
         cfsSectionFields.PageLayout = pageLayout.Metadata;
 
         cfsSectionFields.Render();

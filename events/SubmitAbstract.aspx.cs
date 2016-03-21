@@ -31,7 +31,7 @@ public partial class events_SubmitAbstract :  PortalPage
         base.InitializeTargetObject();
 
 
-        var contextObject = LoadObjectFromAPI(ContextID);
+        var contextObject = APIExtensions.LoadObjectFromAPI(ContextID);
 
         switch (contextObject.ClassType)
         {
@@ -97,6 +97,8 @@ public partial class events_SubmitAbstract :  PortalPage
         setupTracks();
 
         dataBind();
+
+        CustomTitle.Text = string.Format("{0} Abstract Submission", targetEvent.Name);
     }
 
     /// <summary>
@@ -127,7 +129,7 @@ public partial class events_SubmitAbstract :  PortalPage
         cfsAbstractCustomFields.MemberSuiteObject = targetAbstract;
         cfsAbstractCustomFieldsConfirm.MemberSuiteObject = targetAbstract;
 
-        var pageLayout = GetAppropriatePageLayout(targetAbstract);
+        var pageLayout = targetAbstract.GetAppropriatePageLayout();
         divAdditionalInfo.Visible = false;
 
         if ((pageLayout == null || pageLayout.Metadata == null || pageLayout.Metadata.IsEmpty()))
@@ -136,7 +138,7 @@ public partial class events_SubmitAbstract :  PortalPage
         divAdditionalInfoConfirm.Visible = divAdditionalInfo.Visible = true;
 
         // setup the metadata
-        cfsAbstractCustomFields.Metadata = proxy.DescribeObject(msAbstract.CLASS_NAME).ResultValue;
+        cfsAbstractCustomFields.Metadata = targetAbstract.DescribeObject();
         cfsAbstractCustomFields.PageLayout = pageLayout.Metadata;
 
         cfsAbstractCustomFields.Render();
@@ -148,8 +150,6 @@ public partial class events_SubmitAbstract :  PortalPage
         cfsAbstractCustomFieldsConfirm.AddReferenceNamesToTargetObject(proxy);
 
         cfsAbstractCustomFieldsConfirm.Render();
-
-
     }
 
     protected void dataBind()
@@ -173,7 +173,7 @@ public partial class events_SubmitAbstract :  PortalPage
         s.AddOutputColumn("Name");
         s.AddSortColumn("Name");
 
-        var results = ExecuteSearch(s, 0, null);
+        var results = APIExtensions.GetSearchResult(s, 0, null);
         if (results.TotalRowCount == 0)
         {
             trTracks.Visible = false;
@@ -267,7 +267,7 @@ public partial class events_SubmitAbstract :  PortalPage
             var result = api.Save(ab);
 
             // and send the email
-            api.SendEmail(EmailTemplates.Events.AbstractSubmission, new List<string> { result.ResultValue.SafeGetValue<string>("ID") },
+            api.SendTransactionalEmail(EmailTemplates.Events.AbstractSubmission, result.ResultValue.SafeGetValue<string>("ID") ,
                   null );
 
             QueueBannerMessage(string.Format("Abstract '{0}' submitted successfully.", ab.Name));

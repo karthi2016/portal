@@ -48,7 +48,7 @@ public partial class events_CreateEditWaivedRegistrationList : PortalPage
             waivedRegistrationListFieldMetadata = waivedRegistrationListClassMetadata.GenerateFieldDictionary();
         }
 
-        MemberSuiteObject contextObject = LoadObjectFromAPI(ContextID);
+        var contextObject = APIExtensions.LoadObjectFromAPI(ContextID);
 
         if (contextObject.ClassType == msEvent.CLASS_NAME)
         {
@@ -137,7 +137,7 @@ public partial class events_CreateEditWaivedRegistrationList : PortalPage
         sMembersOnList.AddSortColumn("Individual.LastName");
         sMembersOnList.AddSortColumn("Individual.FirstName");
 
-        SearchResult srMembersOnList = ExecuteSearch(sMembersOnList, 0, null);
+        SearchResult srMembersOnList = APIExtensions.GetSearchResult(sMembersOnList, 0, null);
         dvMembers = new DataView(srMembersOnList.Table);
     }
 

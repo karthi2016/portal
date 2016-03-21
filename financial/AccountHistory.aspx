@@ -9,7 +9,7 @@
 <asp:Content ID="Content3" ContentPlaceHolderID="BreadcrumbBar" runat="Server">
 </asp:Content>
 <asp:Content ID="Content4" ContentPlaceHolderID="PageTitle" runat="Server">
-    View Account History for <%=targetEntity.Name %>
+    View Account History for <asp:Literal runat="server" ID="PageTitleExtension"></asp:Literal>
 </asp:Content>
 <asp:Content ID="Content5" ContentPlaceHolderID="TopRightContent" runat="Server">
 </asp:Content>
@@ -18,7 +18,6 @@
     <asp:GridView ID="gvTransactions" AutoGenerateColumns="false" GridLines="None"  AlternatingRowStyle-CssClass="even"
         runat="server" onrowdatabound="gvTransactions_RowDataBound">
     <Columns>
-    <asp:BoundField DataField="TransactionType" HeaderText="Type" HeaderStyle-HorizontalAlign="Left" />
     <asp:BoundField DataField="Date" DataFormatString="{0:d}" HeaderText="Date"  HeaderStyle-HorizontalAlign="Left" />
     <asp:BoundField DataField="Name" HeaderText="Name"  HeaderStyle-HorizontalAlign="Left"  />
     <asp:BoundField DataField="Memo" HeaderText="Memo"  HeaderStyle-HorizontalAlign="Left"  />

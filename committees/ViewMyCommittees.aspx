@@ -43,7 +43,7 @@
             Past Committee Membership</asp:Literal></h2>
         </div>
         <div class="sectionContent">
-            <asp:GridView ID="gvPastCommitteeMembership" runat="server" GridLines="None" AutoGenerateColumns="false" EmptyDataText="No past committeed memberships found.">
+            <asp:GridView ID="gvPastCommitteeMembership" runat="server" GridLines="None" AutoGenerateColumns="false" EmptyDataText="No past committee memberships found.">
                 <Columns>
                     <asp:BoundField DataField="Committee.Name" HeaderStyle-HorizontalAlign="Left" HeaderText="Name" />
                     <asp:BoundField DataField="Term.Name" HeaderStyle-HorizontalAlign="Left" HeaderText="Term" />

@@ -37,12 +37,12 @@ public partial class membership_EditMembership : PortalPage
     {
         CustomFieldSet1.MemberSuiteObject = targetMembership;
 
-        var pageLayout = GetAppropriatePageLayout(targetMembership);
+        var pageLayout = targetMembership.GetAppropriatePageLayout();
         if (pageLayout == null || pageLayout.Metadata == null || pageLayout.Metadata.IsEmpty())
             return;
 
         // setup the metadata
-        CustomFieldSet1.Metadata = proxy.DescribeObject(msMembership.CLASS_NAME).ResultValue;
+        CustomFieldSet1.Metadata = targetMembership.DescribeObject();
         CustomFieldSet1.PageLayout = pageLayout.Metadata;
 
 

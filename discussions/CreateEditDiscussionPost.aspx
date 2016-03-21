@@ -15,9 +15,7 @@
                 <%= targetDiscussionTopic.Name%></a>
 </asp:Content>
 <asp:Content ID="Content4" ContentPlaceHolderID="PageTitle" runat="Server">
-    <%= targetDiscussionTopic.Name %>:
-    <%= editMode ? "Edit" : "New" %>
-    Post
+   <asp:Literal runat="server" ID="CustomTitle"></asp:Literal>
 </asp:Content>
 <asp:Content ID="Content5" ContentPlaceHolderID="TopRightContent" runat="Server">
 </asp:Content>

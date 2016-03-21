@@ -10,8 +10,7 @@
         <%= TargetDiscussionBoard.Name %></a>
 </asp:Content>
 <asp:Content ID="Content4" ContentPlaceHolderID="PageTitle" runat="Server">
-    Topics in Forum:
-    <%= targetForum.Name %>
+    Topics in Forum: <asp:Literal runat="server" ID="PageTitleExtension"></asp:Literal>
 </asp:Content>
 <asp:Content ID="Content5" ContentPlaceHolderID="TopRightContent" runat="Server">
 </asp:Content>

@@ -51,7 +51,7 @@
                                         <ItemTemplate>
                                             <tr style="vertical-align: top; margin-top: 20px">
                                                 <td style="width: 30px">
-                                                    <asp:RadioButton ID="rbAddress" runat="server" onchange="updateBillingAddress();" />
+                                                    <asp:RadioButton ID="rbAddress" runat="server" onchange="updateBillingAddress();" onclick="updateBillingAddress();" />
                                                 </td>
                                                 <td>
                                                     <asp:Literal ID="lAddress" runat="server" />
@@ -61,13 +61,13 @@
                                     </asp:Repeater>
                                     <tr style="vertical-align: top; margin-top: 20px">
                                         <td style="width: 30px">
-                                            <asp:RadioButton ID="rbNewBillingAddress" GroupName="BillingAddress" onchange="updateBillingAddress();"
+                                            <asp:RadioButton ID="rbNewBillingAddress" GroupName="BillingAddress" onchange="updateBillingAddress();" onclick="updateBillingAddress();"
                                                 runat="server" />
                                         </td>
                                         <td>
                                             Enter a new address:
                                             <div id="newBillingAddress" runat="server" style="display: none">
-                                                <cc1:AddressControl ID="acBillingAddress" IsRequired="false" EnableValidation="False"
+                                                <cc1:AddressControl ID="acBillingAddress" IsRequired="False" EnableValidation="True"
                                                     runat="server" />
                                             </div>
                                         </td>

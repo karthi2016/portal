@@ -74,7 +74,7 @@ public partial class committees_BrowseCompetitions : PortalPage
         
         s.AddSortColumn("CloseDate");
 
-        var searchResult =  ExecuteSearch(s, 0, null);
+        var searchResult =  APIExtensions.GetSearchResult(s, 0, null);
         dtCompetitions = searchResult.Table;
     }
 

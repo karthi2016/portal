@@ -48,7 +48,7 @@ public partial class volunteers_ViewMyJobAssignments : PortalPage
 
         s.AddSortColumn(msVolunteerJobAssignment.FIELDS.StartDateTime, true);
 
-        gvHistory.DataSource = ExecuteSearch(s, 0, null).Table;
+        gvHistory.DataSource = APIExtensions.GetSearchResult(s, 0, null).Table;
         gvHistory.DataBind();
     }
 }

@@ -71,7 +71,7 @@ public partial class financial_ViewPayment : PortalPage
         s.AddOutputColumn("BillingAddress");
         
         
-        var sr = ExecuteSearch(s, 0, 1);
+        var sr = APIExtensions.GetSearchResult(s, 0, 1);
         if (sr.TotalRowCount == 0)
             GoToMissingRecordPage();
 
@@ -80,7 +80,7 @@ public partial class financial_ViewPayment : PortalPage
         if (string.IsNullOrWhiteSpace(LeaderOfId))
             return;
 
-        MemberSuiteObject leaderOf = LoadObjectFromAPI(LeaderOfId);
+        var leaderOf = APIExtensions.LoadObjectFromAPI(LeaderOfId);
         switch (leaderOf.ClassType)
         {
             case msChapter.CLASS_NAME:
@@ -104,16 +104,15 @@ public partial class financial_ViewPayment : PortalPage
     {
         base.InitializePage();
 
-        Search sPaymentItems = generatePaymentItemsSearch();
-     
-      
-        List<Search> searchesToRun = new List<Search> { sPaymentItems };
-        var searchResults = ExecuteSearches(searchesToRun, 0, null);
+        var sPaymentItems = generatePaymentItemsSearch();
+
+        var searchesToRun = new List<Search> {sPaymentItems};
+        var searchResults = APIExtensions.GetMultipleSearchResults(searchesToRun, 0, null);
 
         gvPaymentItems.DataSource = searchResults[0].Table;
         gvPaymentItems.DataBind();
- 
 
+        PageTitleExtenstion.Text = GetSearchResult(targetPayment, "LocalID", null);
     }
 
     #endregion
@@ -139,8 +138,8 @@ public partial class financial_ViewPayment : PortalPage
 
         s.AddOutputColumn("Type");
         s.AddOutputColumn("TransactionName");
-        s.AddOutputColumn("Amount");
-        s.AddOutputColumn("TransactionID");
+        s.AddOutputColumn(msPaymentLineItem.FIELDS.Total);
+        s.AddOutputColumn(msPaymentLineItem.FIELDS.Invoice);
         
       
 
@@ -189,7 +188,7 @@ public partial class financial_ViewPayment : PortalPage
                 if ( (string) drv["Type"] == "Invoice")
                 {
                     hlView.Visible = true;
-                    hlView.NavigateUrl = "/financial/ViewInvoice.aspx?contextID=" + drv["TransactionID"];
+                    hlView.NavigateUrl = "/financial/ViewInvoice.aspx?contextID=" + drv[msPaymentLineItem.FIELDS.Invoice];
                 }
                 else
                     hlView.Visible = false;

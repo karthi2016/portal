@@ -100,6 +100,7 @@ public partial class careercenter_SearchEventRegistrations_Results : PortalPage
 
         loadDataFromConcierge();
 
+        PageTitleExtension.Text = string.Format("{0} Registration Results", targetEvent.Name);
 
     }
 
@@ -153,7 +154,7 @@ public partial class careercenter_SearchEventRegistrations_Results : PortalPage
     {
         using (IConciergeAPIService proxy = GetConciegeAPIProxy())
         {
-            SearchResult srEventRegistrations = ExecuteSearch(proxy, targetSearch, 0, null);
+            SearchResult srEventRegistrations = proxy.GetSearchResult(targetSearch, 0, null);
             dvEventRegistrations = new DataView(srEventRegistrations.Table);
         
             lblSearchResultCount.Text = string.Format("Search returned {0} result(s).", srEventRegistrations.TotalRowCount);

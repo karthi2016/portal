@@ -20,10 +20,11 @@
         information below and select <b>Place Order</b> to submit your order.</span></b>
     </asp:Literal>
     <div class="section" style="margin-top: 10px">
-        <div class="sectHeaderTitle">
+        <div class="sectionHeaderTitle">
             <h2>
                 <asp:Literal ID="lItemsInYourOrder" runat="server">Items In Your Order</asp:Literal></h2>
         </div>
+        <div class="sectionContent">
         <asp:Label ID="lblShoppingCartEmpty" runat="server">There are no items in your shopping cart.</asp:Label>
         <div id="divMissingDemographics" runat="server" style="color: Red; vertical-align: middle">
             <img alt="Warning" height="20" src="/images/icons/warning.png" />
@@ -142,7 +143,7 @@
                                         <br />
                                         <span style="font-size: 10px" id="spanSaving" runat="server" ><i>
                                         <asp:Literal ID="lSavingInfo" runat="server" Visible="false">
-                                            <span style="color:green">We will be securely saving this payment information so you can use it in the future.</span>
+                                            <span class="hlte">We will be securely saving this payment information so you can use it in the future.</span>
                                         </asp:Literal>
                                         
                                         </i>
@@ -207,12 +208,13 @@
                 </ItemTemplate>
             </asp:DataList>
         </div>
+        </div>
     </div>
     <div class="section" style="margin-top: 10px" id="divExhibitorConfirmation" runat="server"
         visible="false">
         <div class="sectHeaderTitle">
             <h2>
-                Exhibitor Confirmation</h2>
+                <asp:Literal runat="server" ID="lExhibitorConfirmation">Exhibitor Confirmation</asp:Literal></h2>
         </div>
         <div id="divExhibitorConfirmation_BoothPreferences" runat="server" visible="false">
             <b>Booth Preferences:</b> &nbsp;&nbsp;&nbsp;
@@ -220,8 +222,15 @@
             <br />
             &nbsp;
         </div>
+        <div id="divExhibitorConfirmation_ConfirmationInstructions" runat="server" visible="false">
+            <h3>
+                <asp:Literal runat="server" ID="lExhibitorConfirmationInstructions">Additional Instructions</asp:Literal></h3>
+            <asp:Label ID="lblExhibitorConfirmationInstructions" runat="server">None.</asp:Label>
+            <br />
+            &nbsp;
+        </div>
         <h3>
-            Special Requests</h3>
+            <asp:Literal runat="server" ID="lExhibitorSpecialRequests">Special Requests</asp:Literal></h3>
         <asp:Label ID="lblExhibitorSpecialRequests" runat="server">None.</asp:Label>
     </div>
     <asp:Label ID="lblContinueShoppingInstructions" runat="server">
@@ -229,12 +238,13 @@
     and continue shopping.
     </asp:Label>
     <p />
-      <div class="sectHeaderTitle">
-            <h2>
-               Notes/Comments</h2>
+    <asp:PlaceHolder runat="server" ID="secNotesComments">
+      <div class="sectionHeaderTitle">
+            <h2><asp:Literal ID="lNotes" runat="server">Notes/Comments</asp:Literal></h2>
         </div>
-        Add any notes or special instructions to this order.
-    <asp:TextBox ID="tbNotesComments" runat="server" TextMode="MultiLine" Rows=5 Width=600px/>
+        <div class="sectionContent">
+        <asp:Literal ID="lNotesInstructions" runat="server">Add any notes or special instructions to this order.</asp:Literal>
+    <asp:TextBox ID="tbNotesComments" runat="server" TextMode="MultiLine" Rows="5" Width="600px"/>
     <hr style="width: 100%" />
     <div style="text-align: center">
          
@@ -244,7 +254,9 @@
         <asp:LinkButton ID="lbCancel" runat="server" Text="Cancel Your Order" CausesValidation="false"
             OnClick="btnContinueShopping_Click" />
         </asp:PlaceHolder>
+        </div>
     </div>
+    </asp:PlaceHolder>
 </asp:Content>
 <asp:Content ID="Content7" ContentPlaceHolderID="FooterContent" runat="Server">
 </asp:Content>

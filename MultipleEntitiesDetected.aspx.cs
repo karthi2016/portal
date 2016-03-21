@@ -33,24 +33,29 @@ public partial class MultipleEntitiesDetected : PortalPage
         if (string.IsNullOrWhiteSpace(redirectURL))
             redirectURL = "/";
 
-
-        if (selectedEntity == ConciergeAPI.CurrentEntity.ID) Response.Redirect(redirectURL); // nothing to do
-        msEntity ent = LoadObjectFromAPI<msEntity>(selectedEntity);
+        var entityChanged = !ConciergeAPI.CurrentEntity.ID.Equals(selectedEntity, StringComparison.Ordinal);
 
         // record that this was the last one logged in
         // let's re-load it from the database
-        var pu = LoadObjectFromAPI<msPortalUser>(ConciergeAPI.CurrentUser.ID);
-        pu.LastLoggedInAs = ent.ID;
-        SaveObject(pu);
+        if (entityChanged || string.IsNullOrEmpty(ConciergeAPI.CurrentUser.LastLoggedInAs))
+        {
+            var pu = LoadObjectFromAPI<msPortalUser>(ConciergeAPI.CurrentUser.ID);
+            pu.LastLoggedInAs = selectedEntity;
+            var saveResult = SaveObject(pu);
+            if (saveResult != null)
+            {
+                ConciergeAPI.CurrentUser = saveResult.ConvertTo<msPortalUser>();
+            }
+        }
 
-        // now set the current entity
-        ConciergeAPI.CurrentEntity = ent;
-
-
+        if (entityChanged)
+        {
+            var ent = LoadObjectFromAPI<msEntity>(selectedEntity);
+            // now set the current entity
+            ConciergeAPI.CurrentEntity = ent;
+        }
 
         // now go home
         Response.Redirect(redirectURL);
-
-
     }
 }

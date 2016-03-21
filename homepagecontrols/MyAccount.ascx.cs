@@ -12,8 +12,7 @@ public partial class homepagecontrols_MyAccount : HomePageUserControl
     public override List<string> GetFieldsNeededForMainSearch()
     {
         var fields = base.GetFieldsNeededForMainSearch();
-        fields.Add("Invoices_OpenInvoiceBalance");
-        fields.Add("CreditBalance");
+        fields.Add("Invoices_OpenInvoiceBalance");        
         fields.Add("Payments_LastPayment.Date");
         fields.Add("Payments_LastPayment.Total");
 
@@ -41,9 +40,6 @@ public partial class homepagecontrols_MyAccount : HomePageUserControl
         if (openBalance > 0)
             hlMakeAPayment.Visible = true;
 
-        decimal creditBalance = (decimal)drMainRecord["CreditBalance"];
-        lblCreditBalance.Text = creditBalance.ToString("C");
-        if (creditBalance > 0)
-            hlRequestRefund.Visible = true;
+        
     }
 }

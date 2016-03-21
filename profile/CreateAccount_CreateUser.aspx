@@ -6,13 +6,14 @@
 <%@ Register Src="../controls/CustomFieldSet.ascx" TagName="CustomFieldSet" TagPrefix="uc1" %>
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="Server">
     <style type="text/css">
-        .noWrap
-        {
+        .noWrap {
             white-space: nowrap;
         }
-        .padded
-        {
+        .padded {
             margin: 10px;
+        }
+        .leftPadded {
+            margin-left: 10px;
         }
     </style>
 </asp:Content>
@@ -38,29 +39,54 @@
             };
         })();
 
-        $(document).ready(function() {
-            $("#rbNotListed").change(
-                function() {
-                    $("#rbNoAffiliation").trigger('change');
-                }
-            );
-
-            $("#rbNoAffiliation").change(function() {
-                $(".padded").hide();
-                window.ValidatorEnable($("#rfvddlOrganization")[0], false);
-                //MS-5317
-                window.ValidatorEnable($("#cfvddlOrganization")[0], false);
+        $(document).ready(function () {
+            $("#rbNotListed").change(function () {
+                enableOrgSelector(false);
+                enableNotListed(true);
             });
 
-            $("#rbHaveOrg").change(function() {
-                $(".padded").show();
-
-                window.ValidatorEnable($("#rfvddlOrganization")[0], true);
-                //MS-5317
-                window.ValidatorEnable($("#cfvddlOrganization")[0], true);
+            $("#rbNoAffiliation").change(function () {
+                enableOrgSelector(false);
+                enableNotListed(false);
             });
 
+            $("#rbHaveOrg").change(function () {
+                enableOrgSelector(true);
+                enableNotListed(false);
+            });
+
+            enableOrgSelector(false);
+            enableNotListed(false);
+
+            // Initialize the Organization Selector validators based on default selection
+            if ($("#rbHaveOrg").is(':checked')) {
+                enableOrgSelector(true);
+            } else if ($("#rbNotListed").is(':checked')) {
+                enableNotListed(true);
+            }
         });
+
+        function enableOrgSelector(enabled) {
+            if (enabled) {
+                $("#HaveOrgSection .padded").show();
+            } else {
+                $("#HaveOrgSection .padded").hide();
+            }
+
+            var temp = $("#rfvddlOrganization")[0];
+            if (temp) window.ValidatorEnable(temp, enabled);
+
+            temp = $("#cfvddlOrganization")[0];
+            if (temp) window.ValidatorEnable(temp, enabled);
+        }
+
+        function enableNotListed(enabled) {
+            if (enabled) {
+                $("#OrgNotListedSection .leftPadded").show();
+            } else {
+                $("#OrgNotListedSection .leftPadded").hide();
+            }
+        }
 
         //MS-5317
         function ValidateSelectedOrganizationValue(sender, args) {
@@ -75,14 +101,7 @@
         }
     </script>
     <asp:Literal ID="PageText" runat="server" />
-    <asp:Wizard ID="wizCreateAccount" runat="server" DisplaySideBar="false" 
-        OnFinishButtonClick="wizCreateAccount_FinishButtonClick"
-        OnNextButtonClick="wizCreateAccount_NextButtonClick" 
-        OnPreviousButtonClick="wizCreateAccount_PreviousButtonClick"  
-        OnCancelButtonClick="wizCreateAccount_CancelButtonClick"
-        CssClass="sectionContent" Width="300">
-        <WizardSteps>
-            <asp:WizardStep ID="wizIndividualInformationStep" runat="server" Title="Account Information">
+            <asp:PlaceHolder ID="wizIndividualInformationStep" runat="server">
                 <div class="sectionContent">
                     <p>
                         <asp:Literal ID="lPleaseEnterBelow" runat="server">Please enter your contact information below.</asp:Literal>
@@ -102,7 +121,7 @@
                             <asp:Literal ID="lOrgTIedTo" runat="server">What organization do you belong to?</asp:Literal></p>
                         <table style="width: 100%">
                             <tr>
-                                <td style="vertical-align: top;">
+                                <td style="vertical-align: top;" id="HaveOrgSection">
                                     <asp:RadioButton ID="rbHaveOrg" runat="server" GroupName="orgOption" Text=" I am affiliated with an organization."
                                         ClientIDMode="Static" />
                                     <table class="padded">
@@ -118,9 +137,7 @@
                                         <tr>
                                             <td colspan="2">
                                                 <asp:Label ID="lblOrgTIedTo" runat="server">
-                                    
-                                    Start typing your organization's name in the field above. If your organization does not appear, be sure your spelling is correct or an alternate name isn't available.  If your organization's name still does not appear, choose the "My organization is not listed" option below
-                                    
+                                                    Start typing your organization's name in the field above. If your organization does not appear, be sure your spelling is correct or an alternate name isn't available.  If your organization's name still does not appear, choose the "I am affiliated with an organization, but it does not appear" option below.
                                                 </asp:Label>
                                             </td>
                                         </tr>
@@ -137,15 +154,22 @@
                                 </td>
                             </tr>
                             <tr>
-                                <td style="vertical-align: top;">
+                                <td style="vertical-align: top;" id="OrgNotListedSection">
                                     <asp:RadioButton ID="rbNotListed" runat="server" GroupName="orgOption" Text=" I am affiliated with an organization, but it does not appear."
                                         ClientIDMode="Static" />
-                                    <div class="padded">
-                                        <asp:Literal ID="lNoAffiliation" runat="server">
-                                                                     
-                                                                     
-                                    
-                                        </asp:Literal>
+                                    <div class="leftPadded">
+                                        <asp:Literal ID="lNoAffiliation" runat="server" />
+                                        <table>
+                                            <tr runat="server" id="trOrganizationRole_New" style="margin-bottom: 10px;">
+                                                <td class="columnHeader">
+                                                    <asp:Literal ID="lWhatRole_New" runat="server">What is your role in the organization?</asp:Literal>
+                                                </td>
+                                                <td>
+                                                    <asp:DropDownList runat="server" ID="ddlPortalSignupRelationshipTypes_New" DataTextField="Name"
+                                                        DataValueField="ID" />
+                                                </td>
+                                            </tr>
+                                        </table>
                                     </div>
                                 </td>
                             </tr>
@@ -364,7 +388,7 @@
                                                     Address</u></b>
                                                 <br />
                                                 <asp:HiddenField ID="hfIndividualAddressCode" runat="server" />
-                                                <cc1:AddressControl ID="acIndividualAddress" EnableValidation="false" runat="server" />
+                                                <cc1:AddressControl ID="acIndividualAddress" EnableValidation="True" runat="server" />
                                             </td>
                                             <asp:Literal ID="lIndividualNewRowTag" runat="server" />
                                         </ItemTemplate>
@@ -470,8 +494,8 @@
                         </div>
                     </asp:PlaceHolder>
                 </div>
-            </asp:WizardStep>
-            <asp:WizardStep ID="wizOrganizationInformationStep">
+            </asp:PlaceHolder>
+            <asp:PlaceHolder runat="server" Visible="False" ID="wizOrganizationInformationStep">
                 <p>
                     <asp:Literal ID="lOrgContactInfo" runat="server">Please enter the contact information <b>for the Organization</b> below.</asp:Literal>
                 </p>
@@ -585,7 +609,7 @@
                                                 Address</u></b>
                                             <br />
                                             <asp:HiddenField ID="hfOrganizationAddressCode" runat="server" />
-                                            <cc1:AddressControl ID="acOrganizationAddress" EnableValidation="false" runat="server" />
+                                            <cc1:AddressControl ID="acOrganizationAddress" EnableValidation="True" runat="server" />
                                         </td>
                                         <asp:Literal ID="lOrganizationNewRowTag" runat="server" />
                                     </ItemTemplate>
@@ -612,8 +636,8 @@
                 <asp:PlaceHolder ID="phOrganizationOtherInformation" runat="server">
                     <uc1:CustomFieldSet ID="cfsOrganizationCustomFields" runat="server" />
                 </asp:PlaceHolder>
-            </asp:WizardStep>
-            <asp:WizardStep ID="wizDuplicateOrganizationStep" runat="server">
+            </asp:PlaceHolder>
+            <asp:PlaceHolder runat="server" Visible="False" ID="wizDuplicateOrganizationStep">
             
 
                 <div class="sectionContent" style="margin-top: 10px">
@@ -634,8 +658,8 @@
                     </asp:GridView>
                     <br />
                 </div>
-            </asp:WizardStep>
-            <asp:WizardStep ID="wizConfirmationStep">
+            </asp:PlaceHolder>
+            <asp:PlaceHolder runat="server" Visible="False" ID="wizConfirmationStep">
                 <div class="sectionContent">
                     <p>
                         <asp:Literal ID="lConfirmFollowing" runat="server"><b>Please confirm the information below then click "Submit".</b></asp:Literal>
@@ -656,9 +680,25 @@
                         </li>
                     </ul>
                 </div>
-            </asp:WizardStep>
-        </WizardSteps>
-        <StartNavigationTemplate>
+            </asp:PlaceHolder>
+            <table width="100%">
+                <tr>
+                    <td align="center">
+                        <asp:Button runat="server" ID="btnPrevious" OnClick="wizCreateAccount_PreviousButtonClick" CausesValidation="false"
+                            Text="Back" />
+                        <asp:Button runat="server" ID="btnFinish" OnClick="wizCreateAccount_FinishButtonClick" CausesValidation="true"
+                            Text="Submit" />
+                        <asp:Button runat="server" ID="btnNext" OnClick="wizCreateAccount_NextButtonClick" CausesValidation="true"
+                            onClientClick="return onNextClick();"
+                            Text="Next" />
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        <asp:Button runat="server" ID="btnCancel" OnClick="wizCreateAccount_CancelButtonClick" CausesValidation="false"
+                            Text="Cancel" />
+                    </td>
+                </tr>
+            </table>
+
+    <%--        <StartNavigationTemplate>
             <table width="100%">
                 <tr>
                     <td align="center">
@@ -672,26 +712,11 @@
             </table>
         </StartNavigationTemplate>
         <StepNavigationTemplate>
-            <table width="100%">
-                <tr>
-                    <td align="center">
-                        <asp:Button runat="server" ID="btnNext" CommandName="MoveNext" CausesValidation="true"
-                            onClientClick="return onNextClick();"
-                            Text="Next" />
-                        <asp:Button runat="server" ID="btnPrevious" CommandName="MovePrevious" CausesValidation="false"
-                            Text="Back" />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                        <asp:Button runat="server" ID="btnCancel" CommandName="Cancel" CausesValidation="false"
-                            Text="Cancel" />
-                    </td>
-                </tr>
-            </table>
         </StepNavigationTemplate>
         <FinishNavigationTemplate>
             <table width="100%">
                 <tr>
                     <td align="center">
-                        <asp:Button runat="server" ID="btnFinish" CommandName="MoveComplete" CausesValidation="true"
-                            Text="Submit" />
                         <asp:Button runat="server" ID="btnPrevious" CommandName="MovePrevious" CausesValidation="false"
                             Text="Back" />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                         <asp:Button runat="server" ID="btnCancel" CommandName="Cancel" CausesValidation="false"
@@ -701,6 +726,7 @@
             </table>
         </FinishNavigationTemplate>
     </asp:Wizard>
+        --%>
 </asp:Content>
 <asp:Content ID="Content6" ContentPlaceHolderID="FooterContent" runat="Server">
 </asp:Content>

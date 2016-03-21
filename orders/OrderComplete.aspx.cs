@@ -41,10 +41,12 @@ public partial class orders_OrderComplete : PortalPage
     {
         base.InitializePage();
         hlViewOrder.NavigateUrl = "/financial/ViewOrder.aspx?contextID=" + targetOrder.ID;
+
+        PageTitleExtension.Text = string.Format("{0} Completed Successfully", targetOrder.LocalID);
     }
 
     protected string getConfirmationText()
     {
-        return string.Format("Order  #{0}  has been processed successfully. A confirmation email has been sent to  {1}.", targetOrder.LocalID, targetOrder.BillingEmailAddress);
+        return string.Format("Order  #{0}  has been processed successfully. A confirmation email has been sent.", targetOrder.LocalID );
     }
 }

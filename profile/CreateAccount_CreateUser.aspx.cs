@@ -32,7 +32,6 @@ public partial class profile_CreateAccount_Complete : PortalPage
     protected List<msAddressType> individualAddressTypes;
     protected List<msAddressType> organizationAddressTypes;
     protected DataTable dtPortalSignupRelationshipTypes;
-    protected DataView dvAllOrganizations;
     private DataView _dvDuplicates;
 
     #endregion
@@ -45,6 +44,36 @@ public partial class profile_CreateAccount_Complete : PortalPage
         {
             return true;
         }
+    }
+
+    private DropDownList PortalSignupRelationshipControl
+    {
+        get
+        {
+            if (rbNotListed.Checked)
+            {
+                return ddlPortalSignupRelationshipTypes_New;
+            }
+            else
+            {
+                return ddlPortalSignupRelationshipTypes;
+            }
+        }
+    }
+
+    protected RadComboBox ddlOrganization
+    {
+        get
+        {
+            return (from object c in tdOrganization.Controls where c.GetType().Name == typeof(RadComboBox).Name select c)
+                    .Cast<RadComboBox>().FirstOrDefault();
+        }
+    }
+
+    private int WizardStep
+    {
+        get { return (int)(ViewState["WizardStep"] ?? 0); }
+        set { ViewState["WizardStep"] = value; }
     }
 
     #endregion
@@ -106,8 +135,14 @@ public partial class profile_CreateAccount_Complete : PortalPage
         ddlPortalSignupRelationshipTypes.DataSource = dtPortalSignupRelationshipTypes;
         ddlPortalSignupRelationshipTypes.DataBind();
 
+        ddlPortalSignupRelationshipTypes_New.DataSource = dtPortalSignupRelationshipTypes;
+        ddlPortalSignupRelationshipTypes_New.DataBind();
+
         divOrganizationInformation.Visible = ddlPortalSignupRelationshipTypes.Items.Count > 0;
         trOrganizationRole.Visible = ddlPortalSignupRelationshipTypes.Items.Count > 1;
+        trOrganizationRole_New.Visible = trOrganizationRole.Visible;
+
+        SetupWizardPanels();
     }
 
     private void bindOrganization()
@@ -115,23 +150,21 @@ public partial class profile_CreateAccount_Complete : PortalPage
         if (!IsPostBack)
             rbHaveOrg.Checked = true;
         var meta = new FieldMetadata
-            {
-                DataType = FieldDataType.Reference,
-                DisplayType = FieldDisplayType.AjaxComboBox
-            };
-
+        {
+            DataType = FieldDataType.Reference,
+            DisplayType = FieldDisplayType.AjaxComboBox
+        };
 
         var manager = ControlManagerResolver.Resolve(meta.DisplayType);
         var control = new ControlMetadata
-            {
-                DataSourceExpression = "ID",
-                Name = "ID,",
-                ID = "ddlOrganization",
-                ReferenceType = "Organization",
-                Enabled = true,
-                EnabledString = "True",
-            };
-
+        {
+            DataSourceExpression = "ID",
+            Name = "ID,",
+            ID = "ddlOrganization",
+            ReferenceType = "Organization",
+            Enabled = true,
+            EnabledString = "True",
+        };
 
         manager.Initialize(this, control);
 
@@ -143,14 +176,14 @@ public partial class profile_CreateAccount_Complete : PortalPage
         rad.EmptyMessage = "Enter organization";
 
         var rfv = new RequiredFieldValidator
-            {
-                ID = "rfvddlOrganization",
-                ClientIDMode = ClientIDMode.Static,
-                ControlToValidate = rad.ID,
-                Display = ValidatorDisplay.None,
-                CssClass = "requiredField",
-                ErrorMessage = " Please choose organization name."
-            };
+        {
+            ID = "rfvddlOrganization",
+            ClientIDMode = ClientIDMode.Static,
+            ControlToValidate = rad.ID,
+            Display = ValidatorDisplay.None,
+            CssClass = "requiredField",
+            ErrorMessage = "Please choose an organization."
+        };
 
         // MS-3517
         // The purpose of this validator is to validate SelectedValue of the Organization's RadComboBox
@@ -161,13 +194,14 @@ public partial class profile_CreateAccount_Complete : PortalPage
             ID = "cfvddlOrganization",
             ClientIDMode = ClientIDMode.Static,
             ControlToValidate = rad.ID,
-            Display = ValidatorDisplay.Dynamic,
-            ErrorMessage = " Please choose organization name.",
+            Display = ValidatorDisplay.None,
+            ErrorMessage = "Please enter a valid organization.",
             Enabled = rbHaveOrg.Checked, // Enable only if rad combobox is enabled
             EnableClientScript = true,
             CssClass = "requiredField",
             ClientValidationFunction = "ValidateSelectedOrganizationValue"
         };
+
         cfv.ServerValidate += (s, e) => { e.IsValid = !string.IsNullOrWhiteSpace(rad.SelectedValue); };
 
         rad.SelectedValue = targetIndividual.SafeGetValue<string>("PrimaryOrganization__rtg");
@@ -181,33 +215,49 @@ public partial class profile_CreateAccount_Complete : PortalPage
         // important - custom fields need to know who their context is
         cfsIndividualCustomFields.MemberSuiteObject = targetIndividual;
 
-        var pageLayout = GetAppropriatePageLayout(targetIndividual);
+        // Since we are creating this individual, even if the Type is set at some point during the process, be sure to always grab the same default layout.
+        var pageLayout = new msIndividual().GetAppropriatePageLayout();
+
         if ((pageLayout != null && pageLayout.Metadata != null) && !pageLayout.Metadata.IsEmpty())
         {
             pageLayout.Metadata.RemoveControlByID("PrimaryOrganization__rtg");
-            cfsIndividualCustomFields.Metadata = proxy.DescribeObject(msIndividual.CLASS_NAME).ResultValue;
+            cfsIndividualCustomFields.Metadata = MetadataLogic.DescribeObject(msIndividual.CLASS_NAME);
             cfsIndividualCustomFields.PageLayout = pageLayout.Metadata;
 
             cfsIndividualCustomFields.Render();
-
-
         }
 
         // important - custom fields need to know who their context is
+        // Since we are creating this organization, even if the Type is set at some point during the process, be sure to always grab the same default layout.
         cfsOrganizationCustomFields.MemberSuiteObject = targetOrganization;
 
-        var orgPageLayout = GetAppropriatePageLayout(targetOrganization);
+        var orgPageLayout = new msOrganization().GetAppropriatePageLayout();
         if ((orgPageLayout != null && orgPageLayout.Metadata != null) && !orgPageLayout.Metadata.IsEmpty())
         {
-            cfsOrganizationCustomFields.Metadata = proxy.DescribeObject(msOrganization.CLASS_NAME).ResultValue;
+            cfsOrganizationCustomFields.Metadata = MetadataLogic.DescribeObject(msOrganization.CLASS_NAME);
             cfsOrganizationCustomFields.PageLayout = orgPageLayout.Metadata;
 
             cfsOrganizationCustomFields.Render();
         }
+
         bindOrganization();
     }
 
+    protected override void OnPreRender(EventArgs e)
+    {
+        base.OnPreRender(e);
 
+        // Reset the Org Selector during postbacks
+        var orgField = ddlOrganization;
+        if (orgField != null && !string.IsNullOrEmpty(orgField.SelectedValue))
+        {
+            var newItem = new RadComboBoxItem(orgField.Text, orgField.SelectedValue);
+            newItem.DataItem = targetOrganization;
+
+            orgField.Items.Clear();
+            orgField.Items.Add(newItem);
+        }
+    }
 
     #endregion
 
@@ -265,9 +315,8 @@ public partial class profile_CreateAccount_Complete : PortalPage
                 else
                     rbIndividualSeasonalNo.Checked = true;
             }
-
-
         }
+
         //Communication Preferences
         chkDoNotEmail.Checked = targetIndividual.DoNotEmail;
         chkDoNotFax.Checked = targetIndividual.DoNotFax;
@@ -286,8 +335,6 @@ public partial class profile_CreateAccount_Complete : PortalPage
 
                 dlbMessageCategories.Source.Transfer(rli, dlbMessageCategories.Source, dlbMessageCategories.Destination);
             }
-
-
     }
 
     // MS-5208
@@ -360,6 +407,7 @@ public partial class profile_CreateAccount_Complete : PortalPage
         rptOrganizationAddresses.DataSource = organizationAddressTypes;
         rptOrganizationAddresses.DataBind();
     }
+
     private DataRow GetRelationshipType()
     {
         if (dtPortalSignupRelationshipTypes == null)
@@ -372,7 +420,7 @@ public partial class profile_CreateAccount_Complete : PortalPage
         {
             var drRelationshipType = dtPortalSignupRelationshipTypes.Rows.Count == 1
                 ? dtPortalSignupRelationshipTypes.Rows[0]
-                : dtPortalSignupRelationshipTypes.Rows.Find(ddlPortalSignupRelationshipTypes.SelectedValue);
+                : dtPortalSignupRelationshipTypes.Rows.Find(PortalSignupRelationshipControl.SelectedValue);
 
             return drRelationshipType;
         }
@@ -399,9 +447,6 @@ public partial class profile_CreateAccount_Complete : PortalPage
 
             if (relatinshipType != null)
             {
-
-
-
                 targetOrganizationRelationship.Type = relatinshipType["ID"].ToString();
 
                 switch (relatinshipType["LeftSideType"].ToString())
@@ -425,8 +470,6 @@ public partial class profile_CreateAccount_Complete : PortalPage
             MultiStepWizards.CreateAccount.TargetOrganizationRelationship = targetOrganizationRelationship;
         }
     }
-
-
 
     private bool unbindPortalUserAndIndividual()
     {
@@ -452,7 +495,6 @@ public partial class profile_CreateAccount_Complete : PortalPage
 
             //Set the session variable forcing any cached images to be refreshed from the MemberSuite Image content server
             SessionManager.Set("ImageUrlUpper", !SessionManager.Get<bool>("ImageUrlUpper"));
-
         }
 
         // now, the email
@@ -470,10 +512,8 @@ public partial class profile_CreateAccount_Complete : PortalPage
             var code = dataKey.Value;
             TextBox tb = grvPhoneNumberType.FindControl("tbIndividualPhoneNumber") as TextBox;
 
-
             if (tb == null) continue;
             targetIndividual[code + "_PhoneNumber"] = tb.Text;
-
         }
 
         // the preferred
@@ -492,7 +532,6 @@ public partial class profile_CreateAccount_Complete : PortalPage
 
             string code = hfAddressCode.Value;  // remember we stuck the code in there during databinding
             targetIndividual[code + "_Address"] = ac.Address;
-
         }
 
         // let's get the preferred address
@@ -558,7 +597,6 @@ public partial class profile_CreateAccount_Complete : PortalPage
         string preferredPhoneNumberID = Request.Form["OrganizationPhoneNumberPreferredType"];
         if (preferredPhoneNumberID != null)
             targetOrganization.PreferredPhoneNumberType = preferredPhoneNumberID;
-
 
         // now, let's unbind the addresses
         foreach (RepeaterItem riAddress in rptOrganizationAddresses.Items)
@@ -627,9 +665,6 @@ public partial class profile_CreateAccount_Complete : PortalPage
     {
         getPortalSignupRelationshipTypes(serviceProxy);
 
-        if (dtPortalSignupRelationshipTypes.Rows.Count > 0)
-            getAllOrganizations(serviceProxy);
-
         getAddressTypes(serviceProxy);
         getPhoneNumberTypes(serviceProxy);
     }
@@ -645,18 +680,18 @@ public partial class profile_CreateAccount_Complete : PortalPage
         //sRelationshipTypes.AddCriteria(Expr.DoesNotEqual("Multiplicity", "One To One"));
 
         SearchOperationGroup individualGroup = new SearchOperationGroup
-                                                   {
-                                                       FieldName = "LeftSideType",
-                                                       GroupType = SearchOperationGroupType.Or
-                                                   };
+        {
+            FieldName = "LeftSideType",
+            GroupType = SearchOperationGroupType.Or
+        };
         individualGroup.Criteria.Add(Expr.Equals("LeftSideType", msIndividual.CLASS_NAME));
         individualGroup.Criteria.Add(Expr.Equals("RightSideType", msIndividual.CLASS_NAME));
 
         SearchOperationGroup organizationGroup = new SearchOperationGroup
-                                                     {
-                                                         FieldName = "RightSideType",
-                                                         GroupType = SearchOperationGroupType.Or
-                                                     };
+        {
+            FieldName = "RightSideType",
+            GroupType = SearchOperationGroupType.Or
+        };
         organizationGroup.Criteria.Add(Expr.Equals("LeftSideType", msOrganization.CLASS_NAME));
         organizationGroup.Criteria.Add(Expr.Equals("RightSideType", msOrganization.CLASS_NAME));
 
@@ -666,23 +701,11 @@ public partial class profile_CreateAccount_Complete : PortalPage
         sRelationshipTypes.AddSortColumn("DisplayOrder");
         sRelationshipTypes.AddSortColumn("Name");
 
-        SearchResult srRelationshipTypes = ExecuteSearch(proxy, sRelationshipTypes, 0, null);
+        SearchResult srRelationshipTypes = proxy.GetSearchResult(sRelationshipTypes, 0, null);
         DataTable result = srRelationshipTypes.Table;
         result.PrimaryKey = new DataColumn[] { result.Columns["ID"] };
 
         dtPortalSignupRelationshipTypes = result;
-    }
-
-    private void getAllOrganizations(IConciergeAPIService proxy)
-    {
-        Search sOrganizations = new Search(msOrganization.CLASS_NAME);
-        sOrganizations.AddOutputColumn("ID");
-        sOrganizations.AddOutputColumn("Name");
-        sOrganizations.AddSortColumn("Name");
-
-        SearchResult srOrganizations = ExecuteSearch(proxy, sOrganizations, 0, null);
-
-        dvAllOrganizations = new DataView(srOrganizations.Table);
     }
 
     private void getAddressTypes(IConciergeAPIService proxy)
@@ -773,7 +796,7 @@ public partial class profile_CreateAccount_Complete : PortalPage
 
 
         //Send the welcome email
-        proxy.SendEmail(EmailTemplates.CRM.Welcome, new List<string> { targetIndividual.ID }, null);
+        proxy.SendTransactionalEmail(EmailTemplates.CRM.Welcome, targetIndividual.ID , null);
     }
 
     protected void saveOrganization(IConciergeAPIService proxy)
@@ -800,9 +823,7 @@ public partial class profile_CreateAccount_Complete : PortalPage
         liOrganization.Visible = MultiStepWizards.CreateAccount.TargetOrganization != null;
         litOrganization.Text = string.Format("Organization <b>{0}</b>", targetOrganization.Name);
 
-        var org =
-            (from object c in tdOrganization.Controls where c.GetType().Name == typeof(RadComboBox).Name select c)
-                .Cast<RadComboBox>().FirstOrDefault();
+        var org = ddlOrganization;
 
         liRelationship.Visible = false;
         if (org != null && !string.IsNullOrWhiteSpace(org.SelectedValue))
@@ -821,7 +842,7 @@ public partial class profile_CreateAccount_Complete : PortalPage
                                          dtPortalSignupRelationshipTypes.Rows.Count == 1
                                              ? dtPortalSignupRelationshipTypes.Rows[0]
                                              : dtPortalSignupRelationshipTypes.Rows.Find(
-                                                 ddlPortalSignupRelationshipTypes.SelectedValue);
+                                                 PortalSignupRelationshipControl.SelectedValue);
                 litRelationship.Text = string.Format("<b>{0}</b> relationship between <b>{1} {2}</b> and <b>{3}</b>",
                                                      drRelationshipType["Name"], targetIndividual.FirstName,
                                                      targetIndividual.LastName,
@@ -835,15 +856,15 @@ public partial class profile_CreateAccount_Complete : PortalPage
 
     private void saveAndGoHome()
     {
-
-
-
         var type = GetRelationshipType();
-        if (type != null && MultiStepWizards.CreateAccount.TargetOrganization!=null)
-            ErrorOutIfOrganizationContactRestrictionApplies(type["ID"].ToString(), MultiStepWizards.CreateAccount.TargetOrganization.Type);
+        if (type != null && MultiStepWizards.CreateAccount.TargetOrganization != null)
+        {
+            CRMLogic.ErrorOutIfOrganizationContactRestrictionApplies(
+                MultiStepWizards.CreateAccount.TargetOrganization.ID,
+                type["ID"].ToString());
+        }
 
-
-        //Set the password using the association credentials
+        // Set the password using the association credentials
         using (IConciergeAPIService proxy = ConciergeAPIProxyGenerator.GenerateProxy())
         {
             saveIndividualAndPortalUser(proxy);
@@ -942,22 +963,22 @@ public partial class profile_CreateAccount_Complete : PortalPage
 
     protected void wizCreateAccount_CancelButtonClick(object sender, EventArgs e)
     {
+        MultiStepWizards.CreateAccount.Clear();
         GoHome();
     }
 
-    protected void wizCreateAccount_NextButtonClick(object sender, WizardNavigationEventArgs e)
+    protected void wizCreateAccount_NextButtonClick(object sender, EventArgs e)
     {
-        switch (e.CurrentStepIndex)
+        switch (WizardStep)
         {
             case 0:
                 if (!unbindPortalUserAndIndividual())
                 {
-                    e.Cancel = true;
                     return;
                 }
 
                 // MS-5462 Check if we have available organization relationships.
-                if (ddlPortalSignupRelationshipTypes.Items.Count == 0)
+                if (PortalSignupRelationshipControl.Items.Count == 0)
                 {
                     MultiStepWizards.CreateAccount.TargetOrganization = null;
                     saveAndGoHome();
@@ -967,12 +988,10 @@ public partial class profile_CreateAccount_Complete : PortalPage
                 RadComboBox org = null;
                 if (rbHaveOrg.Checked)
                 {
-                    org = (from object c in tdOrganization.Controls
-                           where c.GetType().Name == typeof(RadComboBox).Name
-                           select c).Cast<RadComboBox>().FirstOrDefault();
+                    org = ddlOrganization;
                 }
 
-                
+
                 if (rbNoAffiliation.Checked)
                     MultiStepWizards.CreateAccount.TargetOrganization = null;
 
@@ -995,14 +1014,15 @@ public partial class profile_CreateAccount_Complete : PortalPage
             case 1:
                 if (!unbindOrganization())
                 {
-                    e.Cancel = true;
                     return;
                 }
+
+                setConfirmationText();
 
                 var isDuplicateOrganization = CheckDuplicateOrganization(targetOrganization.Name);
                 if (!isDuplicateOrganization)
                 {
-                    wizCreateAccount.ActiveStepIndex = 3;
+                    WizardStep = 2;
                 }
                 break;
 
@@ -1010,11 +1030,15 @@ public partial class profile_CreateAccount_Complete : PortalPage
                 setConfirmationText();
                 break;
         }
+
+        WizardStep++;
+
+        SetupWizardPanels();
     }
 
-    protected void wizCreateAccount_PreviousButtonClick(object sender, WizardNavigationEventArgs e)
+    protected void wizCreateAccount_PreviousButtonClick(object sender, EventArgs e)
     {
-        switch (e.CurrentStepIndex)
+        switch (WizardStep)
         {
             case 2:
                 // MS-5208. Going back to organization part. Bind Organization's addresses repeater.                    
@@ -1024,6 +1048,46 @@ public partial class profile_CreateAccount_Complete : PortalPage
             case 1:
                 // MS-5208. Going back to individual part. Bind Individual's addresses repeater.
                 BindIndividualAddresses();
+                break;
+        }
+
+        WizardStep--;
+
+        SetupWizardPanels();
+    }
+
+    private void SetupWizardPanels()
+    {
+        // Start by hiding everything
+        wizIndividualInformationStep.Visible = false;
+        wizOrganizationInformationStep.Visible = false;
+        wizDuplicateOrganizationStep.Visible = false;
+        wizConfirmationStep.Visible = false;
+
+        btnPrevious.Visible = false;
+        btnNext.Visible = false;
+        btnFinish.Visible = false;
+
+        switch (WizardStep)
+        {
+            case 0:
+                wizIndividualInformationStep.Visible = true;
+                btnNext.Visible = true;
+                break;
+            case 1:
+                wizOrganizationInformationStep.Visible = true;
+                btnPrevious.Visible = true;
+                btnNext.Visible = true;
+                break;
+            case 2:
+                wizDuplicateOrganizationStep.Visible = true;
+                btnPrevious.Visible = true;
+                btnNext.Visible = true;
+                break;
+            case 3:
+                wizConfirmationStep.Visible = true;
+                btnPrevious.Visible = true;
+                btnFinish.Visible = true;
                 break;
         }
     }
@@ -1056,8 +1120,6 @@ public partial class profile_CreateAccount_Complete : PortalPage
                 Literal lPhoneNumberRequired = (Literal)e.Row.FindControl("lPhoneNumberRequired");
                 RequiredFieldValidator rfvPhoneNumber = (RequiredFieldValidator)e.Row.FindControl("rfvPhoneNumber");
 
-
-
                 bool requiredInPortal = pt.SafeGetValue<bool>("RequiredInPortal");
                 lPhoneNumberRequired.Visible = requiredInPortal;
                 rfvPhoneNumber.Enabled = requiredInPortal;
@@ -1080,8 +1142,6 @@ public partial class profile_CreateAccount_Complete : PortalPage
                     @"id=RowSelector{0} value='{1}' {2} />", e.Row.RowIndex,
                     pt.ID,
                     isSelected ? "checked" : "");
-
-
                 break;
         }
     }
@@ -1122,12 +1182,8 @@ public partial class profile_CreateAccount_Complete : PortalPage
                 /* we're doing THREE columns, so if the index is divisible by three, we want to generate a
                  * start row tag (<tr>)and an end row tag (</tr>)
                  */
-
-
                 if (e.Item.ItemIndex != 0 && (e.Item.ItemIndex + 1) % 3 == 0)
                     lNewRowTag.Text = "</TR><TR>";
-
-
 
                 break;
         }
@@ -1139,14 +1195,11 @@ public partial class profile_CreateAccount_Complete : PortalPage
         AddressControl acAddress = (AddressControl)e.Item.FindControl("acIndividualAddress");
         msAddressType at = (msAddressType)e.Item.DataItem;
 
-
         if (acAddress != null)
         {
             acAddress.Host = this;
             if (at != null) acAddress.IsRequired = at.SafeGetValue<bool>("RequiredInPortal");
-
         }
-
     }
 
     #endregion
@@ -1168,15 +1221,12 @@ public partial class profile_CreateAccount_Complete : PortalPage
             case DataControlRowType.Footer:
                 break;
 
-
             case DataControlRowType.DataRow:
                 Label lblPhoneNumberType = (Label)e.Row.FindControl("lblOrganizationPhoneNumberType");
                 TextBox tbPhoneNumber = (TextBox)e.Row.FindControl("tbOrganizationPhoneNumber");
                 var lRadioButtonMarkup = (Literal)e.Row.FindControl("lOrganizationRadioButtonMarkup");
                 Literal lPhoneNumberRequired = (Literal)e.Row.FindControl("lPhoneNumberRequired");
                 RequiredFieldValidator rfvPhoneNumber = (RequiredFieldValidator)e.Row.FindControl("rfvPhoneNumber");
-
-
 
                 bool requiredInPortal = pt.SafeGetValue<bool>("RequiredInPortal");
                 lPhoneNumberRequired.Visible = requiredInPortal;
@@ -1200,8 +1250,6 @@ public partial class profile_CreateAccount_Complete : PortalPage
                     @"id=RowSelector{0} value='{1}' {2} />", e.Row.RowIndex,
                     pt.ID,
                     isSelected ? "checked" : "");
-
-
                 break;
         }
     }
@@ -1245,9 +1293,6 @@ public partial class profile_CreateAccount_Complete : PortalPage
 
                 if (e.Item.ItemIndex != 0 && (e.Item.ItemIndex + 1) % 3 == 0)
                     lNewRowTag.Text = "</TR><TR>";
-
-
-
                 break;
         }
     }
@@ -1255,8 +1300,8 @@ public partial class profile_CreateAccount_Complete : PortalPage
     protected void rptOrganizationAddresses_OnItemCreated(object sender, RepeaterItemEventArgs e)
     {
         // we need to set the control host property every time the item is created
-        AddressControl acAddress = (AddressControl)e.Item.FindControl("acOrganizationAddress");
-        msAddressType at = (msAddressType)e.Item.DataItem;
+        var acAddress = (AddressControl)e.Item.FindControl("acOrganizationAddress");
+        var at = e.Item.DataItem as msAddressType;
 
         if (acAddress != null)
         {
@@ -1264,7 +1309,6 @@ public partial class profile_CreateAccount_Complete : PortalPage
             if (at != null) acAddress.IsRequired = at.SafeGetValue<bool>("RequiredInPortal");
 
         }
-
     }
 
     #endregion

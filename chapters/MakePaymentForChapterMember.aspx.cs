@@ -68,7 +68,7 @@ public partial class chapters_MakePaymentForChapterMember : PortalPage
         sMembers.AddCriteria(Expr.IsGreaterThan("Membership.Owner.Invoices_OpenInvoiceCount",0));
         sMembers.AddSortColumn("Membership.Owner.Name");
 
-        SearchResult srMembers = ExecuteSearch(sMembers, 0, null);
+        SearchResult srMembers = APIExtensions.GetSearchResult(sMembers, 0, null);
         dvMembers = new DataView(srMembers.Table);
     }
 

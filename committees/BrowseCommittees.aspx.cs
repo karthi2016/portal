@@ -55,7 +55,7 @@ public partial class committees_BrowseCommittees : PortalPage
         s.AddSortColumn("Name");
 
 
-        var searchResult =  ExecuteSearch(s, 0, null);
+        var searchResult =  APIExtensions.GetSearchResult(s, 0, null);
 
         dvCommittees = new DataView(searchResult.Table);
     }

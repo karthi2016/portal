@@ -56,6 +56,8 @@ public partial class orders_EnterShippingInformation : PortalPage
             targetOrder.ShipTo = targetOrder.BillTo;
 
         RegisterJavascriptConfirmationBox(lbCancel, "Are you sure you want to cancel this order?");
+
+        acBillingAddress.Host = this;
     }
 
     /// <summary>
@@ -135,7 +137,7 @@ public partial class orders_EnterShippingInformation : PortalPage
         sShippingMethods.AddOutputColumn("IsDefault");
         sShippingMethods.AddSortColumn("Name");
 
-        var dtShippingMethods = ExecuteSearch(sShippingMethods, 0, null).Table;
+        var dtShippingMethods = APIExtensions.GetSearchResult(sShippingMethods, 0, null).Table;
 
         foreach (DataRow dr in dtShippingMethods.Rows)
         {
@@ -249,11 +251,19 @@ public partial class orders_EnterShippingInformation : PortalPage
     {
         var a = GetBillingAddress();
 
-        args.IsValid =
-            a != null &&
-            !string.IsNullOrWhiteSpace(a.Line1) &&
-            !string.IsNullOrWhiteSpace(a.City) &&
-            !string.IsNullOrWhiteSpace(a.PostalCode);
+        var isValid = false;
+
+        if (a != null)
+        {
+            isValid = !string.IsNullOrWhiteSpace(a.Line1) && !string.IsNullOrWhiteSpace(a.City);
+
+            if (!string.IsNullOrWhiteSpace(a.Country) && 
+                (a.Country.Equals("CA", StringComparison.CurrentCultureIgnoreCase)
+                || a.Country.Equals("US", StringComparison.CurrentCultureIgnoreCase)))
+                isValid = isValid && !string.IsNullOrWhiteSpace(a.PostalCode);
+        }
+
+        args.IsValid = isValid;
     }
 
     protected void cvWrongShippingMethod_OnServerValidate(object source, ServerValidateEventArgs args)

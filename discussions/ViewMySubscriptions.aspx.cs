@@ -47,7 +47,7 @@ public partial class discussions_ViewMySubscriptions : PortalPage
         sSubscription.AddSortColumn("Topic.Forum.Name");
         sSubscription.AddSortColumn("Topic.Name");
 
-        SearchResult srSubscription = ExecuteSearch(sSubscription, PageStart, PAGE_SIZE);
+        SearchResult srSubscription = APIExtensions.GetSearchResult(sSubscription, PageStart, PAGE_SIZE);
         dtSubscriptions = srSubscription.Table;
 
         SetCurrentPageFromResults(srSubscription, hlFirstPage, hlPrevPage, hlNextPage, lNumPages, null, null,

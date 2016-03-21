@@ -69,7 +69,7 @@ public partial class sections_ManageSectionEvents : PortalPage
         s.AddSortColumn("StartDate");
         s.AddSortColumn("EndDate");
         s.AddSortColumn("Name");
-        var searchResult = ExecuteSearch(s, 0, null);
+        var searchResult = APIExtensions.GetSearchResult(s, 0, null);
 
         dvEvents = new DataView(searchResult.Table);
     }

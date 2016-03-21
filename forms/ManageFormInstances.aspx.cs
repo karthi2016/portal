@@ -76,11 +76,13 @@ public partial class forms_ManageFormInstances : PortalPage
         hlCreateInstance.Visible = true;
         hlCreateInstance.Text = string.Format("<LI>{0}</LI>", createLink);
         hlCreateInstance.NavigateUrl += targetForm.ID;
+
+        CustomTitle.Text = string.Format("{0}", targetFormManifest.ManageLink);
     }
 
     protected void rgMainDataGrid_NeedDataSource(object sender, GridNeedDataSourceEventArgs e)
     {
-        SearchResult result = ExecuteSearch(targetSearch, rgMainDataGrid.CurrentPageIndex * rgMainDataGrid.PageSize,
+        SearchResult result = APIExtensions.GetSearchResult(targetSearch, rgMainDataGrid.CurrentPageIndex * rgMainDataGrid.PageSize,
        rgMainDataGrid.PageSize);
 
         if (result.Table != null)

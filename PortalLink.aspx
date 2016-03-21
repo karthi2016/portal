@@ -7,7 +7,7 @@
 <asp:Content ID="Content3" ContentPlaceHolderID="BreadcrumbBar" Runat="Server">
 </asp:Content>
 <asp:Content ID="Content4" ContentPlaceHolderID="PageTitle" Runat="Server">
-<%= targetLink.Name %>
+    <asp:Literal runat="server" ID="CustomTitle"></asp:Literal>
 </asp:Content>
 <asp:Content ID="Content5" ContentPlaceHolderID="TopRightContent" Runat="Server">
 </asp:Content>

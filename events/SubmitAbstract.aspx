@@ -13,8 +13,7 @@
         <%=targetEvent.Name%></a>
 </asp:Content>
 <asp:Content ID="Content4" ContentPlaceHolderID="PageTitle" runat="Server">
-    <%=targetEvent.Name%>
-    Abstract Submission
+    <asp:Literal runat="server" ID="CustomTitle"></asp:Literal>
 </asp:Content>
 <asp:Content ID="Content5" ContentPlaceHolderID="TopRightContent" runat="Server">
 </asp:Content>
@@ -115,7 +114,7 @@
             </asp:WizardStep>
             <asp:WizardStep ID="WizardStep1" runat="server" Title="Step 2">
               <asp:Literal ID="lConfirmAbstractNotComplete" runat="server">
-                    <font color="red">Your abstract submission is not complete!</font> Please review
+                    <span class="hlteWarn">Your abstract submission is not complete!</span> Please review
                     the details and click <b>Submit Abstract</b> below to submit your abstract.
              </asp:Literal>
                 <table style="width: 500px">

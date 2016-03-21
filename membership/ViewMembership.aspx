@@ -16,10 +16,11 @@
 <asp:Content ID="Content6" ContentPlaceHolderID="PageContent" runat="Server">
     <asp:Literal ID="PageText" runat="server" />
     <div class="section" style="margin-top: 10px">
-        <div class="sectHeaderTitle">
+        <div class="sectionHeaderTitle">
             <h2>
                 <asp:Literal ID="lMembershipInfoHeader" runat="server">Membership Information</asp:Literal></h2>
         </div>
+        <div class="sectionContent">
         <table style="width: 100%">
             <tr id="trMembershipID_Row" runat="server">
                 <td class="columnHeader">
@@ -120,12 +121,14 @@
                 </td>
             </tr>
         </table>
+        </div>
     </div>
     <div class="section" style="margin-top: 10px" id="tdChapters" runat="server" visible="false">
-        <div class="sectHeaderTitle">
+        <div class="sectionHeaderTitle">
             <h2>
                 <asp:Literal ID="lChapters" runat="server">Chapters</asp:Literal></h2>
         </div>
+        <div class="sectionContent">
         <asp:GridView ID="gvChapters" GridLines="None" runat="server" AutoGenerateColumns="false">
             <Columns>
                 <asp:BoundField HeaderStyle-HorizontalAlign="Left" HeaderText="Chapter" DataField="Chapter.Name" />
@@ -135,12 +138,14 @@
                     DataFormatString="{0:d}" />
             </Columns>
         </asp:GridView>
+        </div>
     </div>
     <div class="section" style="margin-top: 10px" id="tdSections" runat="server" visible="false">
-        <div class="sectHeaderTitle">
+        <div class="sectionHeaderTitle">
             <h2>
                 <asp:Literal ID="lSections" runat="server">Sections</asp:Literal></h2>
         </div>
+        <div class="sectionContent">
         <asp:GridView ID="gvSections" GridLines="None" runat="server" AutoGenerateColumns="false">
             <Columns>
                 <asp:BoundField HeaderStyle-HorizontalAlign="Left" HeaderText="Section" DataField="Section.Name" />
@@ -150,12 +155,14 @@
                     DataFormatString="{0:d}" />
             </Columns>
         </asp:GridView>
+        </div>
     </div>
      <div class="section" style="margin-top: 10px" id="divAddOns" runat="server" visible="false">
-        <div class="sectHeaderTitle">
+        <div class="sectionHeaderTitle">
             <h2>
                 <asp:Literal ID="lAddOns" runat="server">Add-Ons</asp:Literal></h2>
         </div>
+        <div class="sectionContent">
         <asp:GridView ID="gvAddOns" GridLines="None" runat="server" AutoGenerateColumns="false">
             <Columns>
                 <asp:BoundField HeaderStyle-HorizontalAlign="Left" HeaderText="Type" DataField="Merchandise.Name" />
@@ -165,12 +172,14 @@
                     
             </Columns>
         </asp:GridView>
+        </div>
     </div>
      <div class="section" style="margin-top: 10px" id="divBillingInformation" runat="server"  >
-        <div class="sectHeaderTitle">
+        <div class="sectionHeaderTitle">
             <h2>
                 <asp:Literal ID="lBillingInfo" runat="server">Billing Information</asp:Literal></h2>
         </div>
+        <div class="sectionContent">
         You can have this membership renewal automatically charged to your credit card. The current information is below.
         <asp:HyperLink ID="hlUpdateBillingInfo2" runat="server" Text="Click here to update."></asp:HyperLink>
         <table style="width: 100%; margin-top: 10px">
@@ -188,12 +197,14 @@
             </tr>
              
         </table>
+        </div>
     </div>
     <div class="section" style="margin-top: 10px" id="divHistory" runat="server" visible="false">
-        <div class="sectHeaderTitle">
+        <div class="sectionHeaderTitle">
             <h2>
                 <asp:Literal ID="lHistory" runat="server">History</asp:Literal></h2>
         </div>
+        <div class="sectionContent">
         <asp:GridView ID="gvHistory" GridLines="None" runat="server" AutoGenerateColumns="false">
             <Columns>
                 <asp:BoundField HeaderStyle-HorizontalAlign="Left" HeaderText="Activity" DataField="Type_Name" />
@@ -203,8 +214,9 @@
                     DataFormatString="{0:d}" />
             </Columns>
         </asp:GridView>
+        </div>
     </div>
-    <div class="section" style="margin-top: 10px" visible="false">
+    <div class="section" style="margin-top: 10px" id="divCustomFields" runat="server" visible="false">
         <uc1:CustomFieldSet ID="CustomFieldSet1" EditMode="False" runat="server" />
     </div>
     <div class="section" style="margin-top: 10px">

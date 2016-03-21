@@ -103,7 +103,7 @@ public partial class continuingeducation_ReportComponentAttendance : PortalPage
         s.AddOutputColumn(msCertificationComponent.FIELDS.AllowPartialParticipation);
         s.AddOutputColumn("Address");
 
-        var result = ExecuteSearch(s, 0, 1);
+        var result = APIExtensions.GetSearchResult(s, 0, 1);
         return result;
     }
 
@@ -114,7 +114,7 @@ public partial class continuingeducation_ReportComponentAttendance : PortalPage
         s.AddCriteria(Expr.Equals("Student", ConciergeAPI.CurrentEntity.ID ));
 
 
-        return ExecuteSearch(s, 0, 1).TotalRowCount > 0;
+        return APIExtensions.GetSearchResult(s, 0, 1).TotalRowCount > 0;
     }
 
    

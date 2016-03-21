@@ -8,7 +8,7 @@
 <asp:HyperLink ID="hlEvent1" runat="server" Visible="true" NavigateUrl="/events/ViewEvent.aspx?contextID=" />
 </asp:Content>
 <asp:Content ID="Content4" ContentPlaceHolderID="PageTitle" Runat="Server">
- <%=targetShow.Name%>
+    <asp:Literal runat="server" ID="CustomTitle"></asp:Literal>
 </asp:Content>
 <asp:Content ID="Content5" ContentPlaceHolderID="TopRightContent" Runat="Server">
 </asp:Content>

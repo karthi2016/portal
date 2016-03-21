@@ -85,7 +85,7 @@ public partial class careercenter_ManageResumes : PortalPage
         sResumes.AddOutputColumn("IsActive");
         sResumes.AddCriteria(Expr.Equals("Owner", ConciergeAPI.CurrentEntity.ID));
 
-        SearchResult srResume = ExecuteSearch(sResumes, 0, null);
+        SearchResult srResume = APIExtensions.GetSearchResult(sResumes, 0, null);
         dvResumes = new DataView(srResume.Table);
     }
 

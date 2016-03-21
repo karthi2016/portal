@@ -51,7 +51,7 @@ public partial class events_Register_SelectFee : PortalPage
     {
         base.InitializeTargetObject();
 
-        targetEvent = LoadObjectFromAPI(ContextID).ConvertTo<msEvent>();
+        targetEvent = LoadObjectFromAPI<msEvent>(ContextID);
         if (targetEvent == null)
         {
             GoToMissingRecordPage();
@@ -171,9 +171,9 @@ public partial class events_Register_SelectFee : PortalPage
                 }
             }
 
-            fee.ProductName = fee.ProductName.Replace(targetEvent.Name + " - ", ""); 
+            fee.ProductName = fee.ProductName.Replace(targetEvent.Name + " - ", "");
 
-            fee.ProductName = string.Format("{0} - <font color=green>{1}</font>", fee.ProductName,
+            fee.ProductName = string.Format("{0} - <span class=\"hlteMon\">{1}</span>", fee.ProductName,
                 string.IsNullOrWhiteSpace(fee.DisplayPriceAs) ? fee.Price.ToString("C") : fee.DisplayPriceAs);
             if (fee.IsSoldOut)
                 fee.ProductName += " SOLD OUT";
@@ -258,7 +258,7 @@ public partial class events_Register_SelectFee : PortalPage
         // add one more criteria - we only care about existing if the name hasn't been changed
         sRegistered.AddCriteria(Expr.Equals("Name", targetEntity.Name));
 
-        registrationsCount = (int)ExecuteSearch(sRegistered, 0, null).Table.Rows[0]["Name"];
+        registrationsCount = (int)APIExtensions.GetSearchResult(sRegistered, 0, null).Table.Rows[0]["Name"];
 
         //Display a message if there are existing registrations for the current entity
         if (registrationsCount > 0)
@@ -300,7 +300,7 @@ public partial class events_Register_SelectFee : PortalPage
     protected void SetRegistrationFee(string registrationFeeID)
     {
         MultiStepWizards.RegisterForEvent.RegistrationFee =
-            LoadObjectFromAPI(registrationFeeID).ConvertTo<msRegistrationFee>();
+            LoadObjectFromAPI<msRegistrationFee>(registrationFeeID);
     }
 
     #endregion

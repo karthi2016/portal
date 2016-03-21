@@ -68,7 +68,7 @@ public partial class profile_ViewReport : PortalPage
 
     protected void rgMainDataGrid_NeedDataSource(object sender, GridNeedDataSourceEventArgs e)
     {
-        SearchResult result = ExecuteSearch(targetSearch.Search, rgMainDataGrid.CurrentPageIndex * rgMainDataGrid.PageSize,
+        SearchResult result = APIExtensions.GetSearchResult(targetSearch.Search, rgMainDataGrid.CurrentPageIndex * rgMainDataGrid.PageSize,
             rgMainDataGrid.PageSize);
 
         if (result.Table != null)

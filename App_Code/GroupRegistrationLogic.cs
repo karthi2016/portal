@@ -54,7 +54,7 @@ public class GroupRegistrationLogic
 
         s.AddOutputColumn("Target_ID");
 
-        var values = api.ExecuteSearch(s, 0, null).ResultValue.Table;
+        var values = api.GetSearchResult(s, 0, null).Table;
 
         foreach (DataRow dr in values.Rows)
             entities.Add(Convert.ToString(dr["Target_ID"]));

@@ -53,7 +53,7 @@ public partial class recommendations_SubmitRecommendation : PortalPage
             case msCertificationRecommendation.CLASS_NAME:
                 target = LoadObjectFromAPI<msIndividual>(
                     LoadObjectFromAPI<msCertification>(
-                        targetRecommendation.SafeGetValue<string>(msCertificationRecommendation.FIELDS.Certification)).Certificant );
+                        targetRecommendation.SafeGetValue<string>(msCertificationRecommendation.FIELDS.Certification)).Owner );
                 break;
 
             default:
@@ -75,12 +75,12 @@ public partial class recommendations_SubmitRecommendation : PortalPage
     {
         CustomFieldSet1.MemberSuiteObject = targetRecommendation ;
 
-        var pageLayout = GetAppropriatePageLayout(targetRecommendation);
+        var pageLayout = targetRecommendation.GetAppropriatePageLayout();
         if (pageLayout == null || pageLayout.Metadata == null || pageLayout.Metadata.IsEmpty())
             return;
 
         // setup the metadata
-        CustomFieldSet1.Metadata = proxy.DescribeObject(targetRecommendation.ClassType ).ResultValue;
+        CustomFieldSet1.Metadata = targetRecommendation.DescribeObject();
         CustomFieldSet1.PageLayout = pageLayout.Metadata;
 
 

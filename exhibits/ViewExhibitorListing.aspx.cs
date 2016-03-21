@@ -42,7 +42,7 @@ public partial class exhibits_ViewExhibitorListing : PortalPage
         s.AddOutputColumn("Logo");
         s.AddOutputColumn("Bio");
 
-        var dt = ExecuteSearch(s, 0, null).Table;
+        var dt = APIExtensions.GetSearchResult(s, 0, null).Table;
 
         if (dt.Rows.Count > 0)
         {
@@ -50,6 +50,8 @@ public partial class exhibits_ViewExhibitorListing : PortalPage
             rptExhibitors.DataSource = dt;
             rptExhibitors.DataBind();
         }
+
+        CustomTitle.Text = string.Format("{0} Exhibitor Listing", targetShow.Name);
 
     }
 

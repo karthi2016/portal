@@ -38,7 +38,7 @@ public partial class profile_ManageContacts : PortalPage
 
         targetOrganization = string.IsNullOrWhiteSpace(ContextID) ? ConciergeAPI.CurrentEntity.ConvertTo<msOrganization>() : LoadObjectFromAPI<msOrganization>(ContextID);
 
-        if (targetOrganization == null)
+        if (targetOrganization == null || targetOrganization.ClassType != msOrganization.CLASS_NAME)
         {
             GoToMissingRecordPage();
         }
@@ -66,6 +66,8 @@ public partial class profile_ManageContacts : PortalPage
 
         //rptRelationshipTypes.DataSource = dvRelationshipTypes;
         //rptRelationshipTypes.DataBind();
+
+        PageTitleExtension.Text = targetOrganization.Name;
     }
 
     #endregion
@@ -96,10 +98,10 @@ public partial class profile_ManageContacts : PortalPage
     //MS-4881
     protected DataTable LoadDataFromConcierge(bool currentContacts, int start, int count, out int totalCount)
     {
-        List<Search> searches = new List<Search>();
+        var searches = new List<Search>();
 
-        //Relationships
-        Search sRelationships = new Search("RelationshipsForARecord")
+        // Relationships
+        var sRelationships = new Search("RelationshipsForARecord")
         {
             ID = msRelationship.CLASS_NAME,
             Context = targetOrganization.ID
@@ -116,8 +118,8 @@ public partial class profile_ManageContacts : PortalPage
         sRelationships.AddSortColumn("Target_Name");
         searches.Add(sRelationships);
 
-        List<SearchResult> searchResults = ExecuteSearches(searches, start, count);        
-        SearchResult srRelationships = searchResults.Single(x => x.ID == msRelationship.CLASS_NAME);
+        var searchResults = APIExtensions.GetMultipleSearchResults(searches, start, count);        
+        var srRelationships = searchResults.Single(x => x.ID == msRelationship.CLASS_NAME);
 
         totalCount = srRelationships.TotalRowCount;
 

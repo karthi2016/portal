@@ -58,7 +58,7 @@ public partial class financial_CreateEditHistoricalTransaction : PortalPage
             historicalTransactionFieldMetadata = historicalTransactionClassMetadata.GenerateFieldDictionary();
         }
 
-        MemberSuiteObject contextObject = LoadObjectFromAPI(ContextID);
+        var contextObject = APIExtensions.LoadObjectFromAPI(ContextID);
         if(contextObject == null)
         {
             GoToMissingRecordPage();

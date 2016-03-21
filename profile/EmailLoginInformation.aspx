@@ -27,10 +27,10 @@
     <p>
         A link has already been sent to the email address on file for
         <%=targetPortalUser.EmailAddress%>
-        with instructions on how to reset your password. <font class="redHighlight">Do NOT proceed
+        with instructions on how to reset your password. <span class="redHighlight">Do NOT proceed
             with a different email address if
             this email
-            belongs to you.</font> 
+            belongs to you.</span> 
             <asp:Literal ID="lCreateDupe" runat="server">
             Doing so will create a duplicate record. Please allow
         up to 5 minutes for the email to arrive. If you do not receive it in 5 minutes,

@@ -63,6 +63,8 @@ public partial class committees_EditCommittee : PortalPage
             setOwnerBackLinks(targetOrganizationalLayer.ID, targetOrganizationalLayer.Name, "~/organizationallayers/ViewOrganizationalLayer.aspx", "~/organizationallayers/ManageOrganizationalLayerEvents.aspx");
 
         bindObjectToPage();
+
+        PageTitleExtension.Text = targetCommittee.Name;
     }
 
     protected override bool CheckSecurity()

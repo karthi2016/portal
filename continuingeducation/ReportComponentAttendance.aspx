@@ -52,8 +52,8 @@ First, we need to know what component you are registering for. Enter in the code
             </asp:WizardStep>
             <asp:WizardStep>
                 <asp:Literal ID="lConfirmComponent" runat="server">
-<h2>Confirm Component Information</h2>
-We've located the component you specified. <font color=red>Please confirm that this is correct.</font>
+                    <h2>Confirm Component Information</h2>
+                    We've located the component you specified. <span class="hlteWarn">Please confirm that this is correct.</span>
                 </asp:Literal>
                 <table style="margin-top: 10px">
                     <tr>

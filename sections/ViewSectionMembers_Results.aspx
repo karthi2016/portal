@@ -9,8 +9,7 @@
 <a href="/sections/ViewSection.aspx?contextID=<%=targetSection.ID %>"><%=targetSection.Name%> ></a>
 </asp:Content>
 <asp:Content ID="Content4" ContentPlaceHolderID="PageTitle" runat="Server">
-    <%=targetSection.Name %>
-    Members
+    <asp:Literal runat="server" ID="CustomTitle"></asp:Literal>
 </asp:Content>
 <asp:Content ID="Content5" ContentPlaceHolderID="TopRightContent" runat="Server">
 </asp:Content>

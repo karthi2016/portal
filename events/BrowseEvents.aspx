@@ -9,7 +9,7 @@
 <a href="BrowseEvents.aspx">Browse Events</a>
 </asp:Content>
 <asp:Content ID="Content4" ContentPlaceHolderID="PageTitle" runat="Server">
-    Upcoming Events<%=targetCategory != null ? " - " + targetCategory.Name : "" %>
+    Upcoming Events<asp:Literal runat="server" ID="PageTitleExtension"></asp:Literal>
 </asp:Content>
 <asp:Content ID="Content5" ContentPlaceHolderID="TopRightContent" runat="Server">
 </asp:Content>
@@ -38,7 +38,7 @@
     </asp:Repeater>
     <asp:Panel ID="pnlSelectType" runat="server" Visible="false">
         <h2>
-            Select an event category:
+            <asp:Literal runat="server" ID="SelectEventHeader">Select an event category:</asp:Literal>
         </h2>
         <ul>
             <asp:Repeater ID="rptEventCategory" runat='server'>

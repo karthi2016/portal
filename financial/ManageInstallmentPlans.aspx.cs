@@ -28,7 +28,7 @@ public partial class financial_ManageInstallmentPlans : PortalPage
 
         using (var api = GetServiceAPIProxy())
         {
-            var result = api.ExecuteSearch(s, 0, null).ResultValue;
+            var result = api.GetSearchResult(s, 0, null);
 
             if (result.Table != null)
                 rgMainDataGrid.DataSource = result.Table.DefaultView;

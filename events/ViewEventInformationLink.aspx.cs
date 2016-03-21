@@ -61,8 +61,8 @@ public partial class events_ViewEventInformationLink : PortalPage
 
     protected void loadDataFromConcierge(IConciergeAPIService serviceProxy)
     {
-        targetEvent = LoadObjectFromAPI<msEvent>(serviceProxy, ContextID);
-        targetEventInformationLink = LoadObjectFromAPI<msEventInformationLink>(serviceProxy, EventInformationLinkID);
+        targetEvent = serviceProxy.LoadObjectFromAPI<msEvent>(ContextID);
+        targetEventInformationLink = serviceProxy.LoadObjectFromAPI<msEventInformationLink>(EventInformationLinkID);
     }
 
     protected override bool CheckSecurity()

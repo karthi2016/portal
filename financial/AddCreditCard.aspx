@@ -1,5 +1,6 @@
 ﻿<%@ Page Title="" Language="C#" MasterPageFile="~/App_Master/GeneralPage.master"
     AutoEventWireup="true" CodeFile="AddCreditCard.aspx.cs" Inherits="financial_AddCreditCard" %>
+
 <%@ Register TagPrefix="cc1" Namespace="MemberSuite.SDK.Web.Controls" Assembly="MemberSuite.SDK.Web" %>
 <%@ Register TagPrefix="telerik" Namespace="Telerik.Web.UI" Assembly="Telerik.Web.UI, Version=2011.1.519.40, Culture=neutral, PublicKeyToken=121fae78165ba3d4" %>
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="Server">
@@ -7,9 +8,22 @@
         .none {
             display: none;
         }
+
+        input.masked-cc-number {
+            -webkit-text-security: disc;
+            color: white;
+        }
     </style>
-    <script type="text/javascript" src="/js/priorityPaymentsScript/jquery-2.1.3.min.js"></script>
-    <script type="text/javascript" src="/js/priorityPaymentsScript/membersuite.payment-processor.min.js"></script>
+    
+    <script type="text/javascript" src="/js/priorityPaymentsScript/payment-processor-jquery.js"></script>
+    
+    <script type="text/javascript" src="/js/priorityPaymentsScript/membersuite.payment-processor.API.js"></script>
+    <script type="text/javascript" src="/js/priorityPaymentsScript/priorityPayment.logger.js"></script>
+    <script type="text/javascript" src="/js/priorityPaymentsScript/cardType-util.js"></script>
+    <script type="text/javascript" src="/js/priorityPaymentsScript/priorityPayment.ajaxAPI.js"></script>
+    <script type="text/javascript" src="/js/priorityPaymentsScript/membersuite.payment-processor-1.0.js"></script>    
+
+<%--    <script type="text/javascript" src="/js/priorityPaymentsScript/membersuite.payment-processor.min.js"></script>--%>
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="TopMenu" runat="Server">
 </asp:Content>
@@ -28,54 +42,47 @@
             <td rowspan="4" style="width: 120px">
                 <img src="/images/creditcards.gif" />
             </td>
-            <td style="width: 100px">
-                Card Number: <span class="requiredField">*</span>
+            <td style="width: 100px">Card Number: <span class="requiredField">*</span>
             </td>
             <td>
                 <asp:TextBox ID="tbCardNumber" CssClass="inputText cc-number" runat="server" autocomplete="off" />
-                <asp:TextBox TextMode="Password" runat="server" ID="hfVaultToken" CssClass="masked-cc-number none"/>
+                <asp:TextBox runat="server" ID="hfVaultToken" CssClass="masked-cc-number none" />
                 <asp:RequiredFieldValidator ID="rfvCreditCardNumber" runat="server" ControlToValidate="tbCardNumber"
-                      Display="None" ErrorMessage="You have not entered a credit card number."
-                    />
-                <asp:HiddenField runat="server" ID="hfOrderBillToId"/>                
-                <div id="dvPriorityData" runat="server" class="pp-config" style="display:none;"/>
+                    Display="None" ErrorMessage="You have not entered a credit card number." />
+                <asp:HiddenField runat="server" ID="hfOrderBillToId" />
+                <div id="dvPriorityData" runat="server" class="pp-config" style="display: none;" />
             </td>
         </tr>
         <tr>
-            <td>
-                Name on Card:<span class="requiredField">*</span>
+            <td>Name on Card:<span class="requiredField">*</span>
             </td>
             <td>
                 <asp:TextBox ID="tbNameOnCard" runat="server" autocomplete="off" />
                 <asp:RequiredFieldValidator ID="rfvNameOnCard" runat="server" ControlToValidate="tbNameOnCard"
-                    Display="None" ErrorMessage="You have not entered a name for the credit card."
-                      />
+                    Display="None" ErrorMessage="You have not entered a name for the credit card." />
             </td>
         </tr>
         <tr>
-            <td>
-                Security Code:<span class="requiredField">*</span>
+            <td>Security Code:<span class="requiredField">*</span>
             </td>
             <td>
                 <asp:TextBox ID="tbCCV" Width="50px" runat="server" autocomplete="off" />
                 <asp:RequiredFieldValidator ID="rfvSecurityCode" runat="server" ControlToValidate="tbCCV"
-                    Display="None" ErrorMessage="You have not entered a security code for the credit card."
-                     />
+                    Display="None" ErrorMessage="You have not entered a security code for the credit card." />
             </td>
         </tr>
         <tr>
-            <td>
-                Expiration Date:<span class="requiredField">*</span>
+            <td>Expiration Date:<span class="requiredField">*</span>
             </td>
             <td>
-                <cc1:monthyearpicker id="myExpiration" runat="server" CssClass="monthYearPicker"/>                
+                <cc1:MonthYearPicker ID="myExpiration" runat="server" CssClass="monthYearPicker" />
             </td>
         </tr>
     </table>
-     <hr style="width: 100%" />
+    <hr style="width: 100%" />
     <div style="text-align: center">
-        <asp:Button ID="btnContinue" runat="server" Text="Save this Card" OnClick="btnSaveCard_Click" CssClass="save-token none"/>
-        <input onclick="javascript: requestToken()" type="button" value="Save this Card" />
+        <asp:Button ID="btnContinue" runat="server" Text="Save this Card" OnClick="btnSaveCard_Click" CssClass="save-token none" />
+        <input onclick="javascript: requestToken();" type="button" value="Save this Card" />
         or
         <asp:LinkButton ID="lbCancel" runat="server" Text="Cancel " OnClick="lbCancel_Click" CausesValidation="false" />
     </div>
@@ -97,7 +104,7 @@
             var $cardNumberElem = $('.cc-number');
             var $expiryMonthElem = $('.mypMonth');
             var $expiryYearElem = $('.mypYear');
-            var id = $('[id$="hfOrderBillToId"').val();
+            var id = $('[id$="hfOrderBillToId"]').val();
 
             var parms = {
                 ppConfig: config,

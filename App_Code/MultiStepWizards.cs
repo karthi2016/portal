@@ -118,7 +118,8 @@ public static class MultiStepWizards
             Order = null;
             RegistrationFee = null;
             AdditionalLineItems = null;
-
+            IsSessionSwap = false;
+            SessionsToCancel = null;
         }
 
         public static msOrganization Group
@@ -142,6 +143,24 @@ public static class MultiStepWizards
         {
             get { return SessionManager.Get<List<msOrderLineItem>>("MemberSuite:RegisterForEvent.AdditionalLineItems"); }
             set { SessionManager.Set("MemberSuite:RegisterForEvent.AdditionalLineItems", value); }
+        }
+
+        public static bool IsSessionSwap
+        {
+            get { return SessionManager.Get<bool>("MemberSuite:RegisterForEvent.IsSessionSwap"); }
+            set { SessionManager.Set("MemberSuite:RegisterForEvent.IsSessionSwap", value); }
+        }
+
+        public static string SwapRegistrationID
+        {
+            get { return SessionManager.Get<string>("MemberSuite:RegisterForEvent.SwapRegistrationID"); }
+            set { SessionManager.Set("MemberSuite:RegisterForEvent.SwapRegistrationID", value); }
+        }
+
+        public static List<string> SessionsToCancel
+        {
+            get { return SessionManager.Get<List<string>>("MemberSuite:RegisterForEvent.SessionsToCancel"); }
+            set { SessionManager.Set("MemberSuite:RegisterForEvent.SessionsToCancel", value); }
         }
 
     }
@@ -377,7 +396,7 @@ public static class MultiStepWizards
             }
         }
 
-        public static msOrderLineItem AddItemToShoppingCart(decimal qty, DataRow selectedProduct)
+        public static msOrderLineItem AddItemToShoppingCart(int qty, DataRow selectedProduct)
         {
             var hasActiveMemberhip = ConciergeAPI.CurrentEntity != null && MembershipLogic.IsActiveMember(ConciergeAPI.CurrentEntity.ID);
 
@@ -422,10 +441,10 @@ public static class MultiStepWizards
 
         public const int NumberOfRecentItemsToDisplay = 3;
 
-        public static OrderConfirmationPacket OrderConfirmaionPacket
+        public static OrderConfirmationPacket OrderConfirmationPacket
         {
-            get { return SessionManager.Get<OrderConfirmationPacket>("MemberSuite:PlaceAnOrder.OrderConfirmaionPacket"); }
-            set { SessionManager.Set("MemberSuite:PlaceAnOrder.OrderConfirmaionPacket", value); }
+            get { return SessionManager.Get<OrderConfirmationPacket>("MemberSuite:PlaceAnOrder.OrderConfirmationPacket"); }
+            set { SessionManager.Set("MemberSuite:PlaceAnOrder.OrderConfirmationPacket", value); }
         }
 
         public static void InitiateOrderProcess(msOrder targetOrder)

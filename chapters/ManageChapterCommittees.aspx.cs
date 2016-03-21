@@ -67,7 +67,7 @@ public partial class chapters_ManageChapterCommittees : PortalPage
         s.AddCriteria(Expr.Equals("Chapter.ID", targetChapter.ID));
         s.AddCriteria(Expr.Equals("ShowInPortal", true));
         s.AddSortColumn("Name");
-        var searchResult = ExecuteSearch(s, 0, null);
+        var searchResult = APIExtensions.GetSearchResult(s, 0, null);
 
         dvCommittees = new DataView(searchResult.Table);
     }

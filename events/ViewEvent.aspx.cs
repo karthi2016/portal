@@ -74,9 +74,16 @@ public partial class events_ViewEvent : PortalPage
         setRegistrationLink();
         initializeExhibits();
 
-        //Bind any registrations (only if logged in)
+        // Bind any registrations (only if logged in)
         gvRegistrations.DataSource = dvRegistrations;
         gvRegistrations.DataBind();
+
+        if (!targetEvent.AllowRegistrantsToChangeSessions ||
+            (targetEvent.DeadlineForChangingSessions.HasValue && targetEvent.DeadlineForChangingSessions < DateTime.Now) ||
+            !EventLogic.HasSessions(targetEvent.ID))
+        {
+            gvRegistrations.Columns[3].Visible = false;
+        }
 
         setupAbstracts();
 
@@ -91,6 +98,8 @@ public partial class events_ViewEvent : PortalPage
                                                    ConfigurationManager.AppSettings["ImageServerUri"],
                                                    ConciergeAPIProxyGenerator.AssociationId ,
                                                    targetEvent.ID);
+
+        CustomTitle.Text = string.Format("{0}", targetEvent.Name);
     }
 
     private void initializeExhibits()
@@ -98,11 +107,26 @@ public partial class events_ViewEvent : PortalPage
         // show all exhibit shows linked to this event
         Search s = new Search(msExhibitShow.CLASS_NAME);
         s.AddCriteria(Expr.Equals(msExhibitShow.FIELDS.Event, targetEvent.ID));
+
+        if (!ConciergeAPI.HasBackgroundConsoleUser) // there's no background user
+            s.AddCriteria(Expr.Equals(msExhibitShow.FIELDS.VisibleInPortal, true));
+
         s.AddSortColumn("Name");
         s.AddOutputColumn("Name");
+        s.AddOutputColumn(msExhibitShow.FIELDS.VisibleInPortal);
 
-        rptExhibits.DataSource = ExecuteSearch(s, 0, null).Table;
+        rptExhibits.DataSource = APIExtensions.GetSearchResult(s, 0, null).Table;
         rptExhibits.DataBind();
+    }
+
+    protected string DisplayHiddenMessage(object o)
+    {
+        if (o != DBNull.Value && o != null && Convert.ToBoolean(o))
+        {
+            return string.Empty;
+        }
+
+        return " [HIDDEN]";
     }
 
     private void initializeGroupRegistration()
@@ -157,13 +181,13 @@ public partial class events_ViewEvent : PortalPage
 
     protected void loadDataFromConcierge(IConciergeAPIService serviceProxy)
     {
-        targetEvent = LoadObjectFromAPI<msEvent>(serviceProxy, ContextID);
+        targetEvent = serviceProxy.LoadObjectFromAPI<msEvent>(ContextID);
         loadEventOwners(serviceProxy);
 
-        List<Search> searches = new List<Search>();
+        var searches = new List<Search>();
 
-        //Event information links related to current event
-        Search sEventLinks = new Search { Type = msEventInformationLink.CLASS_NAME };
+        // Event information links related to current event
+        var sEventLinks = new Search { Type = msEventInformationLink.CLASS_NAME };
         sEventLinks.AddOutputColumn("ID");
         sEventLinks.AddOutputColumn("Name");
         sEventLinks.AddCriteria(Expr.Equals("IsActive", 1));
@@ -178,6 +202,7 @@ public partial class events_ViewEvent : PortalPage
             sRegistrations.AddOutputColumn("ID");
             sRegistrations.AddOutputColumn("Name");
             sRegistrations.AddOutputColumn("Fee.Name");
+            sRegistrations.AddOutputColumn("Fee.IsGuestRegistration");
             sRegistrations.AddOutputColumn("CreatedDate");
             sRegistrations.AddCriteria(Expr.Equals("Owner.ID", ConciergeAPI.CurrentEntity.ID));
             sRegistrations.AddCriteria(Expr.Equals("Event.ID", ContextID));
@@ -185,7 +210,7 @@ public partial class events_ViewEvent : PortalPage
             searches.Add(sRegistrations);
         }
 
-        var searchResults = ExecuteSearches(serviceProxy, searches, 0, null);
+        var searchResults = APIExtensions.GetMultipleSearchResults(searches, 0, null);
         dvEventLinks = new DataView(searchResults[0].Table);
 
         if (searchResults.Exists(x => x.ID == "Registrations"))
@@ -251,13 +276,13 @@ public partial class events_ViewEvent : PortalPage
     protected void loadEventOwners(IConciergeAPIService proxy)
     {
         if (!string.IsNullOrWhiteSpace(targetEvent.Chapter))
-            targetChapter = LoadObjectFromAPI<msChapter>(proxy, targetEvent.Chapter);
+            targetChapter = proxy.LoadObjectFromAPI<msChapter>(targetEvent.Chapter);
 
         if (!string.IsNullOrWhiteSpace(targetEvent.Section))
-            targetSection = LoadObjectFromAPI<msSection>(proxy, targetEvent.Section);
+            targetSection = proxy.LoadObjectFromAPI<msSection>(targetEvent.Section);
 
         if (!string.IsNullOrWhiteSpace(targetEvent.OrganizationalLayer))
-            targetOrganizationalLayer = LoadObjectFromAPI<msOrganizationalLayer>(proxy, targetEvent.OrganizationalLayer);
+            targetOrganizationalLayer = proxy.LoadObjectFromAPI<msOrganizationalLayer>(targetEvent.OrganizationalLayer);
     }
 
     protected bool isLeader()
@@ -329,5 +354,19 @@ public partial class events_ViewEvent : PortalPage
 
     #endregion
 
-    
+    protected void gvRegistrations_RowDataBoud(object sender, GridViewRowEventArgs e)
+    {
+        var dr = (DataRowView)e.Row.DataItem;
+
+        switch (e.Row.RowType)
+        {
+            case DataControlRowType.DataRow:
+                if (dr["Fee.IsGuestRegistration"] is bool && (bool)dr["Fee.IsGuestRegistration"])
+                {
+                    e.Row.Cells[3].Visible = false;
+                }
+
+                break;
+        }
+    }
 }

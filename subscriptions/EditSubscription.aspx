@@ -61,7 +61,7 @@
             <td colspan="2">
                 <asp:Literal ID="lSpecifyAddress" runat="server"><B>Specify Address Below:</B></asp:Literal>
                 <br />
-                <cc1:AddressControl ID="acAddress" IsRequired="true" runat="server" />
+                <cc1:AddressControl ID="acAddress" IsRequired="true" runat="server" EnableValidation="True" />
             </td>
         </tr>
         <tr id="trOnHold" runat="server">

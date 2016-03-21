@@ -23,7 +23,7 @@ public partial class events_ViewMyRegistrations : PortalPage
         s.AddOutputColumn("Event.StartDate");
         s.AddOutputColumn("CreatedDate");
 
-        var results = ExecuteSearch(s, 0, null);
+        var results = APIExtensions.GetSearchResult(s, 0, null);
 
         gvEvents.DataSource = results.Table;
         gvEvents.DataBind();

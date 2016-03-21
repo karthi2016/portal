@@ -4,8 +4,8 @@ using System.Linq;
 using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
+using MemberSuite.SDK.Concierge;
 using MemberSuite.SDK.Results;
-using MemberSuite.SDK.WCF;
 using Spring.Globalization.Formatters;
 
 public partial class profile_ResetPassword : PortalPage
@@ -87,6 +87,12 @@ public partial class profile_ResetPassword : PortalPage
 
             serviceProxy.ResetPassword(ConciergeAPI.CurrentUser.ID, tbPassword.Text);
             ConciergeAPI.CurrentUser.MustChangePassword = false;
+        }
+
+        // allow us to bypass multiple identity check by explicitly redirecting to "/" if necessary
+        if (string.IsNullOrWhiteSpace(NextUrl))
+        {
+            CRMLogic.CheckToSeeIfMultipleIdentitiesAreAccessible();
         }
 
         GoTo(!string.IsNullOrWhiteSpace(NextUrl) ? NextUrl : "/");

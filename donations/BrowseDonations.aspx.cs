@@ -45,7 +45,7 @@ public partial class events_BrowseDonations : PortalPage
     protected void rgOpenRecurringGifts_OnNeedDataSource(object sender, GridNeedDataSourceEventArgs e)
     {
         string msql = string.Format(
-            "select LocalID, Amount, Type, NextTransactionDue, NextTransactionAmount from Gift where Donor='{0}'",
+            "select LocalID, Total, Type, NextTransactionDue, NextTransactionAmount from Gift where Donor='{0}'",
             ConciergeAPI.CurrentEntity.ID);
 
         using (var api = GetServiceAPIProxy())
@@ -72,10 +72,10 @@ public partial class events_BrowseDonations : PortalPage
         s.AddOutputColumn("Fund.Name");
         s.AddOutputColumn("Type");
         s.AddOutputColumn("LocalID");
-        s.AddOutputColumn("Amount");
+        s.AddOutputColumn("Total");
         s.AddCriteria(Expr.Equals("Donor.ID", ConciergeAPI.CurrentEntity.ID));
 
-        var result = ExecuteSearch(s, 0, null);
+        var result = APIExtensions.GetSearchResult(s, 0, null);
 
 
         if (result.Table != null)

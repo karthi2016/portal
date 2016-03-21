@@ -49,12 +49,12 @@ public partial class profile_EditOrganizationInfo : PortalPage
         // important - custom fields need to know who their context is
         CustomFieldSet1.MemberSuiteObject = targetObject;
 
-        var pageLayout = GetAppropriatePageLayout(targetObject);
+        var pageLayout = targetObject.GetAppropriatePageLayout();
         if (pageLayout == null || pageLayout.Metadata == null || pageLayout.Metadata.IsEmpty())
             return;
 
         // setup the metadata
-        CustomFieldSet1.Metadata = proxy.DescribeObject(msOrganization.CLASS_NAME).ResultValue;
+        CustomFieldSet1.Metadata = targetObject.DescribeObject();
         CustomFieldSet1.PageLayout = pageLayout.Metadata;
 
         CustomFieldSet1.Render();
@@ -270,9 +270,8 @@ public partial class profile_EditOrganizationInfo : PortalPage
         {
             //Send the update confirmation email
             using (IConciergeAPIService proxy = GetConciegeAPIProxy())
-            {
-                proxy.SendEmail(EmailTemplates.CRM.UserInformationUpdate, new List<string> {targetObject.ID}, null);
-            }
+                proxy.SendTransactionalEmail(EmailTemplates.CRM.UserInformationUpdate, targetObject.ID, null);
+            
         }
 
         QueueBannerMessage("Your profile was updated successfully.");
@@ -390,17 +389,14 @@ public partial class profile_EditOrganizationInfo : PortalPage
     protected void rptAddresses_OnItemCreated(object sender, RepeaterItemEventArgs e)
     {
         // we need to set the control host property every time the item is created
-        AddressControl acAddress = (AddressControl)e.Item.FindControl("acAddress");
-         msAddressType at = (msAddressType)e.Item.DataItem;
+        var acAddress = (AddressControl) e.Item.FindControl("acAddress");
+        var at = e.Item.DataItem as msAddressType;
 
-
-         if (acAddress != null)
-         {
-             acAddress.Host = this;
-             if ( at != null ) acAddress.IsRequired = at.SafeGetValue<bool>("RequiredInPortal");
-
-         }
-
+        if (acAddress != null)
+        {
+            acAddress.Host = this;
+            if (at != null) acAddress.IsRequired = at.SafeGetValue<bool>("RequiredInPortal");
+        }
     }
 
     #endregion

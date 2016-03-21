@@ -54,7 +54,7 @@ public partial class sections_ManageSectionLeaders : PortalPage
         sLeaders.AddCriteria(Expr.Equals("Section.ID", targetSection.ID));
         sLeaders.AddSortColumn("Individual.Name");
 
-        SearchResult srLeaders = ExecuteSearch(sLeaders, 0, null);
+        SearchResult srLeaders = APIExtensions.GetSearchResult(sLeaders, 0, null);
         dvLeaders = new DataView(srLeaders.Table);
     }
 

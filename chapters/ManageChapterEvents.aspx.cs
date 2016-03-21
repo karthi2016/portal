@@ -32,6 +32,14 @@ public partial class chapters_ManageChapterEvents : PortalPage
             GoToMissingRecordPage();
             return;
         }
+
+    }
+
+    protected override void InitializePage()
+    {
+        base.InitializePage();
+
+        PageTitleExtension.Text = string.Format("{0}", targetChapter.Name);
     }
 
     protected override bool CheckSecurity()
@@ -70,7 +78,7 @@ public partial class chapters_ManageChapterEvents : PortalPage
         s.AddSortColumn("StartDate");
         s.AddSortColumn("EndDate");
         s.AddSortColumn("Name");
-        var searchResult = ExecuteSearch(s, 0, null);
+        var searchResult = APIExtensions.GetSearchResult(s, 0, null);
 
         dvEvents = new DataView(searchResult.Table);
     }

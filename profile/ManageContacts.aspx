@@ -8,8 +8,7 @@
 <asp:Content ID="Content3" ContentPlaceHolderID="BreadcrumbBar" runat="Server">
 </asp:Content>
 <asp:Content ID="Content4" ContentPlaceHolderID="PageTitle" runat="Server">
-    Manage Contacts for
-    <%= targetOrganization.Name %>
+    Manage Contacts for <asp:Literal runat="server" ID="PageTitleExtension"></asp:Literal>
 </asp:Content>
 <asp:Content ID="Content5" ContentPlaceHolderID="TopRightContent" runat="Server">
 </asp:Content>
@@ -36,7 +35,7 @@
         <asp:Literal ID="PageText" runat="server"/>
         <div class="sectionContent">
             <telerik:RadCodeBlock ID="RadCodeBlock1" runat="server">                           
-            <telerik:RadGrid ID="gvCurrentRelationships" runat="server" GridLines="None" OnNeedDataSource="CurrentContactsNeedDataSource" PageSize="5" AllowAutomaticDeletes="True"
+            <telerik:RadGrid ID="gvCurrentRelationships" runat="server" GridLines="None" OnNeedDataSource="CurrentContactsNeedDataSource" PageSize="10" AllowAutomaticDeletes="True"
                 OnItemDataBound="ContactRowBound" OnDeleteCommand="DeleteCurrentContact">
                <PagerStyle AlwaysVisible="True"/>
                <MasterTableView AllowPaging="True" AllowCustomPaging="True" AutoGenerateColumns="False" ItemStyle-VerticalAlign="Top" 
@@ -51,7 +50,7 @@
                        <telerik:GridTemplateColumn>
                          <ItemTemplate>
                             <asp:LinkButton runat="server" ID="lbDelete" CommandArgument='<%# Bind("ID") %>'
-                                CommandName="Delete" CausesValidation="false" Text="(delete)" OnClientClick="if (!window.confirm('Are you sure you want to unlink this person from your organization? DO NOT DO THIS if the person has simply left the organization – if the person has left the organization, update the relationship with an end date.')) return false;" />
+                                CommandName="Delete" CausesValidation="false" Text="(delete)" OnClientClick="if (!window.confirm($('#DeleteMsg').html())) return false;" />
                          </ItemTemplate>                           
                        </telerik:GridTemplateColumn>
                    </Columns>
@@ -60,6 +59,7 @@
             </telerik:RadCodeBlock>
         </div>
     </div>
+    <div style="display:none" id="DeleteMsg"><asp:Literal runat="server" ID="lDeleteMessage">Are you sure you want to unlink this person from your organization? DO NOT DO THIS if the person has simply left the organization – if the person has left the organization, update the relationship with an end date.</asp:Literal></div>
     <div class="section" style="margin-top: 10px" runat="server" id="divPastRelationships">
         <div class="sectionHeaderTitle">
             <h2>

@@ -1,5 +1,6 @@
 ﻿<%@ Page Title="" Language="C#" MasterPageFile="~/App_Master/GeneralPage.master"
     AutoEventWireup="true" CodeFile="ViewEvent.aspx.cs" Inherits="events_ViewEvent" %>
+<%@ Import Namespace="MemberSuite.SDK.Types" %>
 
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="Server">
 </asp:Content>
@@ -8,7 +9,7 @@
 <asp:Content ID="Content3" ContentPlaceHolderID="BreadcrumbBar" runat="Server">
 </asp:Content>
 <asp:Content ID="Content4" ContentPlaceHolderID="PageTitle" runat="Server">
-    <%=targetEvent.Name%>
+    <asp:Literal runat="server" ID="CustomTitle"></asp:Literal>
 </asp:Content>
 <asp:Content ID="Content5" ContentPlaceHolderID="TopRightContent" runat="Server">
 </asp:Content>
@@ -36,13 +37,16 @@
         </div>
         <div class="sectionContent">
             <asp:GridView ID="gvRegistrations" runat="server" GridLines="None" AutoGenerateColumns="false"
-                EmptyDataText="No registrations found.">
+                EmptyDataText="No registrations found." OnRowDataBound="gvRegistrations_RowDataBoud">
                 <Columns>
                     <asp:HyperLinkField DataNavigateUrlFormatString="~\events\ViewEventRegistration.aspx?contextID={0}"
                         HeaderStyle-HorizontalAlign="Left" HeaderText="Name" DataNavigateUrlFields="ID"
                         DataTextField="Name" />
-                        <asp:BoundField DataField="Fee.Name" HeaderStyle-HorizontalAlign="Left" HeaderText="Registration Type" />
+                    <asp:BoundField DataField="Fee.Name" HeaderStyle-HorizontalAlign="Left" HeaderText="Registration Type" />
                     <asp:BoundField DataField="CreatedDate" HeaderStyle-HorizontalAlign="Left" HeaderText="Registration Date" />
+                    <asp:HyperLinkField DataNavigateUrlFormatString="~\events\Register_CreateRegistration.aspx?contextID={0}"
+                        HeaderStyle-HorizontalAlign="Left" HeaderText="" DataNavigateUrlFields="ID"
+                        Text="(change sessions)" />
                 </Columns>
             </asp:GridView>
         </div>
@@ -70,7 +74,7 @@
 
                 <asp:Repeater ID="rptExhibits" runat="server">
                  <ItemTemplate>
-                 <li> <a href='/exhibits/ViewShow.aspx?contextID=<%#DataBinder.Eval(Container.DataItem,"ID") %>'>View <%#DataBinder.Eval(Container.DataItem,"Name") %> Home Page  </a>
+                 <li> <a href='/exhibits/ViewShow.aspx?contextID=<%#DataBinder.Eval(Container.DataItem,"ID") %>'>View <%#DataBinder.Eval(Container.DataItem,"Name") %> Home Page <%# DisplayHiddenMessage(DataBinder.Eval(Container.DataItem,msExhibitShow.FIELDS.VisibleInPortal)) %> </a>
                  </li> 
                    </ItemTemplate>
                 </asp:Repeater>

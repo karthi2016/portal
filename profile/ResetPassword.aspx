@@ -26,8 +26,7 @@
                     <asp:Literal ID="lNewPassword" runat="server">New Password:</asp:Literal>
                 </td>
                 <td>
-                    <asp:TextBox ID="tbPassword" Style="width: 160px" TextMode="Password" runat="server"  TabIndex="20" /><font
-                        color="red">*</font>
+                    <asp:TextBox ID="tbPassword" Style="width: 160px" TextMode="Password" runat="server"  TabIndex="20" /><span class="requiredField">*</span>
                     <asp:RequiredFieldValidator ID="rfvPassword" runat="server" ErrorMessage="Please enter a new password"
                         ControlToValidate="tbPassword" Display="None" />
                 </td>
@@ -37,8 +36,7 @@
                     <asp:Literal ID="lConfirmNewPassword" runat="server">Confirm New Password:</asp:Literal>
                 </td>
                 <td>
-                    <asp:TextBox ID="tbConfirmPassword" Style="width: 160px" TextMode="Password" runat="server" TabIndex="30" /><font
-                        color="red">*</font>
+                    <asp:TextBox ID="tbConfirmPassword" Style="width: 160px" TextMode="Password" runat="server" TabIndex="30" /><span class="requiredField">*</span>
                     <asp:CompareValidator ID="cvPasswordConfirm" runat="server" ErrorMessage="Password and confirmation password do not match" ControlToValidate="tbConfirmPassword" ControlToCompare="tbPassword" Display="None" />                
                 </td>
             </tr>

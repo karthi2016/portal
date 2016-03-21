@@ -65,12 +65,12 @@ public partial class profile_EditIndividualInfo : PortalPage
         // important - custom fields need to know who their context is
         CustomFieldSet1.MemberSuiteObject = targetObject;
 
-        var pageLayout = GetAppropriatePageLayout(targetObject);
+        var pageLayout = targetObject.GetAppropriatePageLayout();
         if (pageLayout == null || pageLayout.Metadata == null || pageLayout.Metadata.IsEmpty())
             return;
 
         // setup the metadata
-        CustomFieldSet1.Metadata = proxy.DescribeObject(msIndividual.CLASS_NAME).ResultValue;
+        CustomFieldSet1.Metadata = targetObject.DescribeObject();
         CustomFieldSet1.PageLayout = pageLayout.Metadata;
 
         CustomFieldSet1.Render();
@@ -368,9 +368,16 @@ public partial class profile_EditIndividualInfo : PortalPage
         if (!IsValid)
             return;
 
-
         if (!unbindObjectFromPage())
             return;
+
+        var primaryOrganizationRoles = targetObject.SafeGetValue<List<string>>("PrimaryOrganizationRoles__rtg");
+        if (primaryOrganizationRoles != null)
+        {
+            var orgId = targetObject.SafeGetValue<string>("PrimaryOrganization");
+            foreach (var primaryOrganizationRole in primaryOrganizationRoles)
+                CRMLogic.ErrorOutIfOrganizationContactRestrictionApplies(orgId, primaryOrganizationRole, targetObject.ID);
+        }
 
         targetObject = SaveObject(targetObject).ConvertTo<msIndividual>();
 
@@ -384,9 +391,8 @@ public partial class profile_EditIndividualInfo : PortalPage
         {
             //Send the update confirmation email
             using (IConciergeAPIService proxy = GetConciegeAPIProxy())
-            {
-                proxy.SendEmail(EmailTemplates.CRM.UserInformationUpdate, new List<string> { targetObject.ID }, null);
-            }
+                proxy.SendTransactionalEmail(EmailTemplates.CRM.UserInformationUpdate, targetObject.ID , null);
+            
         }
 
         QueueBannerMessage("Your profile was updated successfully.");
@@ -505,17 +511,16 @@ public partial class profile_EditIndividualInfo : PortalPage
     protected void rptAddresses_OnItemCreated(object sender, RepeaterItemEventArgs e)
     {
         //MS-2064
-        if (e == null || e.Item == null || e.Item.DataItem == null)
+        if (e == null || e.Item == null)
             return;
 
         // we need to set the control host property every time the item is created
-        AddressControl acAddress = (AddressControl)e.Item.FindControl("acAddress");
+        var acAddress = (AddressControl) e.Item.FindControl("acAddress");
         if (acAddress == null)
             return;
 
         //MS-2064
-        msAddressType at = e.Item.DataItem as msAddressType;
-         
+        var at = e.Item.DataItem as msAddressType;
 
         acAddress.Host = this;
         if (at != null) acAddress.IsRequired = at.SafeGetValue<bool>("RequiredInPortal");

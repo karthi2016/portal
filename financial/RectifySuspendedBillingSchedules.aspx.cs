@@ -24,7 +24,7 @@ public partial class financial_RectifySuspendedBillingSchedules : PortalPage
         sBillingSchedule.AddOutputColumn("Order.Total");
         sBillingSchedule.AddOutputColumn("Order.Memo");
 
-        var results = ExecuteSearch(sBillingSchedule, 0, null);
+        var results = APIExtensions.GetSearchResult(sBillingSchedule, 0, null);
 
         if (results.TotalRowCount == 1)   // just redirect
             Response.Redirect("RectifySuspendedBillingSchedule.aspx?contextID=" + results.Table.Rows[0]["ID"]);

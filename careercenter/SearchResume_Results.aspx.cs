@@ -130,7 +130,7 @@ public partial class careercenter_SearchResume_Results : PortalPage
 
     protected void loadDataFromConcierge()
     {
-        SearchResult srResumes = ExecuteSearch(targetSearch, 0, null);
+        SearchResult srResumes = APIExtensions.GetSearchResult(targetSearch, 0, null);
         dvResumes = new DataView(srResumes.Table);
 
         lblSearchResultCount.Text = string.Format("Search returned {0} result(s).", srResumes.TotalRowCount);

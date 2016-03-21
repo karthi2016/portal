@@ -32,8 +32,7 @@
                         <asp:Literal ID="lLoginID" runat="server">Login ID/E-mail Address:</asp:Literal>
                     </td>
                     <td>
-                        <asp:TextBox ID="tbLoginID" Style="width: 160px" runat="server" TabIndex="10" /><font
-                            color="red">*</font>
+                        <asp:TextBox ID="tbLoginID" Style="width: 160px" runat="server" TabIndex="10" /><span class="requiredField">*</span>
                         <asp:RequiredFieldValidator ID="rfvLogin" runat="server" ErrorMessage="Please enter your login ID"
                             ControlToValidate="tbLoginID" Display="None" />
                     </td>

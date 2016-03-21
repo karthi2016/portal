@@ -59,6 +59,8 @@ public partial class chapters_EditChapterInfo : PortalPage
         reDescription.NewLineBr = false;
 #pragma warning restore 0618
         bindObjectToPage();
+
+        PageTitleExtension.Text = string.Format("{0}", targetChapter.Name);
     }
 
     protected override bool CheckSecurity()
@@ -82,7 +84,7 @@ public partial class chapters_EditChapterInfo : PortalPage
         // important - custom fields need to know who their context is
         cfsChapterFields.MemberSuiteObject = targetChapter;
 
-        var pageLayout = GetAppropriatePageLayout(targetChapter);
+        var pageLayout = targetChapter.GetAppropriatePageLayout();
         if (pageLayout == null || pageLayout.Metadata == null || pageLayout.Metadata.IsEmpty())
         {
             divOtherInformation.Visible = false;
@@ -90,7 +92,7 @@ public partial class chapters_EditChapterInfo : PortalPage
         }
 
         // setup the metadata
-        cfsChapterFields.Metadata = proxy.DescribeObject(msChapter.CLASS_NAME).ResultValue;
+        cfsChapterFields.Metadata = targetChapter.DescribeObject();
         cfsChapterFields.PageLayout = pageLayout.Metadata;
 
         cfsChapterFields.Render();

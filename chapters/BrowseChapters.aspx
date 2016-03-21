@@ -8,7 +8,7 @@
     <asp:HyperLink runat="server" ID="hlOrganizationalLayer"  />
 </asp:Content>
 <asp:Content ID="Content4" ContentPlaceHolderID="PageTitle" runat="Server">
-    Browse <%= targetOrganizationalLayer != null ? string.Format("{0} ",targetOrganizationalLayer.Name) : ""  %>Chapters
+    Browse <asp:Literal runat="server" ID="PageTitleExtension"></asp:Literal> Chapters
 </asp:Content>
 <asp:Content ID="Content5" ContentPlaceHolderID="TopRightContent" runat="Server">
 </asp:Content>

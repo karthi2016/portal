@@ -47,12 +47,12 @@ public partial class exhibits_ViewExhibitor : PortalPage
     {
         CustomFieldSet1.MemberSuiteObject = targetExhibitor;
 
-        var pageLayout = GetAppropriatePageLayout(targetExhibitor);
+        var pageLayout = targetExhibitor.GetAppropriatePageLayout();
         if (pageLayout == null || pageLayout.Metadata == null || pageLayout.Metadata.IsEmpty())
             return;
 
         // setup the metadata
-        CustomFieldSet1.Metadata = proxy.DescribeObject(msExhibitor.CLASS_NAME).ResultValue;
+        CustomFieldSet1.Metadata = targetExhibitor.DescribeObject();
         CustomFieldSet1.PageLayout = pageLayout.Metadata;
         CustomFieldSet1.AddReferenceNamesToTargetObject(proxy);
 
@@ -90,6 +90,8 @@ public partial class exhibits_ViewExhibitor : PortalPage
         }
 
         CustomFieldSet1.DataBind();
+
+        CustomTitle.Text = string.Format("{0} Exhibitor - {1}", targetShow.Name, targetExhibitor.Name);
     }
 
     private void setupContacts()
@@ -104,7 +106,7 @@ public partial class exhibits_ViewExhibitor : PortalPage
         s.AddOutputColumn("WorkPhone");
         s.AddOutputColumn("MobilePhone");
 
-        gvBoothContacts.DataSource = ExecuteSearch(s, 0, null).Table;
+        gvBoothContacts.DataSource = APIExtensions.GetSearchResult(s, 0, null).Table;
         gvBoothContacts.DataBind();
     }
 
@@ -124,7 +126,7 @@ public partial class exhibits_ViewExhibitor : PortalPage
 
         s.AddSortColumn("Product.Name");
 
-        gvAdditionalProducts.DataSource = ExecuteSearch(s, 0, null).Table;
+        gvAdditionalProducts.DataSource = APIExtensions.GetSearchResult(s, 0, null).Table;
         gvAdditionalProducts.DataBind();
 
     }

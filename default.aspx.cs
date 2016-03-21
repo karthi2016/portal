@@ -133,14 +133,14 @@ public partial class Home : PortalPage
 
     private List<SearchResult> runAllNecessarySearches()
     {
-        List<Search> searchesToRun = new List<Search>();
+        var searchesToRun = new List<Search>();
 
         // first, the main search
-        Search sMain = new Search { Type = CurrentEntity.ClassType, ID = "Main" };
+        var sMain = new Search { Type = CurrentEntity.ClassType, ID = "Main" };
         sMain.AddCriteria(Expr.Equals("ID", CurrentEntity.ID));
 
         // check for failed deferred billing schedules
-        Search sBillingSchedule = new Search(msBillingSchedule.CLASS_NAME)
+        var sBillingSchedule = new Search(msBillingSchedule.CLASS_NAME)
                                       {
                                           ID = "BillingSchedules"
                                       };
@@ -156,7 +156,6 @@ public partial class Home : PortalPage
             prepareWidget(sMain, searchesToRun, ucMyAccount);
         else
             ucMyAccount.Visible = false;
-
 
         //Membership Widget
         if (IsModuleActive("Membership"))
@@ -210,9 +209,7 @@ public partial class Home : PortalPage
 
         addCustomSearches(searchesToRun);
 
-        return ExecuteSearches(searchesToRun, 0, null);
-
-
+        return APIExtensions.GetMultipleSearchResults(searchesToRun, 0, null);
     }
 
     private void prepareWidget(Search sMain, List<Search> searchesToRun, HomePageUserControl hpControl)
@@ -228,7 +225,6 @@ public partial class Home : PortalPage
     {
 
     }
-
 }
 
 

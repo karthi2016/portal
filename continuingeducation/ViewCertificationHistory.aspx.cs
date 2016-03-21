@@ -15,7 +15,7 @@ public partial class continuingeducation_ViewCertificationHistory : PortalPage
         base.InitializePage();
 
         Search s = new Search(msCertification.CLASS_NAME);
-        s.AddCriteria(Expr.Equals(msCertification.FIELDS.Certificant, ConciergeAPI.CurrentEntity.ID));
+        s.AddCriteria(Expr.Equals(msCertification.FIELDS.Owner, ConciergeAPI.CurrentEntity.ID));
 
         s.AddOutputColumn("Program.Name");
         s.AddOutputColumn("Status.Name");
@@ -24,7 +24,7 @@ public partial class continuingeducation_ViewCertificationHistory : PortalPage
 
         s.AddSortColumn("EffectiveDate", true);
 
-        var results = ExecuteSearch(s, 0, null);
+        var results = APIExtensions.GetSearchResult(s, 0, null);
 
         gvCredits.DataSource = results.Table;
         gvCredits.DataBind();

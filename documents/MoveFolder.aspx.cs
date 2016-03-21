@@ -4,10 +4,10 @@ using System.Linq;
 using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
+using MemberSuite.SDK.Concierge;
 using MemberSuite.SDK.Searching;
 using MemberSuite.SDK.Searching.Operations;
 using MemberSuite.SDK.Types;
-using MemberSuite.SDK.WCF;
 
 public partial class documents_MoveFolder : PortalPage 
 {
@@ -56,7 +56,7 @@ public partial class documents_MoveFolder : PortalPage
         sFolders.AddSortColumn("FolderLevel");
         sFolders.AddSortColumn("Name");
 
-        ddlDestination.DataSource = ExecuteSearch(sFolders, 0, null).Table;
+        ddlDestination.DataSource = APIExtensions.GetSearchResult(sFolders, 0, null).Table;
         ddlDestination.DataTextField = "FolderPath";
         ddlDestination.DataValueField = "ID";
         ddlDestination.DataBind();

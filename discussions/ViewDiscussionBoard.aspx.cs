@@ -25,7 +25,7 @@ public partial class discussions_ViewDiscussionBoard : DiscussionsPage
     {
         base.InitializeTargetObject();
 
-        MemberSuiteObject targetObject = LoadObjectFromAPI(ContextID);
+        var targetObject = APIExtensions.LoadObjectFromAPI(ContextID);
 
         if (targetObject != null && targetObject.ParentTypes.Contains(msDiscussionBoard.CLASS_NAME))
         {
@@ -71,6 +71,8 @@ public partial class discussions_ViewDiscussionBoard : DiscussionsPage
 
         rptForums.DataSource = dtForums;
         rptForums.DataBind();
+
+        PageTitleExtension.Text = string.Format("{0} Discussion Board", TargetDiscussionBoard.Name);
     }
     
     #endregion
@@ -96,14 +98,14 @@ public partial class discussions_ViewDiscussionBoard : DiscussionsPage
         sForum.AddCriteria(Expr.Equals("DiscussionBoard", TargetDiscussionBoard.ID));
         sForum.AddCriteria(Expr.Equals("IsActive", true));
 
-        if (!isActiveMember())
+        if (!MembershipLogic.IsActiveMember())
             sForum.AddCriteria(Expr.Equals("MembersOnly", false));
 
         sForum.AddSortColumn("GroupName");
         sForum.AddSortColumn("DisplayOrder");
         sForum.AddSortColumn("Name");
 
-        SearchResult srForums = ExecuteSearch(proxy, sForum, PageStart, PAGE_SIZE);
+        SearchResult srForums = proxy.GetSearchResult(sForum, PageStart, PAGE_SIZE);
         dtForums = srForums.Table;
 
         for (int i = 0; i < dtForums.Columns.Count; i++)
@@ -125,7 +127,7 @@ public partial class discussions_ViewDiscussionBoard : DiscussionsPage
                                                       DiscussionPostStatus.Pending.ToString()));
         sPostsPendingApproval.AddSortColumn("DiscussionPost.CreatedDate", true);
 
-        SearchResult srPostsPendingApproval = ExecuteSearch(proxy, sPostsPendingApproval, 0, 1);
+        SearchResult srPostsPendingApproval = proxy.GetSearchResult(sPostsPendingApproval, 0, 1);
         if (srPostsPendingApproval.Table.Rows.Count > 0)
             drLastPostPendingApproval = srPostsPendingApproval.Table.Rows[0];
         numberOfPostsPendingApproval = srPostsPendingApproval.TotalRowCount;

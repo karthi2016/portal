@@ -89,6 +89,13 @@ public partial class organizationalLayers_ViewOrganizationalLayerMembers_Results
         getLeader();
     }
 
+    protected override void InitializePage()
+    {
+        base.InitializePage();
+
+        CustomTitle.Text = string.Format("{0} Members", targetOrganizationalLayer.Name);
+    }
+
     protected override bool CheckSecurity()
     {
         if (!base.CheckSecurity()) return false;
@@ -103,7 +110,7 @@ public partial class organizationalLayers_ViewOrganizationalLayerMembers_Results
     protected void getLeader()
     {
         Search sLeaders = GetOrganizationalLayerLeaderSearch(targetOrganizationalLayer.ID);
-        SearchResult srLeaders = ExecuteSearch(sLeaders, 0, 1);
+        SearchResult srLeaders = APIExtensions.GetSearchResult(sLeaders, 0, 1);
 
         leader = ConvertLeaderSearchResult(srLeaders);
     }
@@ -178,7 +185,7 @@ public partial class organizationalLayers_ViewOrganizationalLayerMembers_Results
 
     protected void loadDataFromConcierge()
     {
-        SearchResult sr = ExecuteSearch(targetSearch, 0, null);
+        SearchResult sr = APIExtensions.GetSearchResult(targetSearch, 0, null);
         
         //get distinct rows with the ToTable method
         DataView tempdv = new DataView(sr.Table);

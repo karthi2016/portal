@@ -9,7 +9,7 @@
 <a href="/chapters/ViewChapter.aspx?contextID=<%=targetChapter.ID %>"><%=targetChapter.Name %> ></a>
 </asp:Content>
 <asp:Content ID="Content4" ContentPlaceHolderID="PageTitle" runat="Server">
-    Manage <%= targetChapter.Name %> Events
+    Manage <asp:Literal runat="server" ID="PageTitleExtension"></asp:Literal> Events
 </asp:Content>
 <asp:Content ID="Content5" ContentPlaceHolderID="TopRightContent" runat="Server">
 </asp:Content>

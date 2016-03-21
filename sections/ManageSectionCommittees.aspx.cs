@@ -70,7 +70,7 @@ public partial class sections_ManageSectionCommittees : PortalPage
         s.AddCriteria(Expr.Equals("Section.ID", targetSection.ID));
         s.AddCriteria(Expr.Equals("ShowInPortal", true));
         s.AddSortColumn("Name");
-        var searchResult = ExecuteSearch(s, 0, null);
+        var searchResult = APIExtensions.GetSearchResult(s, 0, null);
 
         dvCommittees = new DataView(searchResult.Table);
     }

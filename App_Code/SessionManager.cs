@@ -1,4 +1,6 @@
-﻿using System.Web;
+﻿using System;
+using System.Collections.Generic;
+using System.Web;
 
 /// <summary>
 /// Manages all communication and storage of session information.
@@ -8,35 +10,74 @@
 /// than they would be otherwise.</remarks>
 public static class SessionManager
 {
-    public static T Get<T>( string key )  
-	{
+    /// <summary>
+    /// These Session values should not always be cleared as there may be some items that should pass from a 
+    /// logged out session into the logged in session (such as Shopping Cart)
+    /// </summary>
+    private static List<string> SessionClearExceptions = new List<string>
+    {
+        "MemberSuite:PlaceAnOrder.ShoppingCart",
+        "MemberSuite:CreateAccount.CompleteUrl",
+        "PortalInformation",
+        "AssociationId",
+        "ConciergeAPIBrowserID",
+        "APMUser",
+        "msAssociationConfigurationContainer",
+        "ConciergeAPIBackgroundUser",
+        "ConciergeAPICurrentAssociation",
+        "ConsoleReturnUrl",
+        "LogoutUrl",
+        "ConsoleUrl",
+        "ConciergeAPISessionID",
+        "APIMessageHeader"
+    };
+
+    public static T Get<T>(string key)
+    {
         if (HttpContext.Current == null || HttpContext.Current.Session == null)
             return default(T);
 
         // first, is it in context items?
         object sessionValue = HttpContext.Current.Items[key];
         if (sessionValue != null)
-            return (T)sessionValue;
+            return (T) sessionValue;
 
         // no, try the session
         sessionValue = HttpContext.Current.Session[key];
         if (sessionValue == null)
             return default(T);
-        
-        return (T)sessionValue ;
-	}
 
-    public static void Clear()
+        return (T) sessionValue;
+    }
+
+    /// <summary>
+    /// Clear data out of Session.
+    /// </summary>
+    /// <param name="clearAll">Clear entire Session. If false, will leave a list of exceptions.</param>
+    public static void Clear(bool clearAll = true)
     {
-        // Must Clear this first as it will be lost on the "Current.Items.Clear()" call
+        // Only really need to clear this. HttpContext.Current.Items should be fresh on each new Request already.
         if (HttpContext.Current.Session != null)
         {
-            HttpContext.Current.Session.Clear();
-        }
+            var persistValues = new Dictionary<string, object>();
+            if (!clearAll && SessionClearExceptions.Count > 0)
+            {
+                foreach (var sessionClearException in SessionClearExceptions)
+                {
+                    var value = HttpContext.Current.Session[sessionClearException];
+                    if (value != null)
+                    {
+                        persistValues.Add(sessionClearException, value);
+                    }
+                }
+            }
 
-        if (HttpContext.Current.Items != null)
-        {
-            HttpContext.Current.Items.Clear();
+            HttpContext.Current.Session.Clear();
+
+            foreach (var persistValue in persistValues)
+            {
+                HttpContext.Current.Session.Add(persistValue.Key, persistValue.Value);
+            }
         }
     }
 
@@ -45,7 +86,7 @@ public static class SessionManager
         if (HttpContext.Current == null || HttpContext.Current.Session == null)
             return;
 
-        HttpContext.Current.Items[key] = valueToSet;    // always store in items
+        HttpContext.Current.Items[key] = valueToSet; // always store in items
 
         object valueToActuallyStoreInSession = valueToSet;
 
@@ -58,8 +99,32 @@ public static class SessionManager
         HttpContext.Current.Session[key] = valueToActuallyStoreInSession;
     }
 
-    /*NoSQL
-     * static SessionManager()
+    /// <summary>
+    /// Get value from Session Cache and if it does not exist, generate value and cache it. This function only works with nullable types.
+    /// </summary>
+    /// <typeparam name="T">Type of the object we expect to find in Session Cache.</typeparam>
+    /// <param name="key">Unique identifier to look for in Session Cache.</param>
+    /// <param name="retrieveValue">Function to retrieve value if not found in Session Cache.</param>
+    /// <returns>Value found in or added to Session Cache.</returns>
+    public static T Get<T>(string key, Func<T> retrieveValue)
+    {
+        // See if already cached
+        var cachedValue = Get<T>(key);
+        if (cachedValue != null)
+        {
+            return cachedValue;
+        }
+
+        // Exececute function to generate value
+        cachedValue = retrieveValue();
+
+        // Cache value before returning it
+        Set(key, cachedValue);
+        return cachedValue;
+    }
+
+    /* NoSQL
+    static SessionManager()
     {
         _sessionProvider = NoSQLEngine.GetProvider();
         noSQLTableName = ConfigurationManager.AppSettings["NoSQL_SessionsTable"];
@@ -97,5 +162,5 @@ public static class SessionManager
         _sessionProvider.PutItem(noSQLTableName, items);
         //HttpContext.Current.Session[key] = valueToSet;
     }
-     * */
+    */
 }

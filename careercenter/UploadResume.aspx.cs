@@ -66,6 +66,8 @@ public partial class careercenter_UploadResume : PortalPage
             lbDifferentFile.Visible = true;
             hlView.Visible = true;
         }
+
+        litTitle.Text = string.Format("{0}", targetResume.Name);
     }
 
     #endregion

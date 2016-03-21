@@ -5,7 +5,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head id="Head1" runat="server">
-    <meta http-equiv="x-ua-compatible" content="IE=9" />
     <asp:ContentPlaceHolder ID="head" runat="server">
     </asp:ContentPlaceHolder>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
@@ -31,7 +30,7 @@
             document.title = $("#pageTitleCont h1").text();
         });
         </script>
-    <asp:ScriptManager ID="ScriptManager1" runat="server">
+    <asp:ScriptManager ID="ScriptManager1" runat="server" ScriptMode="Release">
     </asp:ScriptManager>
     <telerik:RadWindowManager ID="rwmWindowManager" Skin="Default" runat="server" />
     <telerik:RadWindow ID="rwTimeoutWarning" ReloadOnShow="false" EnableEmbeddedSkins="false"
@@ -100,8 +99,8 @@
             <div id="priNavCont">
                 <div id="priNavContent">
                     <ul id="priNav">
-                        <li><a href="/default.aspx"><span>
-                            <asp:Literal ID="lHomeText" runat="server">Home</asp:Literal></span></a></li>
+                        <li><asp:HyperLink runat="server" ID="hlHomeLink" NavigateUrl="/default.aspx"><span>
+                            <asp:Literal ID="lHomeText" runat="server">Home</asp:Literal></span></asp:HyperLink></li>
                         <li runat="server" id="liOnlineStore"><a href="/onlinestorefront/BrowseMerchandise.aspx">
                             <span>Online Store</span></a></li>
                         <li runat="server" id="liUpcomingEvents"><a href="/events/BrowseEvents.aspx"><span>Upcoming
@@ -229,5 +228,31 @@
     </asp:Literal>
     <!-- / site wrapper -->
     </form>
+    <script type="text/javascript">
+        // Fix Telerik control on zoomed-in Chrome browser:  http://www.telerik.com/forums/system-formatexception-input-string-was-not-in-a-correct-format-thrown-on-chrome-when-browser-is-zoomed-in-out
+        if (Telerik && Telerik.Web.UI.RadListBox) {
+            Telerik.Web.UI.RadListBox.prototype.saveClientState = function () {
+                return "{" +
+                    "\"isEnabled\":" + this._enabled +
+                    ",\"logEntries\":" + this._logEntriesJson +
+                    ",\"selectedIndices\":" + this._selectedIndicesJson +
+                    ",\"checkedIndices\":" + this._checkedIndicesJson +
+                    ",\"scrollPosition\":" + Math.round(this._scrollPosition) +
+                    "}";
+            }
+        }
+
+        var originalGetLocation = $telerik.getLocation;
+        $telerik.getLocation = function (a) {
+            var point = originalGetLocation(a);
+            ////alert(point.y);
+            point.rawX = Math.round(point.rawX);
+            point.rawY = Math.round(point.rawY);
+            point.x = Math.round(point.x);
+            point.y = Math.round(point.y);
+            ////alert(point.y);
+            return point;
+        };
+    </script>
 </body>
 </html>

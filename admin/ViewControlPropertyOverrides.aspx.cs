@@ -31,19 +31,16 @@ public partial class admin_ViewControlPropertyOverrides : PortalPage
         
         foreach (var nvp in controls)
         {
-
-          
             if ( string.IsNullOrWhiteSpace( nvp.ID ) )
                 nvp.ID = Guid.NewGuid().ToString();
         }
 
         // now, add any manual overrides
         foreach (var o in PortalConfiguration.Current.ControlOverrides)
-            if ( o.PageName == MultiStepWizards.CustomizePage.PageName &&
+            if ( o.PageName.Equals(MultiStepWizards.CustomizePage.PageName, StringComparison.InvariantCultureIgnoreCase) &&
                 !controls.Exists(x => x.ControlName == o.ControlName && x.PropertyName == o.PropertyName ))
                 controls.Add(o);
 
-        
         gvValues.DataSource = controls;
         gvValues.DataBind();
     }
@@ -73,33 +70,33 @@ public partial class admin_ViewControlPropertyOverrides : PortalPage
         var ppo = MultiStepWizards.CustomizePage.ControlsEligibleForQuickOverride.Find(x => x.ID == id);
         if (ppo == null) return;
 
-         switch( e.CommandName )
-         {
-             case "Edit":
-                 MultiStepWizards.CustomizePage.EditModeControlName = ppo.ControlName ;
-                 MultiStepWizards.CustomizePage.EditModeControlPropertyName = ppo.PropertyName ;
-                 MultiStepWizards.CustomizePage.EditModeControlPropertyValue = ppo.Value ;
-                 MultiStepWizards.CustomizePage.EditModeControlPropertyDescription = ppo.Description;
-                 Response.Redirect("EditControlProperty.aspx");
-                 break;
+        switch (e.CommandName)
+        {
+            case "Edit":
+                MultiStepWizards.CustomizePage.EditModeControlName = ppo.ControlName;
+                MultiStepWizards.CustomizePage.EditModeControlPropertyName = ppo.PropertyName;
+                MultiStepWizards.CustomizePage.EditModeControlPropertyValue = ppo.Value == "<b>(default)</b>" ? string.Empty : ppo.Value;
+                MultiStepWizards.CustomizePage.EditModeControlPropertyDescription = ppo.Description;
+                Response.Redirect("EditControlProperty.aspx");
+                break;
 
-             case "Reset":
-                 using (var api = GetServiceAPIProxy())
-                 {
-                     api.Delete(id);    // delete it
+            case "Reset":
+                using (var api = GetServiceAPIProxy())
+                {
+                    api.Delete(id); // delete it
 
-                     // remove it from session
-                     PortalConfiguration.Current.ControlOverrides.RemoveAll(x => x.ID == id);
-                   
-                     Refresh();
-                 }
-                 break;
-         }
+                    // remove it from session
+                    PortalConfiguration.Current.ControlOverrides.RemoveAll(x => x.ID == id);
+                    ppo.Value = "<b>(default)</b>";
+                    Refresh();
+                }
+                break;
+        }
     }
 
     protected void gvValues_RowDataBound(object sender, GridViewRowEventArgs e)
     {
-        msPortalControlPropertyOverride ppo = (msPortalControlPropertyOverride)e.Row.DataItem;
+        var ppo = (msPortalControlPropertyOverride)e.Row.DataItem;
 
         if (Page.IsPostBack)
             return;				// only do this if there's a postback - otherwise, preserve ViewState
@@ -112,17 +109,15 @@ public partial class admin_ViewControlPropertyOverrides : PortalPage
             case DataControlRowType.Footer:
                 break;
 
-
-
             case DataControlRowType.DataRow:
-                LinkButton lbEdit = (LinkButton)e.Row.FindControl("lbEdit");
-                LinkButton lbReset = (LinkButton)e.Row.FindControl("lbReset");
-                var lValue = (Literal)e.Row.FindControl("lValue");
+                var lbEdit = (LinkButton) e.Row.FindControl("lbEdit");
+                var lbReset = (LinkButton) e.Row.FindControl("lbReset");
+                var lValue = (Literal) e.Row.FindControl("lValue");
 
                 lbReset.Visible = false;
-                  lValue.Text = ppo.Value;
+                lValue.Text = ppo.Value;
 
-                 var ppoExisting = PortalConfiguration.GetOverrideFor(ppo.PageName, ppo.ControlName, ppo.PropertyName);
+                var ppoExisting = PortalConfiguration.GetOverrideFor(ppo.PageName, ppo.ControlName, ppo.PropertyName);
                 if (ppoExisting != null)
                 {
                     lbReset.Visible = true;
@@ -130,19 +125,15 @@ public partial class admin_ViewControlPropertyOverrides : PortalPage
                     ppo.ID = ppoExisting.ID;
                 }
 
-                 lbEdit.CommandArgument = ppo.ID;    // guaranteed to be set above
-                lbReset.CommandArgument = ppo.ID;    // guaranteed to be set above
-             
+                lbEdit.CommandArgument = ppo.ID; // guaranteed to be set above
+                lbReset.CommandArgument = ppo.ID; // guaranteed to be set above
 
-                RegisterJavascriptConfirmationBox(lbReset, "Are you sure you want to reset the specified text back to its default value?");
+                RegisterJavascriptConfirmationBox(lbReset,
+                    "Are you sure you want to reset the specified text back to its default value?");
 
-           
-
+                // If we have to truncate, also HTML Encode the data to prevent incomplete HTML
                 if (lValue.Text != null && lValue.Text.Length > 100)
-                    lValue.Text = lValue.Text.Substring(0, 100) + "...";
-
-                
-                
+                    lValue.Text = Server.HtmlEncode(lValue.Text.Substring(0, 100) + "...");
 
                 break;
         }

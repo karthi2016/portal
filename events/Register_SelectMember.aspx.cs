@@ -44,7 +44,7 @@ public partial class events_Register_SelectMember : PortalPage
     {
         base.InitializeTargetObject();
 
-        targetEvent = LoadObjectFromAPI(ContextID).ConvertTo<msEvent>();
+        targetEvent = LoadObjectFromAPI<msEvent>(ContextID);
         if (targetEvent == null) GoToMissingRecordPage();
 
         loadEventOwners();
@@ -74,6 +74,8 @@ public partial class events_Register_SelectMember : PortalPage
 
         ddlMembers.DataSource = dvMembers.ToTable(true, new []{"ID", "Name"});
         ddlMembers.DataBind();
+
+        CustomTitle.Text = string.Format("{0} Registration - Select Member", targetEvent.Name);
     }
 
     #endregion
@@ -103,7 +105,7 @@ public partial class events_Register_SelectMember : PortalPage
             sChapterMembers.AddCriteria(Expr.Equals("IsCurrent", true));
             sChapterMembers.AddCriteria(terminationGroup);
 
-            SearchResult srChapterMembers = ExecuteSearch(sChapterMembers, 0, null);
+            SearchResult srChapterMembers = APIExtensions.GetSearchResult(sChapterMembers, 0, null);
             foreach (DataRow drChapterMember in srChapterMembers.Table.Rows)
             {
                 DataRow memberRow = dtMembers.NewRow();
@@ -129,7 +131,7 @@ public partial class events_Register_SelectMember : PortalPage
             sSectionMembers.AddCriteria(Expr.Equals("IsCurrent", true));
             sSectionMembers.AddCriteria(terminationGroup);
 
-            SearchResult srSectionMembership = ExecuteSearch(sSectionMembers, 0, null);
+            SearchResult srSectionMembership = APIExtensions.GetSearchResult(sSectionMembers, 0, null);
             foreach (DataRow drChapterMember in srSectionMembership.Table.Rows)
             {
                 DataRow memberRow = dtMembers.NewRow();
@@ -170,7 +172,7 @@ public partial class events_Register_SelectMember : PortalPage
             sOrganizationalLayerMembers.AddCriteria(Expr.Equals("IsCurrent",true));
             
 
-            SearchResult srOrganizationalLayerMembers = ExecuteSearch(sOrganizationalLayerMembers, 0, null);
+            SearchResult srOrganizationalLayerMembers = APIExtensions.GetSearchResult(sOrganizationalLayerMembers, 0, null);
             foreach (DataRow drChapterMember in srOrganizationalLayerMembers.Table.Rows)
             {
                 DataRow memberRow = dtMembers.NewRow();

@@ -88,6 +88,8 @@ public partial class orders_UpdateBillingInformation : CreditCardLogic
         base.InitializePage();
         RegisterJavascriptConfirmationBox(lbClearPaymentInf,
                                           "Are you sure you want to clear the payment information from this record?");
+
+        PageTitleExtension.Text = Convert.ToString(targetObject["Name"]);
     }
 
     protected void lbClearPaymentInfo_Click(object sender, EventArgs e)

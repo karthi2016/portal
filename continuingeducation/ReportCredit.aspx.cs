@@ -29,7 +29,7 @@ public partial class continuingeducation_ReportCredit : PortalPage
         Search s = new Search(msCEUType.CLASS_NAME);
         s.AddOutputColumn("Name");
 
-        foreach (DataRow dr in ExecuteSearch(s, 0, null).Table.Rows)
+        foreach (DataRow dr in APIExtensions.GetSearchResult(s, 0, null).Table.Rows)
             ddlType.Items.Add(new ListItem(dr["Name"].ToString(),
                                            dr["ID"].ToString()));
 

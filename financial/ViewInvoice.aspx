@@ -11,8 +11,7 @@
     <a href="AccountHistory.aspx">Account History</a>
 </asp:Content>
 <asp:Content ID="Content4" ContentPlaceHolderID="PageTitle" runat="Server">
-    View Invoice #
-    <%=GetSearchResult( targetInvoice, "LocalID",null ) %>
+    View Invoice #<asp:Literal runat="server" ID="PageTitleExtenstion"></asp:Literal>
 </asp:Content>
 <asp:Content ID="Content5" ContentPlaceHolderID="TopRightContent" runat="Server">
 </asp:Content>
@@ -119,7 +118,7 @@
                 <asp:BoundField DataField="Payment.Date" HeaderText="Date" HeaderStyle-HorizontalAlign="Left"
                     DataFormatString="{0:d}" />
                 <asp:BoundField DataField="Payment.Name" HeaderText="Name" HeaderStyle-HorizontalAlign="Left" />
-                <asp:BoundField DataField="Amount" HeaderText="Total" HeaderStyle-HorizontalAlign="Left"
+                <asp:BoundField DataField="Total" HeaderText="Total" HeaderStyle-HorizontalAlign="Left"
                     DataFormatString="{0:C}" />
                 <asp:HyperLinkField Text="(view)" DataNavigateUrlFormatString="/financial/ViewPayment.aspx?contextID={0}"
                     DataNavigateUrlFields="Payment" />

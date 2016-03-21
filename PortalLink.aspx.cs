@@ -16,7 +16,6 @@ public partial class PortalLink : PortalPage
     #region Fields
 
     protected msPortalLink targetLink;
-    protected DataRow drMembership;
 
     #endregion
 
@@ -44,6 +43,13 @@ public partial class PortalLink : PortalPage
             GoToMissingRecordPage();
     }
 
+    protected override void InitializePage()
+    {
+        base.InitializePage();
+
+        CustomTitle.Text = string.Format("{0}", targetLink.Name);
+    }
+
     private void loadTargetLink(IConciergeAPIService serviceproxy)
     {
         var obj = serviceproxy.Get(ContextID).ResultValue;
@@ -62,63 +68,7 @@ public partial class PortalLink : PortalPage
         if (CurrentUser == null)
             return false;
 
-        return !targetLink.MembersOnly || isActiveMember();
-    }
-
-    #endregion
-
-    #region Methods
-
-    protected bool isActiveMember()
-    {
-        if (CurrentEntity == null)
-            return false;
-
-        loadMembership();
-
-        if (drMembership == null)
-            return false;
-
-        //Check if the appropriate fields exist - if they do not then the membership module is inactive
-        if (
-            !(drMembership.Table.Columns.Contains("Membership") &&
-              drMembership.Table.Columns.Contains("Membership.ReceivesMemberBenefits") &&
-              drMembership.Table.Columns.Contains("Membership.TerminationDate")))
-            return false;
-
-        //Check there is a membership
-        if (string.IsNullOrWhiteSpace(Convert.ToString(drMembership["Membership"])))
-            return false;
-
-        //Check the membership indicates membership benefits
-        if (!drMembership.Field<bool>("Membership.ReceivesMemberBenefits"))
-            return false;
-
-        //At this point if the termination date is null the member should be able to see the restricted directory
-        DateTime? terminationDate = drMembership.Field<DateTime?>("Membership.TerminationDate");
-
-        if (terminationDate == null)
-            return true;
-
-        //There is a termination date so check if it's future dated
-        return terminationDate > DateTime.Now;
-    }
-
-    protected virtual void loadMembership()
-    {
-        Search sMembership = new Search(msEntity.CLASS_NAME) { ID = msMembership.CLASS_NAME };
-        sMembership.AddOutputColumn("ID");
-        sMembership.AddOutputColumn("Membership");
-        sMembership.AddOutputColumn("Membership.ReceivesMemberBenefits");
-        sMembership.AddOutputColumn("Membership.TerminationDate");
-        sMembership.AddCriteria(Expr.Equals("ID", ConciergeAPI.CurrentEntity.ID));
-        sMembership.AddSortColumn("ID");
-
-        SearchResult srMembership = ExecuteSearch(sMembership, 0, 1);
-        drMembership = srMembership != null && srMembership.Table != null &&
-                       srMembership.Table.Rows.Count > 0
-                           ? srMembership.Table.Rows[0]
-                           : null;
+        return !targetLink.MembersOnly || MembershipLogic.IsActiveMember();
     }
 
     #endregion

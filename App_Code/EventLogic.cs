@@ -19,7 +19,7 @@ public static class EventLogic
         s.AddCriteria(Expr.Equals("Invitee", individualID));
 
         using (var api = ConciergeAPIProxyGenerator.GenerateProxy())
-            return api.ExecuteSearch(s, 0, 1).ResultValue.TotalRowCount > 0;
+            return api.GetSearchResult(s, 0, 1).TotalRowCount > 0;
     }
 
     public static bool IsRegistered(string eventID, string entityID)
@@ -31,7 +31,7 @@ public static class EventLogic
 
 
         using (var api = ConciergeAPIProxyGenerator.GenerateProxy())
-            return api.ExecuteSearch(s, 0, 1).ResultValue.TotalRowCount > 0;
+            return api.GetSearchResult(s, 0, 1).TotalRowCount > 0;
          
     }
 
@@ -61,5 +61,31 @@ public static class EventLogic
 
         return false;
         
+    }
+
+    public static bool HasSessions(string eventId)
+    {
+        var key = string.Format("EventLogic::HasSessions_{0}", eventId);
+
+        var returnValue = SessionManager.Get<bool?>(key, () =>
+        {
+            if (string.IsNullOrEmpty(eventId))
+            {
+                return false;
+            }
+
+            var search = new Search(msSession.CLASS_NAME);
+            search.AddCriteria(Expr.Equals("ParentEvent", eventId));
+            search.AddCriteria(Expr.Equals("VisibleInPortal", true));
+
+            using (var api = ConciergeAPIProxyGenerator.GenerateProxy())
+            {
+                var result = api.ExecuteSearch(search, 0, 1);
+
+                return result != null && result.ResultValue != null && result.ResultValue.TotalRowCount > 0;
+            }
+        });
+
+        return returnValue.HasValue ? returnValue.Value : false;
     }
 }

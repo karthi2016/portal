@@ -7,15 +7,23 @@
             display: none;
         }
     </style>
-    <script type="text/javascript" src="/js/priorityPaymentsScript/jquery-2.1.3.min.js"></script>
-    <script type="text/javascript" src="/js/priorityPaymentsScript/membersuite.payment-processor.min.js"></script>    
+    
+    <script type="text/javascript" src="/js/priorityPaymentsScript/payment-processor-jquery.js"></script>
+    
+    <script type="text/javascript" src="/js/priorityPaymentsScript/membersuite.payment-processor.API.js"></script>
+    <script type="text/javascript" src="/js/priorityPaymentsScript/priorityPayment.logger.js"></script>
+    <script type="text/javascript" src="/js/priorityPaymentsScript/cardType-util.js"></script>
+    <script type="text/javascript" src="/js/priorityPaymentsScript/priorityPayment.ajaxAPI.js"></script>
+    <script type="text/javascript" src="/js/priorityPaymentsScript/membersuite.payment-processor-1.0.js"></script>
+
+<%--    <script type="text/javascript" src="/js/priorityPaymentsScript/membersuite.payment-processor.min.js"></script>    --%>
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="TopMenu" Runat="Server">
 </asp:Content>
 <asp:Content ID="Content3" ContentPlaceHolderID="BreadcrumbBar" Runat="Server">
 </asp:Content>
 <asp:Content ID="Content4" ContentPlaceHolderID="PageTitle" Runat="Server">
-    Update Payment Method - <%=targetObject.Name %>
+    Update Payment Method - <asp:Literal runat="server" ID="PageTitleExtension"></asp:Literal>
 </asp:Content>
 <asp:Content ID="Content5" ContentPlaceHolderID="TopRightContent" Runat="Server">
 </asp:Content>
@@ -37,7 +45,7 @@
     <hr style="width: 100%" />
     <div style="text-align: center">
         <asp:Button ID="btnContinue" runat="server" Text="Save Changes" OnClick="btnContinue_Click" CssClass="save-token none"/>
-        <input onclick="javascript: requestToken()" type="button" value="Save Changes" />
+        <input onclick="javascript: requestToken();" type="button" value="Save Changes" />
         or
         <asp:LinkButton ID="lbCancel" runat="server" Text="Cancel the Update" CausesValidation="false"
             OnClick="lbCancel_Click" />
@@ -72,7 +80,7 @@
             var $cardNumberElem = $('.cc-number');
             var $expiryMonthElem = $('.mypMonth');
             var $expiryYearElem = $('.mypYear');
-            var id = $('[id$="hfOrderBillToId"').val();
+            var id = $('[id$="hfOrderBillToId"]').val();
 
             var parms = {
                 ppConfig: config,

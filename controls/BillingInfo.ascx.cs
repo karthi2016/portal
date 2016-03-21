@@ -19,11 +19,12 @@ public partial class controls_BillingInfo : System.Web.UI.UserControl
     {
         if (!IsPostBack)
             InitializeControl();
+
+        acBillingAddress.Host = PortalPage;
     }
 
     public PortalPaymentMethods AllowableMethods { get; set; }
     public ElectronicPaymentManifest ExistingPaymentInfo { private get; set; }
-
 
     private void InitializeControl()
     {
@@ -62,7 +63,7 @@ public partial class controls_BillingInfo : System.Web.UI.UserControl
                 cbSaveCheckingAccount.Visible = cbSaveCreditCard.Visible = false;
                 break;
         }
-        
+
 
         if (AllowableMethods.Messages != null)
             foreach (var msg in AllowableMethods.Messages)
@@ -76,6 +77,7 @@ public partial class controls_BillingInfo : System.Web.UI.UserControl
 
         if (ExistingPaymentInfo != null)
             bindExistingPaymentInfo(ExistingPaymentInfo);
+
     }
 
     private void bindExistingPaymentInfo(ElectronicPaymentManifest existingPaymentInfo)
@@ -167,7 +169,8 @@ public partial class controls_BillingInfo : System.Web.UI.UserControl
         var isCreditCard = method.Value == OrderPaymentMethod.CreditCard;
         rfvCreditCardNumber.Enabled = isCreditCard;
         rfvNameOnCard.Enabled = isCreditCard;
-        rfvSecurityCode.Enabled = isCreditCard;
+        //MS-6920 Disabled CCV validation
+        //rfvSecurityCode.Enabled = isCreditCard;
 
         var isECheck = method.Value == OrderPaymentMethod.ElectronicCheck;
         rfvRoutingNumber.Enabled = isECheck;
@@ -188,12 +191,16 @@ public partial class controls_BillingInfo : System.Web.UI.UserControl
                 return;
             }
 
-            if (string.IsNullOrWhiteSpace(billingAddress.Line1) ||
-                string.IsNullOrWhiteSpace(billingAddress.PostalCode) ||
-                string.IsNullOrWhiteSpace(billingAddress.City))
+            var billingAddressIsValid = !string.IsNullOrWhiteSpace(billingAddress.Line1) && !string.IsNullOrWhiteSpace(billingAddress.City);
+
+            if (!string.IsNullOrWhiteSpace(billingAddress.Country) &&
+                (billingAddress.Country.Equals("CA", StringComparison.CurrentCultureIgnoreCase)
+                || billingAddress.Country.Equals("US", StringComparison.CurrentCultureIgnoreCase)))
+                billingAddressIsValid = billingAddressIsValid && !string.IsNullOrWhiteSpace(billingAddress.PostalCode);
+
+            if (!billingAddressIsValid)
             {
-                cvBillingValidator.ErrorMessage =
-                    "An incomplete billing address was detected. Please complete the address.";
+                cvBillingValidator.ErrorMessage = "An incomplete billing address was detected. Please complete the address.";
                 args.IsValid = false;
             }
         }
@@ -239,7 +246,7 @@ public partial class controls_BillingInfo : System.Web.UI.UserControl
             return OrderPaymentMethod.PayrollDeduction;
 
         if (rbBillMeLater.Checked)
-            return OrderPaymentMethod.None ;
+            return OrderPaymentMethod.None;
 
 
         // was one manually specified?
@@ -290,7 +297,7 @@ public partial class controls_BillingInfo : System.Web.UI.UserControl
                 ElectronicCheck ec = new ElectronicCheck();
                 ec.BankAccountNumber = tbBankAccountNumber.Text;
                 ec.RoutingNumber = tbRoutingNumber.Text;
-                ec.SavePaymentMethod = cbSaveCheckingAccount.Checked;                
+                ec.SavePaymentMethod = cbSaveCheckingAccount.Checked;
                 return ec;
 
             case OrderPaymentMethod.SavedPaymentMethod:

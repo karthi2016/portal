@@ -37,46 +37,56 @@ public partial class competitions_Enter_EntryForm : PortalPage
     {
         base.InitializeTargetObject();
 
-        var contextObject = LoadObjectFromAPI(ContextID);
+        var contextObject = APIExtensions.LoadObjectFromAPI(ContextID);
         switch (contextObject.ClassType)
         {
             case "CompetitionEntry":
                 targetCompetitionEntry = contextObject.ConvertTo<msCompetitionEntry>();
                 targetCompetition = LoadObjectFromAPI<msCompetition>(targetCompetitionEntry.Competition);
-                using (IConciergeAPIService proxy = GetConciegeAPIProxy())
-                {
-                    targetCompetitionInfo = proxy.GetCompetitionEntryInformation(targetCompetition.ID, ConciergeAPI.CurrentEntity.ID).ResultValue;
-                }
+                targetCompetitionInfo = targetCompetition.GetCompetitionEntryInformation();
                 MultiStepWizards.EnterCompetition.EntryFee = LoadObjectFromAPI<msCompetitionEntryFee>(targetCompetitionEntry.EntryFee);
                 break;
+
             case "Competition":
                 targetCompetition = contextObject.ConvertTo<msCompetition>();
-                using (IConciergeAPIService proxy = GetConciegeAPIProxy())
-                {
-                    targetCompetitionInfo = proxy.GetCompetitionEntryInformation(targetCompetition.ID, ConciergeAPI.CurrentEntity.ID).ResultValue;
-                }
+                targetCompetitionInfo = targetCompetition.GetCompetitionEntryInformation();
                 targetCompetitionEntry = new msCompetitionEntry
                 {
                     Competition = targetCompetition.ID,
                     Entrant = ConciergeAPI.CurrentEntity.ID,
                     Status = targetCompetitionInfo.PendingPaymentStatusId
                 };
+
+                // If the fee is null make sure it is allowed to be. If a session expires in the middle of the form, the user will be
+                // redirected here without the proper Fee in session state.
+                if (MultiStepWizards.EnterCompetition.EntryFee == null &&
+                    targetCompetitionInfo.CompetitionEntryFees.Count > 0)
+                {
+                    if (targetCompetitionInfo.CompetitionEntryFees.Count > 1)
+                    {
+                        Response.Redirect("~/competitions/ApplyToCompetition.aspx?contextID=" + ContextID);
+                    }
+
+                    MultiStepWizards.EnterCompetition.EntryFee = LoadObjectFromAPI<msCompetitionEntryFee>(targetCompetitionInfo.CompetitionEntryFees[0].ProductID);
+                }
+                
                 break;
+
             default:
                 QueueBannerError("Unknown context object supplied.");
                 GoHome();
                 return;
         }
 
-        if(targetCompetition == null || targetCompetitionEntry == null || targetCompetitionInfo == null)
+        if (targetCompetition == null || targetCompetitionEntry == null || targetCompetitionInfo == null)
         {
             GoToMissingRecordPage();
             return;
         }
-      
+
         using (IConciergeAPIService proxy = GetConciegeAPIProxy())
         {
-            Search s = new Search(msCustomField.CLASS_NAME);
+            var s = new Search(msCustomField.CLASS_NAME);
             s.AddCriteria(Expr.Equals(msCustomField.FIELDS.Competition, targetCompetition.ID));
             
             targetCompetitionQuestions =
@@ -106,15 +116,15 @@ public partial class competitions_Enter_EntryForm : PortalPage
 
     protected ClassMetadata createClassMetadataFromEntryQuestions()
     {
-        ClassMetadata result = new ClassMetadata();
+        var result = new ClassMetadata();
         result.Fields = (from q in targetCompetitionQuestions select q.FieldDefinition).ToList();
         return result;
     }
 
     protected DataEntryViewMetadata createViewMetadataFromEntryQuestions()
     {
-        DataEntryViewMetadata result = new DataEntryViewMetadata();
-        ViewMetadata.ControlSection baseSection = new ViewMetadata.ControlSection();
+        var result = new DataEntryViewMetadata();
+        var baseSection = new ViewMetadata.ControlSection();
         baseSection.SubSections = new List<ViewMetadata.ControlSection>();
 
         var currentSection = new ViewMetadata.ControlSection();
@@ -122,9 +132,11 @@ public partial class competitions_Enter_EntryForm : PortalPage
         baseSection.SubSections.Add(currentSection);
         foreach (var question in targetCompetitionQuestions)
         {
-            ControlMetadata field = new ControlMetadata { DataSourceExpression = question.Name };
-            // This isn't necessary - the field is aqequately described already ControlMetadata field = ControlMetadata.FromFieldMetadata(question.FieldDefinition);
+            var field = new ControlMetadata { DataSourceExpression = question.Name };
 
+            // This isn't necessary - the field is aqequately described already 
+            ////ControlMetadata field = ControlMetadata.FromFieldMetadata(question.FieldDefinition);
+            
             if (field.DisplayType == FieldDisplayType.Separator)
             {
                 if (currentSection.LeftControls != null && currentSection.LeftControls.Count > 0)
@@ -140,9 +152,9 @@ public partial class competitions_Enter_EntryForm : PortalPage
                 continue;
             }
 
-
             currentSection.LeftControls.Add(field);
         }
+
         result.Sections = new List<ViewMetadata.ControlSection> {baseSection};
         return result;
     }
@@ -153,6 +165,21 @@ public partial class competitions_Enter_EntryForm : PortalPage
 
     protected void unbind()
     {
+        // MS-5451 Do not allow entrants to exceed the maximum number of entries per entrant
+        var searchCompetitionEntries = new Search {Type = msCompetitionEntry.CLASS_NAME};
+        searchCompetitionEntries.AddCriteria(Expr.Equals("Entrant", ConciergeAPI.CurrentEntity.ID));
+        searchCompetitionEntries.AddCriteria(Expr.Equals("Competition", targetCompetition.ID));
+        searchCompetitionEntries.AddCriteria(Expr.Equals("Status", targetCompetitionInfo.SubmittedStatusId));
+
+        var searchResultsCompetitionEntries = APIExtensions.GetSearchResult(searchCompetitionEntries, 0, null);
+
+        if (!targetCompetitionInfo.CanEnter ||
+            searchResultsCompetitionEntries.TotalRowCount >= targetCompetition.MaximumNumberOfEntriesPerEntrant)
+        {
+            QueueBannerMessage("Please ensure that the competition is still open and that you will not exceed the maximum number of entries with this submission.");
+            GoHome();
+        }
+
         targetCompetitionEntry.Name = tbEntryName.Text;
         targetCompetitionEntry.DateSubmitted = DateTime.UtcNow;
 
@@ -185,9 +212,9 @@ public partial class competitions_Enter_EntryForm : PortalPage
             }
 
             // send out the confirmation
-            proxy.SendEmail(
+            proxy.SendTransactionalEmail(
                 targetCompetition.ConfirmationEmail ?? EmailTemplates.Awards.CompetitionEntrySubmissionConfirmation,
-                new List<string> {targetCompetitionEntry.ID}, null);
+                targetCompetitionEntry.ID, null);
         }
 
         QueueBannerMessage(string.Format("Competition Entry #{0} was created successfully.",

@@ -20,8 +20,10 @@ using MemberSuite.SDK.Utilities;
 /// <summary>
 /// 
 /// </summary>
-public partial class App_Master_GeneralPage : System.Web.UI.MasterPage
+public partial class App_Master_GeneralPage : PortalMaster
 {
+    private const string VersionLabelKey = "GeneralPage::Version";
+
     #region Properties
 
     public bool HideHomeBreadcrumb
@@ -45,32 +47,41 @@ public partial class App_Master_GeneralPage : System.Web.UI.MasterPage
     
     public string GetVersion()
     {
-        string coreVersion;
-        try
+        // Pull this through the Session so we are not loading and parsing an XML file on every page load.
+        return SessionManager.Get<string>(VersionLabelKey, () =>
         {
-            using (var reader = XmlReader.Create(Server.MapPath(@"/version.xml")))
+            string coreVersion;
+            try
             {
-                var version = new List<string>();
-                reader.MoveToContent();
-                while (reader.Read())
+                using (var reader = XmlReader.Create(Server.MapPath(@"/version.xml")))
                 {
-                    if (reader.NodeType == XmlNodeType.Text)
+                    var version = new List<string>();
+                    reader.MoveToContent();
+                    while (reader.Read())
                     {
-                        version.Add(reader.Value);
+                        if (reader.NodeType == XmlNodeType.Text)
+                        {
+                            version.Add(reader.Value);
+                        }
                     }
+                    coreVersion = string.Join(".", version.ToArray());
                 }
-                coreVersion = string.Join(".", version.ToArray());
             }
-        }
-        catch(Exception)
-        {
-            coreVersion = "Not available";
-        }
+            catch (Exception)
+            {
+                coreVersion = "Not available";
+            }
 
-        return coreVersion;
+            return coreVersion;
+        });
     }
 
     #endregion
+
+    public void UpdateLoginLinkTab(string newUrl)
+    {
+        hlHomeLink.NavigateUrl = newUrl;
+    }
 
     protected void lbBackgroundUser_Click(object sender, EventArgs e)
     {
@@ -166,9 +177,9 @@ public partial class App_Master_GeneralPage : System.Web.UI.MasterPage
         // page customization is allowed if there's a background, logged in user
         if (Request.Url.LocalPath.Contains("/admin/"))
             return false;
-
-        //return true;
-        
+#if DEBUG
+        return true;
+#endif
         // you can customize the portal if you're logged in from the console,
         // OR if there's an auto login (meaning, we're in development mode
         return ConciergeAPI.HasBackgroundConsoleUser ||
@@ -230,7 +241,6 @@ public partial class App_Master_GeneralPage : System.Web.UI.MasterPage
             return;
         }
 
-      
         populateCurrentUser();
        
         // do we have a background, logged in user?
@@ -268,7 +278,6 @@ public partial class App_Master_GeneralPage : System.Web.UI.MasterPage
         if (dt.Rows.Count == 0) return; // nothing to do
         rptTabs.DataSource = dt;
         rptTabs.DataBind();
-     
     }
 
     private DataTable getPortalLinkTable()
@@ -289,17 +298,15 @@ public partial class App_Master_GeneralPage : System.Web.UI.MasterPage
         s.AddOutputColumn("IsPublic");
         s.AddOutputColumn("MembersOnly");
 
-         //Log in the anonymous user
+        // Log in the anonymous user
         using (var serviceProxy = ConciergeAPIProxyGenerator.GenerateProxy())
         {
-            dt = serviceProxy.ExecuteSearch(s, 0, null).ResultValue.Table;
+            dt = serviceProxy.GetSearchResult(s, 0, null).Table;
             
             //Do not logout because that will logout anyone doing impersonation resulting in a session expired error
             //serviceProxy.Logout();
 
-       
-
-        // remove expired links
+            // remove expired links
             for (int i = dt.Rows.Count - 1; i >= 0; i--)
             {
                 DataRow dr = dt.Rows[i];
@@ -317,116 +324,34 @@ public partial class App_Master_GeneralPage : System.Web.UI.MasterPage
                         continue;
                     }
                 }
-                else
-                    if (isMembersOnly)
+                else if (isMembersOnly)
+                {
+                    if (!MembershipLogic.IsActiveMember()) // not a member
                     {
-                        // let's run a quick search here
-                        Search ss = new Search(msIndividual.CLASS_NAME);
-                        ss.AddCriteria(Expr.Equals("ID", ConciergeAPI.CurrentEntity.ID));
-                        ss.AddOutputColumn("Membership.ReceivesMemberBenefits");
-
-
-                        var dtMember = serviceProxy.ExecuteSearch(ss, 0, 1).ResultValue.Table;
-
-                        if (dtMember == null || dtMember.Rows.Count == 0)
-                        {
-                            // remove it
-                            dt.Rows.RemoveAt(i);
-                            continue;
-                        }
-
-                        object o = dtMember.Rows[0]["Membership.ReceivesMemberBenefits"];
-                        if (o == DBNull.Value || !Convert.ToBoolean(o)) // not a member
-                        {
-                            // remove it
-                            dt.Rows.RemoveAt(i);
-                            continue;
-                        }
+                        // remove it
+                        dt.Rows.RemoveAt(i);
+                        continue;
                     }
+                }
+
                 if (Convert.IsDBNull(dr["ExpirationDate"])) // good
                     continue;
                 DateTime dtExpiration = (DateTime) dr["ExpirationDate"];
                 if (dtExpiration < DateTime.UtcNow)
                     dt.Rows.RemoveAt(i); // it's expired
-
-               
             }
-
-
-
         }
-        //dt.Columns.Add("Url");
-
-        //if ( dt.Rows.Count > 0 )    // we have to 
-        //{
-        //    DataRow dr = dt.NewRow();
-        //    dr["Url"] = "/default.aspx";
-        //    dr["Name"] = "Home";
-        //    dt.Rows.InsertAt( dr, 0 );
-        //}
 
         SessionManager.Set("PortalLinks", dt );
 
         return dt;
-            
-       
     }
 
     private void populateCurrentUser()
     {
         lCurrentUserID.Text = ConciergeAPI.CurrentEntity.LocalID.ToString();
         lCurrentUserName.Text = ConciergeAPI.CurrentEntity.Name;
-
-        //MS-1151
-        //Moved logic to MyProfile.ascx.cs
-        //var accessibleEntities = ConciergeAPI.AccessibleEntities;
-        //if (accessibleEntities == null || accessibleEntities.Count == 0) return;    // done
-
-        //// now, we have accessible entities!
-        //lCurrentUserName.Visible = false;
-        //ddlMultipleUsers.Visible = true;
-
-        //foreach( var e in accessibleEntities )
-        //    ddlMultipleUsers.Items.Add(new ListItem(string.Format("{0} ({1})", e.Name, e.Type), e.ID));
-
-        //// set the value
-        //ListItem li = ddlMultipleUsers.Items.FindByValue(ConciergeAPI.CurrentEntity.ID);
-        //if (li == null)   // this shouldn't happen
-        //{
-        //    li = new ListItem(ConciergeAPI.CurrentEntity.Name, ConciergeAPI.CurrentEntity.ID); 
-        //    ddlMultipleUsers.Items.Add(li);
-        //}
-
-        //ddlMultipleUsers.ClearSelection();
-        //li.Selected = true;
-        //ddlMultipleUsers.SelectedValue = ConciergeAPI.CurrentEntity.ID;
-
     }
-
-    //MS-1151
-    //Moved logic to MyProfile.ascx.cs
-    //protected void ddlMultiplesUsers_SelectedIndexChanged(object sender, EventArgs e)
-    //{
-    //    msEntity newEntity = null ;
-    //    using (var api = ConciergeAPIProxyGenerator.GenerateProxy())
-    //    {
-    //        newEntity = api.Get(ddlMultipleUsers.SelectedValue).ResultValue.ConvertTo<msEntity>();
-
-
-    //        if (newEntity == null) return; // entity was erased?
-
-    //        ConciergeAPI.CurrentEntity = newEntity;
-
-    //        // record that this was the last one logged in
-    //        // let's re-load it from the database
-    //        var pu = api.Get(ConciergeAPI.CurrentUser.ID).ResultValue.ConvertTo<msPortalUser>();
-    //        pu.LastLoggedInAs = newEntity.ID;
-    //        api.Save(pu);
-    //    }
-
-    //    MultiStepWizards.ClearAll();
-    //    Response.Redirect("/default.aspx");
-    //}
 
     protected void rptTabs_DataBound(object sender, RepeaterItemEventArgs e)
     {
@@ -505,30 +430,39 @@ public partial class App_Master_GeneralPage : System.Web.UI.MasterPage
         // now, populate the title
         LiteralControl lc = null;
         bool doNotAddControl = false;
-        foreach (var c in PageTitle.Controls)
+
+        var pageTitleContent = PageTitle;
+
+        // Check if the PageTitle content is wrapping another PageTitle (happens for the DataPage Master Page)
+        var childControl = PageTitle.FindControl("PageTitle") as ContentPlaceHolder;
+        if (childControl != null)
+            pageTitleContent = childControl;
+
+        foreach (var c in pageTitleContent.Controls)
         {
-            if (c is LiteralControl)
+            if (c is LiteralControl && lc == null)
                 lc = (LiteralControl)c;
 
             if (c is Literal) // there's already a literal
                 doNotAddControl = true;
-            }
+        }
 
-        if (lc != null && ! doNotAddControl )
+        if (lc != null && !doNotAddControl)
         {
             var ppo = new msPortalControlPropertyOverride
-                          {
-                              PageName = Request.Url.LocalPath,
-                              ControlName = "__PageTitle",
-                              PropertyName = "Text",
-                              Value = lc.Text
-                          };
+            {
+                PageName = Request.Url.LocalPath,
+                ControlName = "__PageTitle",
+                PropertyName = "Text",
+                Value = lc.Text
+            };
             ppo["Type"] = typeof(LiteralControl).Name;
 
             eligibleControls.Add(ppo);
         }
-    }
 
+        OnAddCustomOverrideEligibleControlsEvent(eligibleControls);
+    }
 
     /// <summary>
     /// Recursively populates the eligible controls.
@@ -571,8 +505,6 @@ public partial class App_Master_GeneralPage : System.Web.UI.MasterPage
             _populateEligibleControls( allControls, eligibleControls, c);
         }
 
-      
-
         return;
     }
 
@@ -612,10 +544,6 @@ public partial class App_Master_GeneralPage : System.Web.UI.MasterPage
             return false;
 
         // purposely don't include labels, as they are typically dynamic
-        return  control is Literal || control is LinkButton || control is Button || control is HyperLink || control is CheckBox   ;
-
-            
-
-
+        return  control is Literal || control is LinkButton || control is Button || control is HyperLink || control is CheckBox;
     }
 }

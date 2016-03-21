@@ -58,10 +58,10 @@ public partial class continuingeducation_ViewMyComponents : PortalPage
             s2.AddCriteria(Expr.IsLessThanOrEqual("ComponentRegistration.Component.StartDate", dpTo.SelectedDate.Value));
         }
 
-        var dt = ExecuteSearch(s, 0, null).Table;
+        var dt = APIExtensions.GetSearchResult(s, 0, null).Table;
         
         // let's get the credits, too
-        var dtCredits = ExecuteSearch(s2, 0, null).Table;
+        var dtCredits = APIExtensions.GetSearchResult(s2, 0, null).Table;
 
         dt.Columns.Add("Credits");
 

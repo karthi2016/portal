@@ -9,8 +9,7 @@
 <asp:Content ID="Content3" ContentPlaceHolderID="BreadcrumbBar" runat="Server">
 </asp:Content>
 <asp:Content ID="Content4" ContentPlaceHolderID="PageTitle" runat="Server">
-    View Gift -
-    <%=targetGift.Name  %>
+    View Gift - <asp:Literal runat="server" ID="PageTitleExtension"></asp:Literal>
 </asp:Content>
 <asp:Content ID="Content5" ContentPlaceHolderID="TopRightContent" runat="Server">
 </asp:Content>
@@ -46,7 +45,7 @@
                 <asp:Literal ID="Literal2" runat="Server">Amount:</asp:Literal>
             </td>
             <td>
-                <%= GetSearchResult( dr, "Amount", "C") %>
+                <%= GetSearchResult( dr, "Total", "C") %>
             </td>
         </tr>
         <tr>
@@ -123,7 +122,7 @@
             <MasterTableView>
                 <Columns>
                     <telerik:GridBoundColumn DataField="Date" HeaderText="Date" DataFormatString="{0:D}" />
-                    <telerik:GridBoundColumn DataField="Amount" HeaderText="Amount" DataFormatString="{0:C}" />
+                    <telerik:GridBoundColumn DataField="Total" HeaderText="Amount" DataFormatString="{0:C}" />
                     <telerik:GridBoundColumn DataField="AmountPaid" HeaderText="Amount Paid" DataFormatString="{0:C}" />
                 </Columns>
             </MasterTableView>

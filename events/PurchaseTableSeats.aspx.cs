@@ -25,7 +25,7 @@ public partial class events_PurchaseTableSeats : PortalPage
     {
         base.InitializeTargetObject();
 
-        targetEvent = LoadObjectFromAPI(ContextID).ConvertTo<msEvent>();
+        targetEvent = LoadObjectFromAPI<msEvent>(ContextID);
         if (targetEvent == null)
         {
             GoToMissingRecordPage();
@@ -52,8 +52,8 @@ public partial class events_PurchaseTableSeats : PortalPage
             s.AddCriteria(Expr.Equals("IsActive", true));
             s.AddSortColumn("DisplayOrder");
             s.AddSortColumn("Name");
-            
-            var results = api.ExecuteSearch( s, 0, null ).ResultValue;
+
+            var results = api.GetSearchResult(s, 0, null);
 
             List<string> productIDs = new List<string>();
             foreach (DataRow dr in results.Table.Rows)
@@ -150,7 +150,7 @@ public partial class events_PurchaseTableSeats : PortalPage
             HiddenField hfProductID = (HiddenField)ri.FindControl("hfProductID");
 
             msOrderLineItem li = new msOrderLineItem();
-            li.Quantity = decimal.Parse(tbQuantity.Text);
+            li.Quantity = int.Parse(tbQuantity.Text);
             if (li.Quantity <= 0)
                 continue;   // don't add
 

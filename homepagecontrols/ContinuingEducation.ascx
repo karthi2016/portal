@@ -1,6 +1,6 @@
 ﻿<%@ Control Language="C#" AutoEventWireup="true" CodeFile="ContinuingEducation.ascx.cs"
     Inherits="homepagecontrols_ContinuingEducation" %>
-<div class="sectCont">
+<div class="sectCont" runat="server" id="divContinuingEducation">
     <div class="sectHeaderTitle hIconClipboard">
         <h2>
           <asp:Literal ID="Widgets_CEU_Title" runat="server">My CEU Credits</asp:Literal> </h2>

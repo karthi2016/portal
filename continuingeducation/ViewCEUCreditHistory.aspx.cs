@@ -26,7 +26,7 @@ public partial class continuingeducations_ViewCEUCreditHistory : PortalPage
         s.AddOutputColumn(msCEUCredit.FIELDS.SelfReported);
         s.AddOutputColumn("Event.Name");
 
-        gvCredits.DataSource = ExecuteSearch(s, 0, null).Table;
+        gvCredits.DataSource = APIExtensions.GetSearchResult(s, 0, null).Table;
         gvCredits.DataBind();
 
         btnReport.Visible = PortalConfiguration.CurrentConfig.CEUSelfReportingMode != CertificationsSelfReportingMode.Disabled;

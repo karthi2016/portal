@@ -15,8 +15,7 @@
         ></a>
 </asp:Content>
 <asp:Content ID="Content4" ContentPlaceHolderID="PageTitle" runat="Server">
-    <%=targetChapter.Name %>
-    Members
+    <asp:Literal runat="server" ID="CustomTitle"></asp:Literal>
 </asp:Content>
 <asp:Content ID="Content5" ContentPlaceHolderID="TopRightContent" runat="Server">
 </asp:Content>
@@ -51,7 +50,7 @@
             <cc1:DualListBox runat="server" ID="dlbOutputFields" />
         </div>
     </div>
-    <div class="section" style="margin-top: 10px">
+    <div class="section" style="margin-top: 10px" runat="server" id="OutputFormatSection">
         <div class="sectionHeaderTitle">
             <h2>
                 <asp:Literal ID="lOutputFormat" runat="server">Output Format</asp:Literal></h2>
@@ -61,11 +60,14 @@
                 <asp:ListItem Text="To My Screen" Value="screen" Selected="True" />
                 <asp:ListItem Text="Excel" Value="download" />
             </asp:RadioButtonList>
-            <div style="text-align: center; padding-top: 20px">
-                <asp:Button runat="server" ID="Button2" Text="Execute Search" OnClick="btnSearch_Click" /></div>
         </div>
     </div>
-   
+    <div class="sectionContent">
+        <hr width="100%" />
+        <div align="center" style="padding-top: 20px">
+            <asp:Button runat="server" ID="Button2" Text="Execute Search" OnClick="btnSearch_Click" />
+        </div>
+    </div>
       <div class="section" style="margin-top: 10px">
         <div class="sectionHeaderTitle">
             <h2>

@@ -49,7 +49,7 @@ public partial class events_CreateEditEventMerchandise : PortalPage
             eventMerchandiseFieldMetadata = eventMerchandiseClassMetadata.GenerateFieldDictionary();
         }
 
-        MemberSuiteObject contextObject = LoadObjectFromAPI(ContextID);
+        var contextObject = APIExtensions.LoadObjectFromAPI(ContextID);
 
         if (contextObject.ClassType == msEvent.CLASS_NAME)
         {
@@ -151,10 +151,10 @@ public partial class events_CreateEditEventMerchandise : PortalPage
 
     protected void loadDataFromConcierge()
     {
-        List<Search> searches = new List<Search>();
+        var searches = new List<Search>();
 
-        //Search for confirmation emails
-        Search sConfirmationEmails = new Search(msEmailTemplateContainer.CLASS_NAME);
+        // Search for confirmation emails
+        var sConfirmationEmails = new Search(msEmailTemplateContainer.CLASS_NAME);
         sConfirmationEmails.AddOutputColumn("ID");
         sConfirmationEmails.AddOutputColumn("Name");
         sConfirmationEmails.AddCriteria(Expr.Equals("ApplicableType", "OrderLineItem"));
@@ -162,7 +162,7 @@ public partial class events_CreateEditEventMerchandise : PortalPage
 
         searches.Add(sConfirmationEmails);
 
-        List<SearchResult> searchResults = ExecuteSearches(searches, 0, null);
+        var searchResults = APIExtensions.GetMultipleSearchResults(searches, 0, null);
         dvConfirmationEmails = new DataView(searchResults[0].Table);
     }
 

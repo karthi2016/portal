@@ -64,6 +64,8 @@ public partial class discussions_ViewForum : DiscussionsPage
 
         rptTopics.DataSource = dtDiscussionTopics;
         rptTopics.DataBind();
+
+        PageTitleExtension.Text = targetForum.Name;
     }
 
     #endregion
@@ -90,7 +92,7 @@ public partial class discussions_ViewForum : DiscussionsPage
         sDiscussionTopic.AddSortColumn("LastDiscussionPost.CreatedDate", true);
         sDiscussionTopic.AddSortColumn("Name");
 
-        SearchResult srDiscussionTopic = ExecuteSearch(proxy, sDiscussionTopic, PageStart, PAGE_SIZE);
+        SearchResult srDiscussionTopic = proxy.GetSearchResult(sDiscussionTopic, PageStart, PAGE_SIZE);
         dtDiscussionTopics = srDiscussionTopic.Table;
 
         for (int i = 0; i < dtDiscussionTopics.Columns.Count; i++)
@@ -112,7 +114,7 @@ public partial class discussions_ViewForum : DiscussionsPage
                                                       DiscussionPostStatus.Pending.ToString()));
         sPostsPendingApproval.AddSortColumn("DiscussionPost.CreatedDate", true);
 
-        SearchResult srPostsPendingApproval = ExecuteSearch(proxy, sPostsPendingApproval, 0, 1);
+        SearchResult srPostsPendingApproval = proxy.GetSearchResult(sPostsPendingApproval, 0, 1);
         if (srPostsPendingApproval.Table.Rows.Count > 0)
             drLastPostPendingApproval = srPostsPendingApproval.Table.Rows[0];
         numberOfPostsPendingApproval = srPostsPendingApproval.TotalRowCount;

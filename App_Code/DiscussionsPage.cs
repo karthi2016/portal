@@ -28,7 +28,6 @@ public class DiscussionsPage : PortalPage
     protected msOrganizationalLayer targetOrganizationalLayer;
     protected msEvent targetEvent;
 
-    protected DataRow drMembership;
     protected bool editMode;
 
     protected msMembershipLeader leader;
@@ -85,26 +84,6 @@ public class DiscussionsPage : PortalPage
     protected override void InitializeTargetObject()
     {
         base.InitializeTargetObject();
-
-        List<Search> searches = new List<Search>();
-
-        Search sMembership = new Search(msEntity.CLASS_NAME) { ID = msMembership.CLASS_NAME };
-        sMembership.AddOutputColumn("ID");
-        sMembership.AddOutputColumn("Membership");
-        sMembership.AddOutputColumn("Membership.ReceivesMemberBenefits");
-        sMembership.AddOutputColumn("Membership.TerminationDate");
-        sMembership.AddCriteria(Expr.Equals("ID", ConciergeAPI.CurrentEntity.ID));
-        sMembership.AddSortColumn("ID");
-
-        searches.Add(sMembership);
-
-        List<SearchResult> searchResults = ExecuteSearches(searches, 0, 1);
-
-        SearchResult srMembership = searchResults.Single(x => x.ID == msMembership.CLASS_NAME);
-        drMembership = srMembership != null && srMembership.Table != null &&
-                       srMembership.Table.Rows.Count > 0
-                           ? srMembership.Table.Rows[0]
-                           : null;
     }
 
     protected override bool CheckSecurity()
@@ -112,7 +91,7 @@ public class DiscussionsPage : PortalPage
         if(!base.CheckSecurity())
             return false;
 
-        if(targetForum != null && (!targetForum.IsActive || (targetForum.MembersOnly && !isActiveMember())))
+        if(targetForum != null && (!targetForum.IsActive || (targetForum.MembersOnly && !MembershipLogic.IsActiveMember())))
             return false;
 
         return true;
@@ -125,36 +104,6 @@ public class DiscussionsPage : PortalPage
     protected virtual void loadDataFromConcierge(IConciergeAPIService proxy)
     {
         
-    }
-
-    protected bool isActiveMember()
-    {
-        if (drMembership == null)
-            return false;
-
-        //Check if the appropriate fields exist - if they do not then the membership module is inactive
-        if (
-            !(drMembership.Table.Columns.Contains("Membership") &&
-              drMembership.Table.Columns.Contains("Membership.ReceivesMemberBenefits") &&
-              drMembership.Table.Columns.Contains("Membership.TerminationDate")))
-            return false;
-
-        //Check there is a membership
-        if (string.IsNullOrWhiteSpace(Convert.ToString(drMembership["Membership"])))
-            return false;
-
-        //Check the membership indicates membership benefits
-        if (!drMembership.Field<bool>("Membership.ReceivesMemberBenefits"))
-            return false;
-
-        //At this point if the termination date is null the member should be able to see the restricted directory
-        DateTime? terminationDate = drMembership.Field<DateTime?>("Membership.TerminationDate");
-
-        if (terminationDate == null)
-            return true;
-
-        //There is a termination date so check if it's future dated
-        return terminationDate > DateTime.Now;
     }
 
     protected string FormatDate(object value)
@@ -189,7 +138,7 @@ public class DiscussionsPage : PortalPage
         if(targetChapter != null)
         {
             Search sChapterLeader = GetChapterLeaderSearch(targetChapter.ID);
-            SearchResult srChapterLeader = ExecuteSearch(proxy, sChapterLeader, 0, 1);
+            SearchResult srChapterLeader = proxy.GetSearchResult(sChapterLeader, 0, 1);
             leader = ConvertLeaderSearchResult(srChapterLeader);
             hasLeaderSearchBeenRun = true;
         }
@@ -197,7 +146,7 @@ public class DiscussionsPage : PortalPage
         if (targetSection != null)
         {
             Search sSectionLeader = GetSectionLeaderSearch(targetSection.ID);
-            SearchResult srSectionLeader = ExecuteSearch(proxy, sSectionLeader, 0, 1);
+            SearchResult srSectionLeader = proxy.GetSearchResult(sSectionLeader, 0, 1);
             leader = ConvertLeaderSearchResult(srSectionLeader);
             hasLeaderSearchBeenRun = true;
         }
@@ -205,7 +154,7 @@ public class DiscussionsPage : PortalPage
         if (targetOrganizationalLayer != null)
         {
             Search sOrganizationalLayerLeader = GetOrganizationalLayerLeaderSearch(targetOrganizationalLayer.ID);
-            SearchResult srOrganizationalLayerLeader = ExecuteSearch(proxy, sOrganizationalLayerLeader, 0, 1);
+            SearchResult srOrganizationalLayerLeader = proxy.GetSearchResult(sOrganizationalLayerLeader, 0, 1);
             leader = ConvertLeaderSearchResult(srOrganizationalLayerLeader);
             hasLeaderSearchBeenRun = true;
         }
@@ -235,7 +184,7 @@ public class DiscussionsPage : PortalPage
         sSubscription.AddCriteria(Expr.Equals("Subscriber", ConciergeAPI.CurrentEntity.ID));
         sSubscription.AddSortColumn("Subscriber");
 
-        SearchResult srSubscription = ExecuteSearch(proxy, sSubscription, 0, 1);
+        SearchResult srSubscription = proxy.GetSearchResult(sSubscription, 0, 1);
         if (srSubscription.TotalRowCount > 0 && srSubscription.Table != null && srSubscription.Table.Rows.Count > 0)
             drSubscription = srSubscription.Table.Rows[0];
     }

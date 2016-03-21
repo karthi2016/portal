@@ -141,6 +141,8 @@ public partial class sections_ViewSectionMembers_SelectFields : PortalPage
 
         populateAvailableOutputFields();
         bindSearchOutputsToPage();
+
+        CustomTitle.Text = string.Format("{0} Members", targetSection.Name);
     }
 
     protected override bool CheckSecurity()

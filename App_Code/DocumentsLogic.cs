@@ -144,7 +144,7 @@ public class DocumentsLogic
         sFolders.AddCriteria(Expr.Equals("ID", folderID ));
         sFolders.AddOutputColumn("FolderPath");
 
-        var sr = api.ExecuteSearch(sFolders, 0, 1).ResultValue;
+        var sr = api.GetSearchResult(sFolders, 0, 1);
         if (sr.TotalRowCount > 0)
             return (string)sr.Table.Rows[0]["FolderPath"];
 
@@ -190,7 +190,7 @@ public class DocumentsLogic
         if (typeName == msOrganizationalLayer.CLASS_NAME) // special logic
         {
             string orgLayerID = membershipObjectID;
-            var results = api.ExecuteSearch(MembershipLogic.GetSearchForOrganizationalLayerMemberships(), 0, null).ResultValue.Table;
+            var results = api.GetSearchResult(MembershipLogic.GetSearchForOrganizationalLayerMemberships(), 0, null).Table;
 
             // search all the columns for the id
             foreach (DataRow dr in results.Rows)
@@ -201,15 +201,24 @@ public class DocumentsLogic
             return false;
         }
 
+        var sFlowDown = new Search("MembershipWithFlowDown");
+        sFlowDown.AddCriteria(Expr.Equals("Owner", entityID));
+
+        var flowdownMembership = api.GetSearchResult(sFlowDown, 0, 1);
+
         // is the person a member of the chapter?
         Search s = new Search( typeName + "Membership");
-        s.AddCriteria(Expr.Equals("Membership.Owner", entityID));
+        var sog = new SearchOperationGroup { GroupType = SearchOperationGroupType.Or };
+        sog.Criteria.Add(Expr.Equals("Membership.Owner", entityID));
+        if (flowdownMembership != null && flowdownMembership.TotalRowCount > 0)
+            sog.Criteria.Add(Expr.Equals("Membership", flowdownMembership.Table.Rows[0]["ID"]));
+        s.AddCriteria(sog);
         s.AddCriteria(Expr.Equals(typeName, membershipObjectID));
         s.AddCriteria( Expr.Equals("IsCurrent", true ));
         s.AddOutputColumn("Membership");
         s.AddSortColumn("ListIndex");
 
-        if (api.ExecuteSearch(s, 0, 1).ResultValue.TotalRowCount > 0)
+        if (api.GetSearchResult(s, 0, 1).TotalRowCount > 0)
             return true;    // yep
 
         // ok - what about a leader?
@@ -219,7 +228,7 @@ public class DocumentsLogic
         sLeaders.AddOutputColumn(typeName);
         sLeaders.AddSortColumn("ListIndex");
 
-        if (api.ExecuteSearch(sLeaders, 0, 1).ResultValue.TotalRowCount > 0)
+        if (api.GetSearchResult(sLeaders, 0, 1).TotalRowCount > 0)
             return true;    // they are a leader
 
         return false;
@@ -252,7 +261,7 @@ public class DocumentsLogic
                     sLeaders.AddOutputColumn("ListIndex");
                     sLeaders.AddSortColumn("ListIndex");
 
-                    return api.ExecuteSearch(sLeaders, 0, 1).ResultValue.TotalRowCount > 0;
+                    return api.GetSearchResult(sLeaders, 0, 1).TotalRowCount > 0;
 
                 
                   
@@ -280,7 +289,7 @@ public class DocumentsLogic
 
         SearchResult sr;
         using( var api = ConciergeAPIProxyGenerator.GenerateProxy())
-        sr = api.ExecuteSearch( s,0,1).ResultValue;
+            sr = api.GetSearchResult(s, 0, 1);
 
         if (sr.TotalRowCount == 0 ) return false;
         DataRow dr = sr.Table.Rows[0];

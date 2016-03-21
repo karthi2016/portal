@@ -86,7 +86,7 @@ public partial class financial_ViewOrder : PortalPage
         s.AddOutputColumn("ShippingAddress");
         s.AddOutputColumn("PurchaseOrderNumber");
 
-        var sr = ExecuteSearch(s, 0, 1);
+        var sr = APIExtensions.GetSearchResult(s, 0, 1);
         if (sr.TotalRowCount == 0)
             GoToMissingRecordPage();
 
@@ -95,7 +95,7 @@ public partial class financial_ViewOrder : PortalPage
         if (string.IsNullOrWhiteSpace(LeaderOfId))
             return;
 
-        MemberSuiteObject leaderOf = LoadObjectFromAPI(LeaderOfId);
+        var leaderOf = APIExtensions.LoadObjectFromAPI(LeaderOfId);
         switch (leaderOf.ClassType)
         {
             case msChapter.CLASS_NAME:
@@ -119,13 +119,13 @@ public partial class financial_ViewOrder : PortalPage
     {
         base.InitializePage();
 
-        Search sOrderItems = generateOrderItemsSearch();
-        Search sInvoices = generateInvoicesSearch();
-        Search sPayments = generatePaymentsSearch();
-        Search sInstallmentsSearch = generateInstallmentsSearch();
+        var sOrderItems = generateOrderItemsSearch();
+        var sInvoices = generateInvoicesSearch();
+        var sPayments = generatePaymentsSearch();
+        var sInstallmentsSearch = generateInstallmentsSearch();
 
-        List<Search> searchesToRun = new List<Search> { sOrderItems, sInvoices, sPayments, sInstallmentsSearch  };
-        var searchResults = ExecuteSearches(searchesToRun, 0, null);
+        var searchesToRun = new List<Search> { sOrderItems, sInvoices, sPayments, sInstallmentsSearch  };
+        var searchResults = APIExtensions.GetMultipleSearchResults(searchesToRun, 0, null);
 
         gvOrderItems.DataSource = searchResults[0].Table;
         gvOrderItems.DataBind();
@@ -148,6 +148,8 @@ public partial class financial_ViewOrder : PortalPage
 
         if (string.IsNullOrWhiteSpace(GetSearchResult(targetOrder, "CustomerNotes")))
             divNotes.Visible = false;
+
+        PageTitleExtenstion.Text = GetSearchResult(targetOrder, "LocalID", null);
 
     }
 
@@ -187,7 +189,7 @@ public partial class financial_ViewOrder : PortalPage
         
         s.AddOutputColumn("Payment.Date");
         s.AddOutputColumn("Payment.Owner.Name");
-        s.AddOutputColumn("Amount");
+        s.AddOutputColumn(msPaymentLineItem.FIELDS.Total);
         s.AddOutputColumn("Payment");
         s.AddOutputColumn("Payment.Name");
         
@@ -274,14 +276,14 @@ public partial class financial_ViewOrder : PortalPage
 
         using (var api = GetServiceAPIProxy())
         {
-            var result = api.ExecuteSearch(s, 0, null).ResultValue;
+            var result = api.GetSearchResult(s, 0, null);
 
             if (result.Table != null)
                 rgInstallments.DataSource = result.Table.DefaultView;
 
-
             rgInstallments.VirtualItemCount = result.TotalRowCount;
 
+            rgInstallments.Visible = result.TotalRowCount > 0;
             lNoIntallmentPlans.Visible = result.TotalRowCount == 0;
         }
     }
