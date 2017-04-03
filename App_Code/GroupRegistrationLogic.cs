@@ -44,7 +44,16 @@ public class GroupRegistrationLogic
         // OK, let's see if this person is linked to any companies
         Search s = new Search("RelationshipsForARecord");
         s.Context = currentEntity.ID ;
-        s.AddCriteria(Expr.Equals("IsLeftSide", false ));  // the right side of the relationship is the individual
+        s.AddCriteria(Expr.Equals("IsLeftSide", false ));  // the right side of the relationship is the individual        
+        // MSIV-5 Indivdiuals with expired relationships should not be eligible for Event Group Registration
+        var sog1 = new SearchOperationGroup { GroupType = SearchOperationGroupType.Or };
+        sog1.Criteria.Add(Expr.Equals(msRelationship.FIELDS.StartDate, null));
+        sog1.Criteria.Add(Expr.IsLessThanOrEqual(msRelationship.FIELDS.StartDate, DateTime.Today.Date));
+        s.AddCriteria(sog1);
+        var sog2 = new SearchOperationGroup { GroupType = SearchOperationGroupType.Or };
+        sog2.Criteria.Add(Expr.Equals(msRelationship.FIELDS.EndDate, null));
+        sog2.Criteria.Add(Expr.IsGreaterThan(msRelationship.FIELDS.EndDate, DateTime.Today.Date));
+        s.AddCriteria(sog2);
         
         // now, we do an is one of the follow for relationship types
         IsOneOfTheFollowing isTypes = new IsOneOfTheFollowing { FieldName = "Type_ID" };
@@ -60,7 +69,7 @@ public class GroupRegistrationLogic
             entities.Add(Convert.ToString(dr["Target_ID"]));
 
         // keep in mind we may have orphaned relationships, so we have to make sure each org ID exists!
-        return entities;
+        return entities.Distinct().ToList();
 
     }
 

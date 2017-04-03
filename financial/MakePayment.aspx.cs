@@ -5,6 +5,7 @@ using System.Linq;
 using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
+using MemberSuite.SDK.Concierge;
 using MemberSuite.SDK.Results;
 using MemberSuite.SDK.Searching;
 using MemberSuite.SDK.Searching.Operations;
@@ -16,7 +17,7 @@ public partial class financial_MakePayment : PortalPage
     protected DataView dvCredits;
     protected DataView dvOptionalItems;
     protected msPayment targetPayment;
-    protected msEntity targetEntity;
+    protected msEntity targetEntity;    
 
     /// <summary>
     /// Initializes the target object for the page
@@ -40,6 +41,8 @@ public partial class financial_MakePayment : PortalPage
         targetPayment = CreateNewObject<msPayment>();
         targetPayment.Owner = targetEntity.ID;
         targetPayment.Date = DateTime.UtcNow;
+        // We can't trust defult cash account set by describer.
+        targetPayment.CashAccount = string.Empty;
     }
 
     protected override void InitializePage()
@@ -62,18 +65,20 @@ public partial class financial_MakePayment : PortalPage
         sInvoices.AddOutputColumn("Name");
         sInvoices.AddOutputColumn("Date");
         sInvoices.AddOutputColumn("BalanceDue");
+        sInvoices.AddOutputColumn("BusinessUnit.DoNotAllowPartialPaymentsInPortal");
         sInvoices.AddCriteria(Expr.Equals("BillTo.ID", targetEntity.ID));
         sInvoices.AddCriteria(Expr.IsGreaterThan("BalanceDue", 0));
+        sInvoices.AddSortColumn("LocalID");
         searches.Add(sInvoices);
 
         var sCredits = new Search { Type = msCredit.CLASS_NAME };
         sCredits.AddOutputColumn("ID");
         sCredits.AddOutputColumn("Name");
         sCredits.AddOutputColumn("Date");
-        sCredits.AddOutputColumn("UseThrough");
         sCredits.AddOutputColumn("AmountAvailable");
         sCredits.AddCriteria(Expr.Equals(msCredit.FIELDS.Owner, targetEntity.ID));
         sCredits.AddCriteria(Expr.IsGreaterThan("AmountAvailable", 0));
+        sCredits.AddSortColumn("LocalID");
         searches.Add(sCredits);
 
         var sInvoiceItems = new Search { Type = msInvoiceLineItem.CLASS_NAME };
@@ -81,10 +86,12 @@ public partial class financial_MakePayment : PortalPage
         sInvoiceItems.AddOutputColumn("Total");
         sInvoiceItems.AddOutputColumn("Description");
         sInvoiceItems.AddOutputColumn("Product.Name");
+        
         sInvoiceItems.AddCriteria(Expr.Equals("Invoice.BillTo.ID", targetEntity.ID));
         sInvoiceItems.AddCriteria(Expr.IsGreaterThan("Invoice.BalanceDue", 0));
         sInvoiceItems.AddCriteria(Expr.Equals("Optional", true));
         sInvoiceItems.AddSortColumn("Invoice");
+        sInvoiceItems.AddSortColumn("InvoiceLineItemID");
         searches.Add(sInvoiceItems);
 
         var results = APIExtensions.GetMultipleSearchResults(searches, 0, null);
@@ -109,11 +116,20 @@ public partial class financial_MakePayment : PortalPage
             //Bind the invoices gridview to the data from the concierge
             rptInvoices.DataSource = dvInvoices;
             rptInvoices.DataBind();
-            /*
+
+            // Until fully fixed, continue to hide credits
+            secCredits.Visible = false;
+
             //Bind the credits gridview to the data from the concierge
-            gvCredits.DataSource = dvCredits;
-            gvCredits.DataBind();
-            */
+            if (dvCredits.Count > 0 && secCredits.Visible)
+            {
+                gvCredits.DataSource = dvCredits;
+                gvCredits.DataBind();
+            }
+            else
+            {
+                secCredits.Visible = false;
+            }
         }
     }
 
@@ -139,32 +155,8 @@ public partial class financial_MakePayment : PortalPage
         targetPayment.Total = decimal.Parse(tbAmount.Text);
         targetPayment.LineItems = new List<msPaymentLineItem>();
 
-        // let's pull all of the open invoices
-        foreach (RepeaterItem row in rptInvoices.Items)
-        {
-            if (row.ItemType == ListItemType.Item || row.ItemType == ListItemType.AlternatingItem)
-            {
-                var cbUse = (CheckBox)row.FindControl("cbUse");
-                var tbAmountToPay = (TextBox)row.FindControl("tbAmountToPay");
-
-                if (!cbUse.Checked) continue;
-                var amt = decimal.Parse(tbAmountToPay.Text); // validator should ensure this is valid
-
-                decimal optAmt;
-                var tbOptionalAmount = (TextBox)row.FindControl("tbOptionalAmount");
-                if (decimal.TryParse(tbOptionalAmount.Text, out optAmt))
-                {
-                    amt += optAmt;
-                }
-
-                string id = dvInvoices[row.ItemIndex]["ID"].ToString();
-                var li = new msPaymentLineItem { Total = amt, Invoice = id, Type = PaymentLineItemType.Invoice };
-                targetPayment.LineItems.Add(li);
-            }
-        }
-
-        /*
-        // now, let's pull any and all credits
+        // Create a list of the possible Credit Usages
+        var creditUsages = new List<msCreditUsage>();
         foreach (GridViewRow row in gvCredits.Rows)
         {
             if (row.RowType == DataControlRowType.DataRow)
@@ -173,13 +165,106 @@ public partial class financial_MakePayment : PortalPage
                 var tbAmountToUse = (TextBox)row.FindControl("tbAmountToUse");
 
                 if (!cbUse.Checked) continue;
-                decimal amt = decimal.Parse(tbAmountToUse.Text); // validator should ensure this is valid
-                string id = dvCredits[row.DataItemIndex]["ID"].ToString();
-                var li = new msPaymentLineItem { Total = amt * -1, Credit = id, Type = PaymentLineItemType.Credit };
-                targetPayment.LineItems.Add(li);
+                var amt = decimal.Parse(tbAmountToUse.Text); // validator should ensure this is valid
+                var id = dvCredits[row.DataItemIndex]["ID"].ToString();
+
+                var creditUsage = new msCreditUsage
+                {
+                    Credit = id,
+                    Total = amt,
+                    LineItems = new List<msCreditUsageLineItem>()
+                };
+                creditUsage.Fields["Credit.Name"] = ((HyperLink)row.Cells[1].Controls[0]).Text;
+
+                creditUsages.Add(creditUsage);
             }
         }
-        */
+        
+        // pointer to the "current" Credit Usage and enumerator to iterate through list
+        var creditEnumerator = creditUsages.GetEnumerator();
+        var haveCredit = creditEnumerator.MoveNext();
+
+        // let's pull all of the open invoices
+        foreach (RepeaterItem row in rptInvoices.Items)
+        {
+            if (row.ItemType == ListItemType.Item || row.ItemType == ListItemType.AlternatingItem)
+            {
+                var cbUse = (CheckBox) row.FindControl("cbUse");
+                var tbAmountToPay = (TextBox) row.FindControl("tbAmountToPay");
+
+                if (!cbUse.Checked) continue;
+                decimal amt; // validator should ensure this is valid
+
+                // hidden balance is set if partial payments is disabled
+                var hiddenBalance = (HiddenField)row.FindControl("hiddenBalance");
+                if (string.IsNullOrWhiteSpace(hiddenBalance.Value) )
+                    amt = decimal.Parse(tbAmountToPay.Text);
+                else
+                {
+                    
+                    amt = decimal.Parse(hiddenBalance.Value);
+                }
+
+                decimal optAmt;
+                var tbOptionalAmount = (TextBox) row.FindControl("tbOptionalAmount");
+                if (decimal.TryParse(tbOptionalAmount.Text, out optAmt))
+                {
+                    amt += optAmt;
+                }
+
+                string id = dvInvoices[row.ItemIndex]["ID"].ToString();
+
+                // If we have Credit Usages, process those first
+                while (amt > 0 && haveCredit && creditEnumerator.Current != null)
+                {
+                    var creditRemaining = creditEnumerator.Current.Total -
+                                          creditEnumerator.Current.LineItems.Sum(ci => ci.Total);
+
+                    decimal creditAmt;
+                    if (creditRemaining >= amt)
+                    {
+                        creditAmt = amt;
+                        amt = 0;
+                    }
+                    else
+                    {
+                        creditAmt = creditRemaining;
+                        amt -= creditRemaining;
+                    }
+
+                    creditEnumerator.Current.LineItems.Add(new msCreditUsageLineItem {Total = creditAmt, Invoice = id});
+
+                    // If this Credit Usage is complete, move to the next one
+                    if (creditEnumerator.Current.LineItems.Sum(ci => ci.Total) == creditEnumerator.Current.Total)
+                    {
+                        haveCredit = creditEnumerator.MoveNext();
+                    }
+                }
+
+                if (amt > 0)
+                {
+                    var li = new msPaymentLineItem {Total = amt, Invoice = id, Type = PaymentLineItemType.Invoice};
+                    targetPayment.LineItems.Add(li);
+                }
+            }
+        }
+
+        foreach (var creditUsage in creditUsages)
+        {
+            using (var proxy = ConciergeAPIProxyGenerator.GenerateProxy())
+            {
+                var result = proxy.Save(creditUsage);
+                if (!result.Success)
+                {
+                    // Queue error and completely refresh page to get updates on Credit and Invoice Totals
+                    QueueBannerError(string.Format(
+                        "Unable to process {0}: {1}", 
+                        creditUsage.SafeGetValue<string>("Credit.Name"), 
+                        result.FirstErrorMessage));
+                    Refresh();
+                }
+            }
+        }
     }
 
     protected void rptInvoices_OnRowDataBound(object sender, RepeaterItemEventArgs e)
@@ -198,6 +283,10 @@ public partial class financial_MakePayment : PortalPage
                 var lDate = (Literal) e.Item.FindControl("lDate");
                 var lBalanceDue = (Literal) e.Item.FindControl("lBalanceDue");
                 var trOptional = e.Item.FindControl("trOptional");
+                var hiddenBalance = (HiddenField) e.Item.FindControl("hiddenBalance");
+
+
+                bool dontAllowPartialPayments = Convert.ToBoolean(drv["BusinessUnit.DoNotAllowPartialPaymentsInPortal"]);
 
                 decimal optionalTotal = 0;
                 var optionalLabel = new List<string>();
@@ -241,20 +330,30 @@ public partial class financial_MakePayment : PortalPage
                 lDate.Text = string.Format("{0:d}", drv["Date"]);
                 lBalanceDue.Text = string.Format("{0:C}", drv["BalanceDue"]);
 
+                if ( dontAllowPartialPayments )
+                    hiddenBalance.Value = drv["BalanceDue"].ToString();
+
                 if (string.IsNullOrEmpty(tbAmountToPay.Text)) tbAmountToPay.Text = "0.00";
 
                 cbUse.Attributes["onclick"] = string.Format(
-                    "setTextBoxValue( this, '{0}', '{1:F2}', '{2}');",
+                    "setTextBoxValue( this, '{0}', '{1:F2}', '{2}','{3}');",
                     tbAmountToPay.ClientID,
                     (decimal)drv["BalanceDue"] - optionalTotal,
-                    optionalTotal > 0 ? trOptional.ClientID : string.Empty);
+                    optionalTotal > 0 ? trOptional.ClientID : string.Empty, dontAllowPartialPayments);
 
                 lTotalScript.Text += string.Format(" + parseFloat( document.getElementById('{0}').value) ",
                     tbAmountToPay.ClientID);
 
-                lStartupScript.Text +=
-                    string.Format(" document.getElementById('{0}').disabled = !document.getElementById('{1}').checked;",
-                        tbAmountToPay.ClientID, cbUse.ClientID);
+
+                // MSIV-330
+                if ( ! dontAllowPartialPayments)
+                    lStartupScript.Text +=
+                        string.Format(" document.getElementById('{0}').disabled = !document.getElementById('{1}').checked;",
+                            tbAmountToPay.ClientID, cbUse.ClientID);
+                else
+                    lStartupScript.Text +=
+                         string.Format(" document.getElementById('{0}').disabled = true;",
+                            tbAmountToPay.ClientID);
 
                 tbAmountToPay.Attributes["onchange"] = "onTotalChange(this);";
 
@@ -277,7 +376,7 @@ public partial class financial_MakePayment : PortalPage
                 break;
         }
     }
-    /*
+    
     protected void gvCredits_OnRowDataBound(object sender, GridViewRowEventArgs e)
     {
         if (e.Row.RowType == DataControlRowType.DataRow)
@@ -298,9 +397,8 @@ public partial class financial_MakePayment : PortalPage
                 string.Format(" document.getElementById('{0}').disabled = !document.getElementById('{1}').checked;",
                               tbAmountToUse.ClientID, cbUse.ClientID);
 
-            tbAmountToUse.Attributes["onchange"] = "onTotalChange();";
+            tbAmountToUse.Attributes["onchange"] = "onTotalChange(this);";
             tbAmountToUse.Enabled = cbUse.Checked;
         }
     }
-    */
 }

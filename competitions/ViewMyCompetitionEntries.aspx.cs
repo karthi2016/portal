@@ -8,7 +8,7 @@ using System.Web.UI.WebControls;
 using MemberSuite.SDK.Concierge;
 using MemberSuite.SDK.Results;
 using MemberSuite.SDK.Searching;
-using MemberSuite.SDK.Searching.Operations; 
+using MemberSuite.SDK.Searching.Operations;
 using MemberSuite.SDK.Types;
 
 public partial class competitions_ViewMyCompetitionEntries : PortalPage
@@ -20,8 +20,8 @@ public partial class competitions_ViewMyCompetitionEntries : PortalPage
     #endregion
 
     #region Initialization
-    
-    protected override void  Page_Load(object sender, EventArgs e)
+
+    protected override void Page_Load(object sender, EventArgs e)
     {
         base.Page_Load(sender, e);
 
@@ -46,7 +46,8 @@ public partial class competitions_ViewMyCompetitionEntries : PortalPage
         sCompetitionEntries.AddOutputColumn("DateSubmitted");
         sCompetitionEntries.AddOutputColumn("Status");
         sCompetitionEntries.AddOutputColumn("Status.Name");
-        sCompetitionEntries.AddCriteria(Expr.Equals("Entrant",ConciergeAPI.CurrentEntity.ID));
+        sCompetitionEntries.AddOutputColumn("Competition.CloseDate");
+        sCompetitionEntries.AddCriteria(Expr.Equals("Entrant", ConciergeAPI.CurrentEntity.ID));
         sCompetitionEntries.AddSortColumn("Competition.Name");
         sCompetitionEntries.AddSortColumn("Competition.CloseDate");
 
@@ -64,25 +65,42 @@ public partial class competitions_ViewMyCompetitionEntries : PortalPage
         {
             case DataControlRowType.DataRow:
                 var drv = (DataRowView)e.Row.DataItem;
+
+                // If the Competition is Closed, stop processing
+                if (drv["Competition.CloseDate"] != DBNull.Value &&
+                    Convert.ToDateTime(drv["Competition.CloseDate"]) < DateTime.Now)
+                {
+                    break;
+                }
+
                 var competitionEntryInfo = CompetitionLogic.GetCompetitionEntryInformation(
                     drv["Competition"].ToString(),
                     CurrentEntity.ID);
                 var lbComplete = (LinkButton)e.Row.FindControl("lbComplete");
 
-                if (competitionEntryInfo == null) 
+                if (competitionEntryInfo == null || drv["Status"] == DBNull.Value)
                 {
                     lbComplete.Visible = false;
                     break;
                 }
 
-                if (drv["Status"] != DBNull.Value && drv["Status"].ToString() == competitionEntryInfo.DraftStatusId)
+                var status = Convert.ToString(drv["Status"]);
+
+                // If "Submitted", no need to show link at all - important if same status used for "Pending Payment" and "Submitted"
+                if (status.Equals(competitionEntryInfo.SubmittedStatusId, StringComparison.OrdinalIgnoreCase))
+                {
+                    lbComplete.Visible = false;
+                    break;
+                }
+
+                if (status.Equals(competitionEntryInfo.DraftStatusId, StringComparison.OrdinalIgnoreCase))
                 {
                     gvCompetitionEntries.Columns[4].Visible = true;
                     lbComplete.Visible = true;
                     lbComplete.CommandName = "completedraft";
                 }
 
-                if (drv["Status"] != DBNull.Value && drv["Status"].ToString() == competitionEntryInfo.PendingPaymentStatusId)
+                if (status.Equals(competitionEntryInfo.PendingPaymentStatusId, StringComparison.OrdinalIgnoreCase))
                 {
                     gvCompetitionEntries.Columns[4].Visible = true;
                     lbComplete.Visible = true;
@@ -102,14 +120,14 @@ public partial class competitions_ViewMyCompetitionEntries : PortalPage
                 break;
 
             case "completepayment":
-                var entry = LoadObjectFromAPI<msCompetitionEntry>((string) e.CommandArgument);
+                var entry = LoadObjectFromAPI<msCompetitionEntry>((string)e.CommandArgument);
                 var competitionEntryInfo = CompetitionLogic.GetCompetitionEntryInformation(
                     entry.Competition);
 
-                if(entry.EntryFee == null)
+                if (entry.EntryFee == null)
                 {
                     entry.Status = competitionEntryInfo.SubmittedStatusId;
-                    using(IConciergeAPIService proxy = GetConciegeAPIProxy())
+                    using (IConciergeAPIService proxy = GetConciegeAPIProxy())
                     {
                         proxy.Save(entry);
                     }

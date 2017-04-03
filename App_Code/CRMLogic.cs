@@ -7,6 +7,7 @@ using MemberSuite.SDK.Results;
 using MemberSuite.SDK.Searching;
 using MemberSuite.SDK.Searching.Operations;
 using MemberSuite.SDK.Types;
+using Telerik.Web.UI;
 
 /// <summary>
 /// Summary description for CRMLogic
@@ -44,6 +45,17 @@ public static class CRMLogic
 
         // we have multiple identiites
         HttpContext.Current.Response.Redirect("/MultipleEntitiesDetected.aspx?redirectURL=" + HttpContext.Current.Request.QueryString["redirectURL"]);
+    }
+
+    public static void InitPickList(FieldMetadata fieldDef, RadComboBox field)
+    {
+        if (fieldDef != null)
+        {
+            foreach (var pickListEntry in fieldDef.PickListEntries)
+            {
+                field.Items.Add(new RadComboBoxItem(pickListEntry.Text, pickListEntry.Value));
+            }
+        }
     }
 
     /// <summary>

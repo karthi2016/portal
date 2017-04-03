@@ -50,7 +50,7 @@
                     <tr id="trSubCategory" runat="server" visible="false" >
                         <td style="padding-top: 20px" colspan="2">
                         <div style="padding-left: 10px">
-                           <u>Please select a sub-category:</u>
+                            <asp:Literal ID="lSelectCategory" runat="server"><u>Please select a sub-category:</u></asp:Literal>
                             <br />
                             <asp:RadioButtonList ID="rblSubCategory" runat="server" />
                             </div>

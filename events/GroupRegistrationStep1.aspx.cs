@@ -87,6 +87,15 @@ public partial class events_GroupRegistrationStep1 : PortalPage
             ID = msRelationship.CLASS_NAME,
             Context = targetOrganization.ID
         };
+        // MSIV-5 Indivdiuals with expired relationships should not be eligible for Event Group Registration
+        var sog1 = new SearchOperationGroup { GroupType = SearchOperationGroupType.Or };
+        sog1.Criteria.Add(Expr.Equals(msRelationship.FIELDS.StartDate, null));
+        sog1.Criteria.Add(Expr.IsLessThanOrEqual(msRelationship.FIELDS.StartDate, DateTime.Today.Date));
+        sRelationships.AddCriteria(sog1);
+        var sog2 = new SearchOperationGroup { GroupType = SearchOperationGroupType.Or };
+        sog2.Criteria.Add(Expr.Equals(msRelationship.FIELDS.EndDate, null));
+        sog2.Criteria.Add(Expr.IsGreaterThan(msRelationship.FIELDS.EndDate, DateTime.Today.Date));
+        sRelationships.AddCriteria(sog2);
         sRelationships.AddOutputColumn("ID");
         sRelationships.AddOutputColumn("RightSide_Individual.LocalID");
         sRelationships.AddOutputColumn("RightSide_Individual.ID");

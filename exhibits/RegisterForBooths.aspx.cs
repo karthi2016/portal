@@ -40,7 +40,21 @@ public partial class exhibits_RegisterForBooths : PortalPage
                 return false;
         }
 
-        return true;
+        if (targetEntity.ID == ConciergeAPI.CurrentEntity.ID)
+            return true;
+
+        if (ConciergeAPI.AccessibleEntities == null)
+            return false;
+
+        bool found = false;
+        foreach (var accessibleEntity in ConciergeAPI.AccessibleEntities)
+        {
+            if (accessibleEntity != null && accessibleEntity.ID != null &&
+                accessibleEntity.ID.Equals(targetEntity.ID, StringComparison.CurrentCultureIgnoreCase))
+                found = true;
+        }
+
+        return found;
     }
 
     protected override void InitializePage()

@@ -13,7 +13,17 @@
             <td>
                 <asp:Label ID="lblOutstandingBalance" runat="server" />
             </td>
-        </tr>        
+        </tr>
+        <!--
+        <tr id="Widget_MyAccount_CreditBalance_Row" runat="Server">
+            <td class="columnHeader">
+                <asp:Literal ID="Widget_MyAccount_CreditBalance" runat="Server">Credit Balance:</asp:Literal>
+            </td>
+            <td>
+                <asp:Label ID="lblCreditBalance" runat="server" />
+            </td>
+        </tr>
+        -->
         <tr id="Widget_MyAccount_LastPayment_Row" runat="Server">
             <td class="columnHeader">
                 <asp:Literal ID="Widget_MyAccount_LastPayment" runat="Server">Last Payment:</asp:Literal>

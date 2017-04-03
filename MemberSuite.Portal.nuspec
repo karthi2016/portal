@@ -3,10 +3,10 @@
   <metadata>
     <id>MemberSuite.Portal</id>
     <version>1.0.0.0</version>
-    <authors>
-      Ryan, Andrew
-    </authors>
-    <description>The portal side of MemberSuite</description>
+    <authors>MemberSuite, Inc.</authors>
+    <owners>MemberSuite, Inc.</owners>
+    <description>The default MemberSuite member portal</description>
     <language>en-US</language>
+    <copyright>Copyright 2016</copyright>
   </metadata>
 </package>

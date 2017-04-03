@@ -7,6 +7,7 @@
 <head id="Head1" runat="server">
     <asp:ContentPlaceHolder ID="head" runat="server">
     </asp:ContentPlaceHolder>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <meta http-equiv="description" content="" />
     <meta http-equiv="keywords" content="" />
@@ -254,5 +255,8 @@
             return point;
         };
     </script>
+    
+    <asp:ContentPlaceHolder ID="javascriptLinks" runat="server">
+    </asp:ContentPlaceHolder>
 </body>
 </html>

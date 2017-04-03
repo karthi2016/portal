@@ -128,7 +128,7 @@
                     <asp:Literal ID="Literal1" runat="server">Post Reply</asp:Literal></a></li>                
                 <asp:HyperLink runat="server" ID="hlPostsPendingApproval"
                             NavigateUrl="~\discussions\ViewPostsPendingApproval.aspx?contextID="><li>View Posts Pending Approval</li></asp:HyperLink>                 
-                <li><asp:LinkButton runat="server" ID="lbSubscribeUnsubscribe" OnClick="lbSubscribeUnsubscribe_Click" Text="Suscribe to this Topic"></asp:LinkButton></li>
+                <li><asp:LinkButton runat="server" ID="lbSubscribeUnsubscribe" OnClick="lbSubscribeUnsubscribe_Click" Text="Subscribe to this Topic"></asp:LinkButton></li>
                 <li><a href="/">
                     <asp:Literal ID="lGoHome" runat="server">Go Home</asp:Literal></a></li>
             </ul>

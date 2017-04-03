@@ -164,16 +164,16 @@ public partial class competitions_ViewCompetitionEntry : PortalPage
 
     protected DataEntryViewMetadata createViewMetadataFromEntryQuestions()
     {
-        DataEntryViewMetadata result = new DataEntryViewMetadata();
-        ViewMetadata.ControlSection baseSection = new ViewMetadata.ControlSection();
+        var result = new DataEntryViewMetadata();
+        var baseSection = new ViewMetadata.ControlSection();
         baseSection.SubSections = new List<ViewMetadata.ControlSection>();
 
         var currentSection = new ViewMetadata.ControlSection();
         currentSection.LeftControls = new List<ControlMetadata>();
         baseSection.SubSections.Add(currentSection);
-        foreach (var question in targetCompetitionQuestions)
+        foreach (var question in targetCompetitionQuestions.OrderBy(o => o.DisplayOrder))
         {
-            ControlMetadata field = ControlMetadata.FromFieldMetadata(question.FieldDefinition);
+            var field = ControlMetadata.FromFieldMetadata(question.FieldDefinition);
 
             if (field.DisplayType == FieldDisplayType.Separator)
             {
@@ -190,9 +190,10 @@ public partial class competitions_ViewCompetitionEntry : PortalPage
                 continue;
             }
 
-
-            currentSection.LeftControls.Add(field);
+            if (currentSection.LeftControls != null) 
+                currentSection.LeftControls.Add(field);
         }
+
         result.Sections = new List<ViewMetadata.ControlSection> { baseSection };
         return result;
     }

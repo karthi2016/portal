@@ -475,38 +475,17 @@ public partial class homepagecontrols_Membership : HomePageUserControl
 
     #region Bindable Properties
 
+    public DataTable dtChapters { get; set; }
 
+    public DataTable dtSections { get; set; }
 
+    public DataView dvPrimaryOrganizationalLayers { get; set; }
 
-
-    public DataTable dtChapters
-    {
-        get;
-        set;
-    }
-
-
-    public DataTable dtSections
-    {
-        get;
-        set;
-    }
-
-    public DataView dvPrimaryOrganizationalLayers
-    {
-        get;
-        set;
-    }
-
-    public DataView dvSecondaryOrganizationalLayers
-    {
-        get;
-        set;
-    }
-
+    public DataView dvSecondaryOrganizationalLayers { get; set; }
 
     protected DataRow drMembershipOrganization { get; set; }
-    //PS-760
+
     protected DataRowCollection drMembershipOrganizations { get; set; }
+
     #endregion
 }

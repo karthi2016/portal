@@ -184,7 +184,7 @@ public partial class careercenter_SelectCareerCenterProduct : PortalPage
 
 
         var targetJobPosting = MultiStepWizards.PostAJob.JobPosting;
-        var memo = targetJobPosting == null ? "Not available" : "Job posting '" + targetJobPosting.Name + "'";
+        var memo = targetJobPosting == null ? "Not available" : "Job posting '" + targetJobPosting.Name + "'";        
 
         var pl = new OrderPayload
         {
@@ -192,9 +192,9 @@ public partial class careercenter_SelectCareerCenterProduct : PortalPage
             {
                 new OrderPayloadEntitlementAdjustments
                 {
-                    EntityID = targetOrder.BillTo,
-                    AmountToAdjust = -1,
+                    EntityID = targetOrder.BillTo,                    
                     EntitlementType = msJobPostingEntitlement.CLASS_NAME,
+                    AmountToAdjust = TransientJobPosting ? -1 : 0,
                     Memo = memo
                 }
             }

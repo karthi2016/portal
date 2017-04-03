@@ -8,17 +8,16 @@
         .none {
             display: none;
         }        
+        .hidden {
+            visibility: hidden
+        }
+        input.ng-invalid {
+            border-color: red
+        }
+        [ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak {
+            display: none !important;
+        }
     </style>
-    
-    <script type="text/javascript" src="/js/priorityPaymentsScript/payment-processor-jquery.js"></script>
-    
-    <script type="text/javascript" src="/js/priorityPaymentsScript/membersuite.payment-processor.API.js"></script>
-    <script type="text/javascript" src="/js/priorityPaymentsScript/priorityPayment.logger.js"></script>
-    <script type="text/javascript" src="/js/priorityPaymentsScript/cardType-util.js"></script>
-    <script type="text/javascript" src="/js/priorityPaymentsScript/priorityPayment.ajaxAPI.js"></script>
-    <script type="text/javascript" src="/js/priorityPaymentsScript/membersuite.payment-processor-1.0.js"></script>
-
-<%--    <script type="text/javascript" src="/js/priorityPaymentsScript/membersuite.payment-processor.min.js"></script>--%>
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="TopMenu" runat="Server">
 </asp:Content>
@@ -30,109 +29,51 @@
 <asp:Content ID="Content5" ContentPlaceHolderID="TopRightContent" runat="Server">
 </asp:Content>
 <asp:Content ID="Content6" ContentPlaceHolderID="PageContent" runat="Server">
-    <asp:Literal ID="PageText" runat="server" />
-    <asp:ValidationSummary ID="vsSummary2" ForeColor="Red" Font-Bold="true" DisplayMode="BulletList"
-        ShowSummary="true" HeaderText="We were unable to continue for the following reasons:"
-        runat="server" />
-    <br />
+    <div id="ng-app" ng-cloak ng-app="msPayments" ng-controller="PaymentController as payments">
+        <asp:Literal ID="PageText" runat="server" />
+        <asp:ValidationSummary ID="vsSummary2" ForeColor="Red" Font-Bold="true" DisplayMode="BulletList"
+            ShowSummary="true" HeaderText="We were unable to continue for the following reasons:"
+            runat="server" />
+        <br />
 
-    <bi:BillingInfo ID="BillingInfoWidget" runat="server" />
-    <asp:HiddenField runat="server" ID="hfOrderBillToId" />
-    <div id="dvPriorityData" runat="server" class="pp-config" style="display: none;" />
-    <hr />
-    <div class="sectionContent">
-        <div align="center" style="padding-top: 20px">
-            <asp:Button ID="btnUpdatePaymentInfo" Text="Update Payment Info" runat="server" OnClick="btnUpdatePaymentInfo_Click" CssClass="save-token none" />
-            <input onclick="javascript: requestToken();" type="button" value="Update Payment Info" />
-            ,
-            <asp:LinkButton ID="lbClearPaymentInf" runat="server" OnClick="lbClearPaymentInfo_Click" Text="Delete Billing Info" />,
-            or 
-            <asp:HyperLink ID="hlCancel" runat="server" Text="Cancel this Operation" />
+        <bi:BillingInfo ID="BillingInfoWidget" runat="server" />
+        <asp:HiddenField runat="server" ID="hfOrderBillToId" />
+        <div id="dvPriorityData" runat="server" class="pp-config" style="display: none;" ms-payment-config/>
+        <hr />
+        <div class="sectionContent">
+            <div align="center" style="padding-top: 20px">
+                <asp:Button ID="btnUpdatePaymentInfo" Text="Update Payment Info" runat="server" OnClick="btnUpdatePaymentInfo_Click" CssClass="save-token none" />
+                <input type="button" value="Update Payment Info" ms-submit-button="payments.process"/>
+                ,
+                <asp:LinkButton ID="lbClearPaymentInf" runat="server" OnClick="lbClearPaymentInfo_Click" Text="Delete Billing Info" />,
+                or 
+                <asp:HyperLink ID="hlCancel" runat="server" Text="Cancel this Operation" />
 
-
-            <div class="clearBothNoSPC">
+                <div class="clearBothNoSPC">
+                </div>
             </div>
         </div>
     </div>
 </asp:Content>
 <asp:Content ID="Content7" ContentPlaceHolderID="FooterContent" runat="Server">
-    <script type="text/javascript">
-        function requestToken() {
-            var config = JSON.parse($('.pp-config').text());
-            var isPP = config.IsPreferredConfigured;
-
-            var saveBtnId = '.save-token';
-            var savedPaymentIsSelected = false;
-
-            $('#divWithGridViewOrRepeater input').each(function () {
-                if (savedPaymentIsSelected) return;
-                savedPaymentIsSelected = $(this).prop('checked');
-            });
-
-            if (savedPaymentIsSelected) {
-                $(saveBtnId).trigger('click');
-                return false;
-            };
-
-            var hasCCNum = !!($('.cc-number').val()) && $('.cc-number').val() != '';
-            var hasBANum = !!($('.ba-number').val()) && $('.ba-number').val() != '';
-
-            if (!(hasCCNum || hasBANum) || !isPP) {
-                $(saveBtnId).trigger('click');
-                return false;
-            };
-
-            if (!config.State) {
-                config.State = 'No State/Province';
-            }
-
-            var id = $('[id$="hfOrderBillToId"]').val();
-
-            if (hasCCNum) {
-                var $cardNumberElem = $('.cc-number');
-                var $expiryMonthElem = $('.mypMonth');
-                var $expiryYearElem = $('.mypYear');
-
-            var parms = {
-                ppConfig: config,
-                msConfig: {
-                    guid: id,
-                    $cardNumberElem: $cardNumberElem,
-                    $expiryMonthElem: $expiryMonthElem,
-                    $expiryYearElem: $expiryYearElem,
-                    saveBtnId: saveBtnId
-                }
-            }
-
-                membersuite.paymentProcessor.init(parms);
-            } else if (hasBANum) {
-                var $bankAccElement = $('.ba-number');
-                var $bankAccElementConfirm = $('.ba-number-confirm');
-                var $rtnNumElement = $('.rtn-number');
-                var $bankAccTypeElement = $('.ba-type');
-
-                if ($bankAccElementConfirm.length > 0 && ($bankAccElement.val() != $bankAccElementConfirm.val())) {
-                    $(saveBtnId).trigger('click');
-
-                    return false;
-                }
-
-                var parms = {
-                    ppConfig: config,
-                    msConfig: {
-                        guid: id,
-                        $bankAccElement: $bankAccElement,
-                        $rtnNumElement: $rtnNumElement,
-                        $bankAccTypeElement: $bankAccTypeElement,
-                        $bankAccElementConfirm: $bankAccElementConfirm,
-                        saveBtnId: saveBtnId                        
-                    }
-                }
-
-                membersuite.paymentProcessor.init(parms);
-            }
-
-            return false;
-        };
-    </script>
+    <script type="text/javascript" src="https://cdn.membersuite.com/console/js/paymentProviderScripts/bluepay.v3.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.5.7/angular.min.js"></script>
+    <script type="text/javascript" src="https://cdn.membersuite.com/console/js/paymentProviderScripts/payment.module.js"></script>    
+    <script type="text/javascript" src="https://cdn.membersuite.com/console/js/paymentProviderScripts/payment.recompile.directive.js"></script>
+    <script type="text/javascript" src="https://cdn.membersuite.com/console/js/paymentProviderScripts/payment.monthyear.directive.js"></script>
+    <script type="text/javascript" src="https://cdn.membersuite.com/console/js/paymentProviderScripts/payment.submit.button.directive.js"></script>
+    <script type="text/javascript" src="https://cdn.membersuite.com/console/js/paymentProviderScripts/payment.radiobutton.bind.directive.js"></script>
+    <script type="text/javascript" src="https://cdn.membersuite.com/console/js/paymentProviderScripts/payment.radiobutton.click.directive.js"></script>
+    <script type="text/javascript" src="https://cdn.membersuite.com/console/js/paymentProviderScripts/payment.config.value.js"></script>
+    <script type="text/javascript" src="https://cdn.membersuite.com/console/js/paymentProviderScripts/payment.config.directive.js"></script>
+    <script type="text/javascript" src="https://cdn.membersuite.com/console/js/paymentProviderScripts/payment.link.button.directive.js"></script>
+    <script type="text/javascript" src="https://cdn.membersuite.com/console/js/paymentProviderScripts/payment.focus.directive.js"></script>
+    <script type="text/javascript" src="https://cdn.membersuite.com/console/js/paymentProviderScripts/payment.controller.v3.js"></script>
+    <script type="text/javascript" src="https://cdn.membersuite.com/console/js/paymentProviderScripts/payment.priorityPayments.v2.service.js"></script>
+    <script type="text/javascript" src="https://cdn.membersuite.com/console/js/paymentProviderScripts/payment.bluePay.v3.service.js"></script>
+    <script type="text/javascript" src="https://cdn.membersuite.com/console/js/paymentProviderScripts/payment.paymentService.factory.js"></script>
+    <script type="text/javascript" src="https://cdn.membersuite.com/console/js/paymentProviderScripts/payment.priorityPaymentsTokenizer.service.js"></script>
+    <script type="text/javascript" src="https://cdn.membersuite.com/console/js/paymentProviderScripts/payment.cardType.service.js"></script>
+    <script type="text/javascript" src="https://cdn.membersuite.com/console/js/paymentProviderScripts/payment.errorReporter.service.js"></script>
+    <script type="text/javascript" src="https://cdn.membersuite.com/console/js/paymentProviderScripts/payment.logger.service.js"></script>
 </asp:Content>

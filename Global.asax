@@ -15,6 +15,7 @@
         ConciergeAPIProxyGenerator.RegisterSessionIDProvider(new ConciergeAPI());
         ConciergeAPIProxyGenerator.RegisterAssociationIdProvider(new PortalConfiguration());
         ConciergeAPIProxyGenerator.RegisterBrowserIdProvider(new ConciergeAPI());
+        ConciergeAPIProxyGenerator.RegisterClientIpProvider(new ConciergeAPI());
         
         ConciergeAPIProxyGenerator.SetAccessKeyId(ConfigurationManager.AppSettings["AccessKeyId"]);
         ConciergeAPIProxyGenerator.SetSecretAccessKey(ConfigurationManager.AppSettings["SecretAccessKey"]);

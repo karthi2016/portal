@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Amazon.ElasticBeanstalk.Model;
 using MemberSuite.SDK.Constants;
 using MemberSuite.SDK.Manifests.Command;
 using MemberSuite.SDK.Manifests.Command.Views;
@@ -288,10 +287,13 @@ public partial class events_Register_RegistrationForm : PortalPage
 
                     // MS-4322 - need to account for demographics here
                     // MS-4970 - need to account for name on registration field (ie: guest registration)
-                    if (name.EndsWith("__q") || (name == MemberSuiteConstants.Events.NAME_ON_REGISTRATION_FIELD))
-                        li.Options.Add(new NameValueStringPair(name, value.ToString()));
-                    else
+
+                    // MSIV-400 - the logic was switched here, for some reason
+                    //if (name.EndsWith("__q") || (name == MemberSuiteConstants.Events.NAME_ON_REGISTRATION_FIELD))
                         li[name] = value;
+                    //else
+                    // MSIV-794 - do both
+                        li.Options.Add(new NameValueStringPair(name, value.ToString()));
 
                 }
             }

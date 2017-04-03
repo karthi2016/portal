@@ -46,6 +46,9 @@ public partial class orders_InitiateOrder : Page
         if (targetOrder.ShipTo == null)
             targetOrder.ShipTo = ConciergeAPI.CurrentEntity.ID;
 
+        if (targetOrder.Date == DateTime.MinValue)
+            targetOrder.Date = DateTime.Now;
+
         Response.Redirect("CrossSellItems.aspx?useTransient=" + isTransient);
          
 

@@ -588,35 +588,15 @@ public abstract class PortalPage : Page, IControlHost
         return APIExtensions.LoadObjectFromAPI<T>(id);
     }
 
-    protected MemberSuiteObject CreateNewObject(string className)
-    {
-        return MemberSuiteObject.FromClassMetadata(MetadataLogic.DescribeObject(className));
-    }
-
     protected T CreateNewObject<T>() where T : msAggregate, new()
     {
         var instance = new T();
-        return CreateNewObject(instance.ClassType).ConvertTo<T>();
-    }
-
-
-
-    protected MemberSuiteObject SaveObject(MemberSuiteObject msoObjectToSave)
-    {
-        using (var api = GetConciegeAPIProxy())
-        {
-            var result = api.Save(msoObjectToSave);
-            return result.ResultValue;
-        }
+        return MetadataLogic.CreateNewObject(instance.ClassType).ConvertTo<T>();
     }
 
     protected T SaveObject<T>(T msoObjectToSave) where T : msAggregate
     {
-        using (var api = GetConciegeAPIProxy())
-        {
-            var result = api.Save(msoObjectToSave);
-            return result.ResultValue == null ? null : result.ResultValue.ConvertTo<T>();
-        }
+        return APIExtensions.SaveObject<T>(msoObjectToSave);
     }
 
     /// <summary>
@@ -629,33 +609,8 @@ public abstract class PortalPage : Page, IControlHost
     {
         using (var api = GetServiceAPIProxy())
         {
-            return GetAllObjects<T>(api, objectType);
+            return api.GetAllObjects<T>(objectType);
         }
-    }
-
-    /// <summary>
-    /// Gets all objects from the API of a certain type
-    /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="objectType">Type of the object.</param>
-    /// <returns></returns>
-    protected List<T> GetAllObjects<T>(IConciergeAPIService proxy, string objectType) where T : msAggregate
-    {
-        List<MemberSuiteObject> result = new List<MemberSuiteObject>();
-        int totalCount = Int32.MaxValue;
-
-        //Add an emergency break
-        Search s = new Search(objectType);
-        while (result.Count < totalCount)
-        {
-            
-            var queryResult = proxy.GetObjectsBySearch( s, null, result.Count, null).ResultValue ;
-            result.AddRange(queryResult.Objects);
-
-            totalCount = queryResult.TotalRowCount;
-        }
-
-        return (from r in result select r.ConvertTo<T>()).ToList();
     }
 
     /// <summary>

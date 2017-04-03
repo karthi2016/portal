@@ -14,6 +14,14 @@ using MemberSuite.SDK.Types;
 
 public partial class directory_SearchDirectory_ViewDetails : PortalPage
 {
+    protected override bool IsPublic
+    {
+        get
+        {
+            return PortalConfiguration.Current.MembershipDirectoryIsPublic;
+        }
+    }
+
     #region Fields
 
     private const string DetailLabelOverridePrefix = "DetailLabel.";
@@ -86,6 +94,9 @@ public partial class directory_SearchDirectory_ViewDetails : PortalPage
     {
         if (!PortalConfiguration.Current.MembershipDirectoryEnabled)
             return false;
+
+        if (PortalConfiguration.Current.MembershipDirectoryIsPublic)
+            return true;
 
         //If the directory is enabled and not restricted to members it's available and no need to check membership status
         if (!PortalConfiguration.Current.MembershipDirectoryForMembersOnly)

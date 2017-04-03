@@ -238,7 +238,7 @@ public partial class organizationalLayers_EditOrganizationalLayerInfo : PortalPa
         if(linkedOrganization != null)
             linkedOrganization = SaveObject(linkedOrganization).ConvertTo<msOrganization>();
 
-        QueueBannerMessage(string.Format("{0} information was updated sucessfully.", drTargetOrganizationalLayerType["Name"]));
+        QueueBannerMessage(string.Format("{0} information was updated successfully.", drTargetOrganizationalLayerType["Name"]));
 
         GoTo(string.Format("~/organizationalLayers/VieworganizationalLayer.aspx?contextID={0}",ContextID));
     }

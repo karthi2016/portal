@@ -34,38 +34,40 @@
         <!-- left column -->
         <div class="sectContLrg productListing">
             <asp:Image ID="imgMerchandise" runat="server" />
-            <div class="productListItemInfo">
-                <h1>
-                    <%=targetMerchandise["Name"]%></h1>
-                <div class="clearBothNoSPC">
-                </div>
-                <p>
-                    <%= targetMerchandise["Description"] != DBNull.Value && !string.IsNullOrWhiteSpace((string)targetMerchandise["Description"] ) ? targetMerchandise["Description"] : targetMerchandise["ShortDescription"]%></p>
-                <div class="productListingPrice">
-                    <span class="columnHeader">Price:</span> <strong class="redHighlight"><asp:Literal ID="litPrice" runat="server" /></strong>
-                    <%=  targetMerchandise["MemberPrice"] != DBNull.Value ? string.Format("<br><span class=\"columnHeader\">Member Price:</span>  <strong class=\"redHighlight\">{0:C}</strong>", targetMerchandise["MemberPrice"]) : ""%>
-                </div>
-                <table>
-                    <tr>
-                        <td>
-                            Quantity:
-                            <asp:TextBox ID="tbQuantity" runat="server" Text="1" Width="60" />
-                        </td>
-                        <td>
-                            <asp:LinkButton runat="server" ID="lbAddToCart" CssClass="uBtn floatLeft" OnClick="lbAddToCart_Click"><span>Add To Cart</span></asp:LinkButton><br />
-                            <asp:CompareValidator ID="valRequired" runat="server" ControlToValidate="tbQuantity"
-                                ValueToCompare="0" Type="Integer" Operator="GreaterThan" ErrorMessage="Please specify a valid quantity"
-                                Display="None" />
-                        </td>
-                    </tr>
-                </table>
+            <div class="productListItemInfo" >
+                    <h1>
+                         <asp:Label runat="server" ID="lblProductName" /></h1>
+                    <div class="clearBothNoSPC">
+                    </div>
+                    <p>
+                        <%= targetMerchandise["Description"] != DBNull.Value && !string.IsNullOrWhiteSpace((string)targetMerchandise["Description"] ) ? targetMerchandise["Description"] : targetMerchandise["ShortDescription"]%></p>
+                    <div class="productListingPrice">
+                        <span class="columnHeader">Price:</span> <strong class="redHighlight"><asp:Literal ID="litPrice" runat="server" /></strong>
+                        <%=  targetMerchandise["MemberPrice"] != DBNull.Value ? string.Format("<br><span class=\"columnHeader\">Member Price:</span>  <strong class=\"redHighlight\">{0:C}</strong>", targetMerchandise["MemberPrice"]) : ""%>
+                    </div>
+                    <table>
+                        <tr>
+                            <td>
+                                Quantity:
+                                <asp:TextBox ID="tbQuantity" runat="server" Text="1" Width="60" />
+                            </td>
+                            <td>
+                                <asp:LinkButton runat="server" ID="lbAddToCart" CssClass="uBtn floatLeft" OnClick="lbAddToCart_Click" ><span>Add To Cart</span></asp:LinkButton><br />
+                                <asp:CompareValidator ID="valRequired" runat="server" ControlToValidate="tbQuantity"
+                                    ValueToCompare="0" Type="Integer" Operator="GreaterThan" ErrorMessage="Please specify a valid quantity"
+                                    Display="None" />
+                            </td>
+                        </tr>
+                    </table>
+              
                 <div class="productListingBreak">
                 </div>
-                <asp:LinkButton runat="server" ID="lbContinueShopping" CssClass="uBtn floatLeft"
-                    OnClick="lbContinueShopping_Click"><span>Continue Shopping</span></asp:LinkButton>
+
                 <div class="clearBothNoSPC">
                 </div>
             </div>
+                            <asp:LinkButton runat="server" ID="lbContinueShopping" CssClass="uBtn floatLeft"
+                    OnClick="lbContinueShopping_Click"><span>Continue Shopping</span></asp:LinkButton>
         </div>
     </div>
     <div id="colRightSml">

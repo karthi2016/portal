@@ -52,15 +52,20 @@ membersuite.paymentProcessorLogger = (function () {
 
     var postLog = function (parms) {
         if (parms.isXhr) {
-            var xdr = new XDomainRequest();
-            xdr.open("POST", parms.logger.logUrl);
-            xdr.onload = function () {
-                console.log(xdr);
-            };
-            xdr.onerror = function () {
-                console.log(xdr);
-            };
-            xdr.send(parms.logger.logMsg);
+            try {
+                var xdr = new XDomainRequest();
+                xdr.open("POST", parms.logger.logUrl);
+                xdr.onload = function() {
+                    console.log(xdr);
+                };
+                xdr.onerror = function() {
+                    console.log(xdr);
+                };
+                xdr.send(parms.logger.logMsg);
+            } catch (err) {
+                console.log(err);
+            }
+
         } else {
             var success = function (response) {
                 console.log('logger logged');

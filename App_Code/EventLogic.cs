@@ -38,6 +38,7 @@ public static class EventLogic
     public static bool IsRegistrationClosed(msEvent targetEvent)
     {
         if ( targetEvent.IsClosed ) return true;
+        if (targetEvent.RegistrationMode == EventRegistrationMode.Disabled) return true;
 
         if ( targetEvent.RegistrationCloseDate == null ) return false;
 

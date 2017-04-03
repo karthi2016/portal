@@ -2,11 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Web;
-using System.Web.UI;
-using System.Web.UI.WebControls;
 using MemberSuite.SDK.Concierge;
-using MemberSuite.SDK.Results;
 using MemberSuite.SDK.Searching;
 using MemberSuite.SDK.Types;
 using Telerik.Web.UI;
@@ -47,12 +43,25 @@ public partial class careercenter_CreateEditJobPosting : PortalPage
 
         if (!string.IsNullOrWhiteSpace(ContextID))
         {
-            targetJobPosting = LoadObjectFromAPI<msJobPosting>(ContextID);
-
-            if (targetJobPosting == null)
+            MemberSuiteObject obj;
+            using (var api = GetServiceAPIProxy())
+                obj = api.Get(ContextID).ResultValue;
+                        
+            if (obj == null)
             {
                 GoToMissingRecordPage();
                 return;
+            }
+
+            if (obj.ClassType.Equals(msJobPosting.CLASS_NAME, StringComparison.InvariantCultureIgnoreCase))
+            {
+                targetJobPosting = LoadObjectFromAPI<msJobPosting>(ContextID);
+
+                if (targetJobPosting == null)
+                {
+                    GoToMissingRecordPage();
+                    return;
+                }
             }
         }        
     }

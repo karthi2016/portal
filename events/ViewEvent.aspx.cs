@@ -237,7 +237,8 @@ public partial class events_ViewEvent : PortalPage
             return;
         }
 
-        hlRegistration.NavigateUrl = string.Format("~/events/RegisterForEvent.aspx?contextID={0}", ContextID);
+        // CORE-1018
+        hlRegistration.NavigateUrl = !string.IsNullOrWhiteSpace(targetEvent.RegistrationUrl) ? targetEvent.RegistrationUrl : string.Format("~/events/RegisterForEvent.aspx?contextID={0}", ContextID);
 
         if ( targetEvent.RegistrationMode == EventRegistrationMode.Normal &&
             ConciergeAPI.CurrentEntity != null && EventLogic.IsRegistered( targetEvent.ID, ConciergeAPI.CurrentEntity.ID )
@@ -268,9 +269,7 @@ public partial class events_ViewEvent : PortalPage
             hlViewMySeats.Visible = true;
             hlPurchaseSeats.NavigateUrl = string.Format("PurchaseTableSeats.aspx?contextID=" + ContextID);
             hlViewMySeats.NavigateUrl = string.Format("ViewTableSeats.aspx?contextID=" + ContextID);
-        }
-
-        hlRegistration.NavigateUrl = string.Format("~/events/RegisterForEvent.aspx?contextID={0}", ContextID);
+        }        
     }
 
     protected void loadEventOwners(IConciergeAPIService proxy)

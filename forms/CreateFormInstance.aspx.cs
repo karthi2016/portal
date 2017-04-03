@@ -50,7 +50,7 @@ public partial class forms_CreateFormInstance : PortalPage
         // MS-5360
         if (string.IsNullOrWhiteSpace(CurrentFormID.Value))
         {
-            targetInstance = CreateNewObject(targetFormManifest.UnderlyingObjectName);
+            targetInstance = MetadataLogic.CreateNewObject(targetFormManifest.UnderlyingObjectName);
             targetInstance["Owner"] = entityID;            
         }
         else
@@ -130,7 +130,7 @@ public partial class forms_CreateFormInstance : PortalPage
             case 1:
                 CustomFieldSet1.Harvest();
                 // MS-5360
-                targetInstance = SaveObject(targetInstance);
+                targetInstance = APIExtensions.SaveObject(targetInstance);
                 CurrentFormID.Value = targetInstance["ID"].ToString();
                 CustomFieldSet2.MemberSuiteObject = targetInstance;
                 CustomFieldSet2.Bind();                
@@ -149,7 +149,7 @@ public partial class forms_CreateFormInstance : PortalPage
 
     private void SubmitForm()
     {
-        targetInstance =  SaveObject(targetInstance);
+        targetInstance = APIExtensions.SaveObject(targetInstance);
 
         // ok, log an activity
         if (ConciergeAPI.CurrentEntity != null)

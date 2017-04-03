@@ -15,7 +15,7 @@ public class CreditCardLogic : PortalPage
 
         using (var api = GetServiceAPIProxy())
         {
-            ConciergeResult<PriorityApiSettings> priorityData = api.GetPriorityConfiguration(entityId);
+            ConciergeResult<PaymentProcessorSettings> priorityData = api.GetPaymentProcessorSettings(null, entityId);
             var serializer = new JavaScriptSerializer();
             return serializer.Serialize(priorityData.ResultValue);
         }

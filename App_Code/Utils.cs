@@ -12,15 +12,18 @@ public static class Utils
 {
     public static String GetIP()
     {
-        String ip =
-            HttpContext.Current.Request.ServerVariables["HTTP_X_FORWARDED_FOR"];
+        var ip = HttpContext.Current.Request.ServerVariables["HTTP_X_FORWARDED_FOR"];
 
-        if (string.IsNullOrEmpty(ip))
-        {
+        if (string.IsNullOrEmpty(ip))        
             ip = HttpContext.Current.Request.ServerVariables["REMOTE_ADDR"];
-        }
 
-        return ip;
+        if (string.IsNullOrWhiteSpace(ip)) 
+            return ip;
+
+        // MSIV-596 Keep the first ip address from the comma-separated list of
+        // ip addresses if available
+        var addresses = ip.Split(',');
+        return addresses.First().Trim();
     }
 
     /// <summary>

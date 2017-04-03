@@ -27,6 +27,14 @@ public partial class directory_SearchDirectory_Criteria : PortalPage
 
     protected List<FieldMetadata> targetCriteriaFields;
 
+    protected override bool IsPublic
+    {
+        get
+        {
+            return PortalConfiguration.Current.MembershipDirectoryIsPublic;
+        }
+    }
+
     #region Intialization
 
     /// <summary>
@@ -80,6 +88,9 @@ public partial class directory_SearchDirectory_Criteria : PortalPage
     {
         if (!PortalConfiguration.Current.MembershipDirectoryEnabled)
             return false;
+
+        if (PortalConfiguration.Current.MembershipDirectoryIsPublic)
+            return true;
 
         // If the directory is enabled and not restricted to members it's available and no need to check membership status
         if (!PortalConfiguration.Current.MembershipDirectoryForMembersOnly)
@@ -169,8 +180,14 @@ public partial class directory_SearchDirectory_Criteria : PortalPage
         s.Criteria.Clear();
         s.GroupType = SearchOperationGroupType.And;
 
+
+        s.AddCriteria(Expr.Equals(msMembership.FIELDS.ReceivesMemberBenefits, true ));
         s.AddCriteria(Expr.Equals(msMembership.FIELDS.MembershipDirectoryOptOut, false));
-        s.AddCriteria(Expr.IsBlank(msMembership.FIELDS.TerminationDate ));
+
+        var sogTerminationDate = new SearchOperationGroup{GroupType = SearchOperationGroupType.Or };
+        sogTerminationDate.Criteria.Add( Expr.IsBlank(msMembership.FIELDS.TerminationDate ));
+        sogTerminationDate.Criteria.Add(Expr.IsGreaterThan(msMembership.FIELDS.TerminationDate, DateTime.Today ));
+        s.AddCriteria(sogTerminationDate);
 
         // MS-5850 - Control whether or not inherited memberships are included
         if ( ! PortalConfiguration.Current.MembershipDirectoryIncludeInheritedMemberships )

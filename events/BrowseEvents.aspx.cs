@@ -152,6 +152,7 @@ public partial class events_BrowseEvents : PortalPage
         s.AddOutputColumn("Location_State");
         s.AddOutputColumn("DisplayStartEndDateTimesAs");
         s.AddOutputColumn("InviteOnly");
+        s.AddOutputColumn("Url"); // CORE-1017
         s.AddSortColumn("StartDate", false );
 
         if (targetCategory != null)
@@ -315,6 +316,7 @@ public partial class events_BrowseEvents : PortalPage
                 DateTime end = Convert.ToDateTime( drv["EndDate"]);
                 string city = Convert.ToString( drv["Location_City"]);
                 string state = Convert.ToString( drv["Location_State"]);
+                string url = Convert.ToString(drv["Url"]); // CORE-1017
                 string strOverrideDisplay = null;
                 
                 if ( drv.Row.Table.Columns.Contains( "DisplayStartEndDateTimesAs"))
@@ -329,7 +331,12 @@ public partial class events_BrowseEvents : PortalPage
                 if (isExhibitShow)
                     hlEventName.NavigateUrl = "/exhibits/ViewShow.aspx?contextID=" + id;
                 else
-                    hlEventName.NavigateUrl = "/events/ViewEvent.aspx?contextID=" + id;
+                {
+                    if (!string.IsNullOrWhiteSpace(url)) // CORE-1017
+                        hlEventName.NavigateUrl = url;
+                    else
+                        hlEventName.NavigateUrl = "/events/ViewEvent.aspx?contextID=" + id;
+                }
 
                 if (!string.IsNullOrWhiteSpace(strOverrideDisplay))
                     lEventTime.Text = strOverrideDisplay;

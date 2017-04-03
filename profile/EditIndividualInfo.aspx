@@ -4,6 +4,7 @@
 <%@ Register Assembly="MemberSuite.SDK.Web" Namespace="MemberSuite.SDK.Web.Controls"
     TagPrefix="cc1" %>
 <%@ Register Src="../controls/CustomFieldSet.ascx" TagName="CustomFieldSet" TagPrefix="uc1" %>
+<%@ Register TagPrefix="telerik" Namespace="Telerik.Web.UI" Assembly="Telerik.Web.UI, Version=2011.1.519.40, Culture=neutral, PublicKeyToken=121fae78165ba3d4" %>
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="Server">
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="TopMenu" runat="Server">
@@ -35,9 +36,23 @@
                     <tr id="trTitle" runat="server">
                         <td class="columnHeader">
                             <asp:Literal ID="lTitle" runat="server">Title:</asp:Literal>
+                            <asp:Literal ID="lReqTitle" runat="server" Visible="False"><span class="requiredField">*</span></asp:Literal>
                         </td>
                         <td>
                             <asp:TextBox ID="tbTitle" runat="server" TabIndex="10" />
+                            <asp:RequiredFieldValidator ID="rfvTitle" runat="server" ErrorMessage="Please enter a title."
+                                ControlToValidate="tbTitle" Display="None" Enabled="False" />
+                        </td>
+                    </tr>
+                    <tr id="trPrefix" runat="server" Visible="False">
+                        <td class="columnHeader">
+                            <asp:Literal ID="lPrefix" runat="server">Prefix:</asp:Literal>
+                            <asp:Literal ID="lReqPrefix" runat="server" Visible="False"><span class="requiredField">*</span></asp:Literal>
+                        </td>
+                        <td>
+                            <telerik:RadComboBox ID="tbPrefix" runat="server" TabIndex="15" />
+                            <asp:RequiredFieldValidator ID="rfvPrefix" runat="server" ErrorMessage="Please enter a prefix."
+                                ControlToValidate="tbPrefix" Display="None" Enabled="False" />
                         </td>
                     </tr>
                     <tr>
@@ -75,7 +90,15 @@
                             <asp:Literal ID="lSuffix" runat="server">Suffix:</asp:Literal>
                         </td>
                         <td>
-                            <asp:TextBox ID="tbSuffix" runat="server" TabIndex="50" />
+                            <telerik:RadComboBox ID="tbSuffix" runat="server" TabIndex="50" />
+                        </td>
+                    </tr>
+                    <tr id="trDesignation" runat="server" Visible="False">
+                        <td class="columnHeader">
+                            <asp:Literal ID="lDesignation" runat="server">Designation:</asp:Literal>
+                        </td>
+                        <td>
+                            <asp:TextBox ID="tbDesignation" runat="server" TabIndex="55" />
                         </td>
                     </tr>
                     <tr id="trNickName" runat="server">
@@ -116,7 +139,7 @@
                 </table>
             </td>
             <td valign="top">
-                <table>
+                <table id="tblProfilePhoto" runat="server">
                     <tr>
                         <td class="columnHeader">
                             <asp:Literal ID="lProfilePhoto" runat="server">Profile Photo</asp:Literal>
@@ -142,6 +165,11 @@
                         <td>
                             <asp:CustomValidator runat="server" ControlToValidate="imageUpload" ForeColor="Red"
                                 OnServerValidate="imageValidate" ErrorMessage="The file specified is not a valid image." />
+                        </td>
+                    </tr>
+                      <tr>
+                        <td class="columnHeader">
+                            <asp:Button ID="btnDeleteProfilePhoto" runat="server" Text="Delete Profile Photo" OnClick="btnDeleteProfilePhoto_Click" ></asp:Button>
                         </td>
                     </tr>
                 </table>

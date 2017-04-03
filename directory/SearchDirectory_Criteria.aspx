@@ -1,12 +1,8 @@
 ﻿<%@ Page Language="C#" MasterPageFile="~/App_Master/GeneralPage.master" AutoEventWireup="true"
-    CodeFile="SearchDirectory_Criteria.aspx.cs" Inherits="directory_SearchDirectory_Criteria"
-    Culture="auto" meta:resourcekey="PageResource1" UICulture="auto" %>
+    CodeFile="SearchDirectory_Criteria.aspx.cs" Inherits="directory_SearchDirectory_Criteria" %>
 
-<%@ Register Assembly="MemberSuite.SDK.Web" Namespace="MemberSuite.SDK.Web.Controls"
-    TagPrefix="cc1" %>
-<%@ Register Assembly="Telerik.Web.UI" Namespace="Telerik.Web.UI" TagPrefix="telerik" %>
 <%@ Register Src="../controls/CustomFieldSet.ascx" TagName="CustomFieldSet" TagPrefix="uc1" %>
-<script runat="server"></script>
+
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="Server">
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="TopMenu" runat="Server">
@@ -34,8 +30,7 @@
             <p>
             </p>
             <div align="center">
-                <asp:Button runat="server" ID="btnSearch" OnClick="btnSearch_Click" Text="Search"
-                    meta:resourcekey="btnSearchResource1" /></div>
+                <asp:Button runat="server" ID="btnSearch" OnClick="btnSearch_Click" Text="Search" /></div>
         </div>
     </div>
      <div class="section" style="margin-top: 10px">

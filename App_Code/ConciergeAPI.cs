@@ -16,7 +16,7 @@ using MemberSuite.SDK.Utilities;
 /// <summary>
 /// Summary description for ConciergeAPISessionIDProvider
 /// </summary>
-public class ConciergeAPI : IConciergeAPISessionIdProvider, IConciergeAPIBrowserIdProvider
+public class ConciergeAPI : IConciergeAPISessionIdProvider, IConciergeAPIBrowserIdProvider, IConciergeClientIpAddressProvider
 {
     private const string BrowserCacheKey = "ConciergeAPIBrowserID";
     private const string COOKIE_APM_USER = "APMUser"; //For APM (DynaTrace) user identification - not to be used for any security function
@@ -436,4 +436,33 @@ public class ConciergeAPI : IConciergeAPISessionIdProvider, IConciergeAPIBrowser
     }
 
     #endregion
+
+    public bool TryGetClientIpAddress(out string ipAddress)
+    {
+        ipAddress = null;
+
+        if (HttpContext.Current != null)
+        {
+            var values = HttpContext.Current.Request.Headers.GetValues("X-Forwarded-For");
+            if (values != null && values.Length > 0)
+            {
+                ipAddress = values.FirstOrDefault();
+                return true;
+            }
+
+            var value = HttpContext.Current.Request.ServerVariables["REMOTE_ADDR"];
+            if (!string.IsNullOrEmpty(value))
+            {
+                ipAddress = value;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public void SetClientIpAddress(string ipAddress)
+    {
+        //throw new NotImplementedException();
+    }
 }

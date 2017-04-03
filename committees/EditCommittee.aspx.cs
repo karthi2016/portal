@@ -150,7 +150,7 @@ public partial class committees_EditCommittee : PortalPage
 
         targetCommittee = SaveObject(targetCommittee).ConvertTo<msCommittee>();
 
-        QueueBannerMessage("Committee information was updated sucessfully.");
+        QueueBannerMessage("Committee information was updated successfully.");
 
         GoTo(string.Format("~/committees/ViewCommittee.aspx?contextID={0}", ContextID));
     }

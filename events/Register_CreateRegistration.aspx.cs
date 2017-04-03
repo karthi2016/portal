@@ -691,7 +691,11 @@ public partial class events_Register_CreateRegistration : PortalPage
                     return;
                 }
 
-                if (ts.ID != null && !ts.AllowMultipleSessions)    // we need to add a "Do Not Select" options
+                if (ts.ID != null && !ts.AllowMultipleSessions &&
+
+                    // MSIV-114
+                    sessions.Any( x=>x.RegistrationMode != EventRegistrationMode.Ticketed )
+                    )    // we need to add a "Do Not Select" options
                     sessions.Insert(0, new EventManifestSession
                     {
                         SessionName = "No session selected during this time slot.",

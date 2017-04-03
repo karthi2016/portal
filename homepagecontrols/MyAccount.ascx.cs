@@ -12,7 +12,8 @@ public partial class homepagecontrols_MyAccount : HomePageUserControl
     public override List<string> GetFieldsNeededForMainSearch()
     {
         var fields = base.GetFieldsNeededForMainSearch();
-        fields.Add("Invoices_OpenInvoiceBalance");        
+        fields.Add("Invoices_OpenInvoiceBalance");
+        fields.Add("CreditBalance");
         fields.Add("Payments_LastPayment.Date");
         fields.Add("Payments_LastPayment.Total");
 
@@ -26,6 +27,8 @@ public partial class homepagecontrols_MyAccount : HomePageUserControl
 
         lblLastPayment.Text = string.Format("{0:d} for {1:C}",
              drMainRecord["Payments_LastPayment.Date"], drMainRecord["Payments_LastPayment.Total"]);
+
+        lblCreditBalance.Text = string.Format("{0:C}", drMainRecord["CreditBalance"]);
     }
 
     public override void DeliverSearchResults(List<SearchResult> results)

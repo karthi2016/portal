@@ -20,7 +20,7 @@
             runat="server" />
         <asp:Wizard ID="wizAddContact" runat="server" DisplaySideBar="false" OnFinishButtonClick="wizAddContact_FinishButtonClick"
             OnNextButtonClick="wizAddContact_NextButtonClick" OnCancelButtonClick="wizAddContact_CancelButtonClick"
-            CssClass="sectionContent" Width="300">
+            CssClass="sectionContent">
             <WizardSteps>
                 <asp:WizardStep ID="wizSearchEmailStep">
                     <asp:Label runat="server" ID="lblAlreadyExists" Visible="false" CssClass="redHighlight"></asp:Label>

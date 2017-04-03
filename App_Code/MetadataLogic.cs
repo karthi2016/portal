@@ -12,6 +12,11 @@ using MemberSuite.SDK.Types;
 /// </summary>
 public static class MetadataLogic
 {
+    public static MemberSuiteObject CreateNewObject(string className)
+    {
+        return MemberSuiteObject.FromClassMetadata(DescribeObject(className));
+    }
+
     public static ClassMetadata DescribeObject(this MemberSuiteObject mso)
     {
         return DescribeObject(mso.ClassType);

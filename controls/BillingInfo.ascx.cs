@@ -177,7 +177,6 @@ public partial class controls_BillingInfo : System.Web.UI.UserControl
         revRoutingNumber.Enabled = isECheck;
         rfvBankAccountNumber.Enabled = isECheck;
         rfvBankAccountNumberConfirm.Enabled = isECheck;
-        cvAccountNumber.Enabled = isECheck;
 
         Address billingAddress = GetBillingAddress();
 

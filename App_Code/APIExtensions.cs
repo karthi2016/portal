@@ -51,6 +51,31 @@ public static class APIExtensions
     }
 
     /// <summary>
+    /// Gets all objects from the API of a certain type
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="objectType">Type of the object.</param>
+    /// <returns></returns>
+    public static List<T> GetAllObjects<T>(this IConciergeAPIService proxy, string objectType) where T : msAggregate
+    {
+        var result = new List<MemberSuiteObject>();
+        var totalCount = Int32.MaxValue;
+
+        //Add an emergency break
+        var s = new Search(objectType);
+        while (result.Count < totalCount)
+        {
+
+            var queryResult = proxy.GetObjectsBySearch(s, null, result.Count, null).ResultValue;
+            result.AddRange(queryResult.Objects);
+
+            totalCount = queryResult.TotalRowCount;
+        }
+
+        return (from r in result select r.ConvertTo<T>()).ToList();
+    }
+
+    /// <summary>
     /// Executes a search against the Concierge API
     /// </summary>
     /// <param name="searchToRun">The search to run.</param>
@@ -151,5 +176,20 @@ public static class APIExtensions
     {
         if (id == null) return null;
         return proxy.Get(id).ResultValue;
+    }
+
+    public static MemberSuiteObject SaveObject(MemberSuiteObject msoObjectToSave)
+    {
+        using (var api = ConciergeAPIProxyGenerator.GenerateProxy())
+        {
+            var result = api.Save(msoObjectToSave);
+            return result.ResultValue;
+        }
+    }
+
+    public static T SaveObject<T>(T msoObjectToSave) where T : msAggregate
+    {
+        var result = SaveObject((MemberSuiteObject)msoObjectToSave);
+        return result == null ? null : result.ConvertTo<T>();
     }
 }

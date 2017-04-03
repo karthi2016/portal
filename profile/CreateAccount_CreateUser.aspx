@@ -4,6 +4,7 @@
 <%@ Register Assembly="MemberSuite.SDK.Web" Namespace="MemberSuite.SDK.Web.Controls"
     TagPrefix="cc1" %>
 <%@ Register Src="../controls/CustomFieldSet.ascx" TagName="CustomFieldSet" TagPrefix="uc1" %>
+<%@ Register Assembly="Telerik.Web.UI" Namespace="Telerik.Web.UI" TagPrefix="telerik" %>
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="Server">
     <style type="text/css">
         .noWrap {
@@ -222,14 +223,28 @@
                                                 ControlToValidate="tbConfirmPassword" ControlToCompare="tbPassword" Display="None" />
                                         </td>
                                     </tr>
-                                    <!--<tr>
+                                    <tr id="trTitle" runat="server" Visible="False">
                                         <td class="columnHeader">
-                                            Prefix:
+                                            <asp:Literal ID="lTitle" runat="server">Title:</asp:Literal>
+                                            <asp:Literal ID="lReqTitle" runat="server" Visible="False"><span class="requiredField">*</span></asp:Literal>
                                         </td>
                                         <td>
                                             <asp:TextBox ID="tbIndividualTitle" runat="server" TabIndex="10" />
+                                            <asp:RequiredFieldValidator ID="rfvTitle" runat="server" ErrorMessage="Please enter a title."
+                                                ControlToValidate="tbIndividualTitle" Display="None" Enabled="False" />
                                         </td>
-                                    </tr>-->
+                                    </tr>
+                                    <tr id="trPrefix" runat="server" Visible="False">
+                                        <td class="columnHeader">
+                                            <asp:Literal ID="lPrefix" runat="server">Prefix:</asp:Literal>
+                                            <asp:Literal ID="lReqPrefix" runat="server" Visible="False"><span class="requiredField">*</span></asp:Literal>
+                                        </td>
+                                        <td>
+                                            <telerik:RadComboBox ID="tbIndividualPrefix" runat="server" TabIndex="15" />
+                                            <asp:RequiredFieldValidator ID="rfvPrefix" runat="server" ErrorMessage="Please enter a prefix."
+                                                ControlToValidate="tbIndividualPrefix" Display="None" Enabled="False" />
+                                        </td>
+                                    </tr>
                                     <tr>
                                         <td class="columnHeader">
                                             <asp:Literal ID="lFirstName" runat="server">First Name:</asp:Literal>
@@ -241,14 +256,14 @@
                                                 ControlToValidate="tbIndividualFirstName" Display="None" />
                                         </td>
                                     </tr>
-                                    <!-- <tr>
+                                    <tr id="trMiddleName" runat="server" Visible="False">
                                         <td class="columnHeader">
-                                            Middle Name:
+                                            <asp:Literal ID="lMiddleName" runat="server">Middle Name:</asp:Literal>
                                         </td>
                                         <td>
                                             <asp:TextBox ID="tbIndividualMiddleName" runat="server" TabIndex="30" />
                                         </td>
-                                    </tr>-->
+                                    </tr>
                                     <tr>
                                         <td class="columnHeader">
                                             <asp:Literal ID="lLastName" runat="server">Last Name:</asp:Literal>
@@ -260,22 +275,30 @@
                                                 ControlToValidate="tbIndividualLastName" Display="None" />
                                         </td>
                                     </tr>
-                                    <tr>
+                                    <tr id="trSuffix" runat="server">
                                         <td class="columnHeader">
                                             <asp:Literal ID="lSuffix" runat="server">Suffix:</asp:Literal>
                                         </td>
                                         <td>
-                                            <asp:TextBox ID="tbIndividualSuffix" runat="server" TabIndex="50" />
+                                            <telerik:RadComboBox ID="tbIndividualSuffix" runat="server" TabIndex="50" />
                                         </td>
                                     </tr>
-                                    <!-- <tr>
+                                    <tr id="trDesignation" runat="server" Visible="False">
                                         <td class="columnHeader">
-                                            Nickname:
+                                            <asp:Literal ID="lDesignation" runat="server">Designation:</asp:Literal>
+                                        </td>
+                                        <td>
+                                            <asp:TextBox ID="tbDesignation" runat="server" TabIndex="55" />
+                                        </td>
+                                    </tr>
+                                    <tr id="trNickName" runat="server" Visible="False">
+                                        <td class="columnHeader">
+                                            <asp:Literal ID="lNickname" runat="server">Nickname:</asp:Literal>
                                         </td>
                                         <td>
                                             <asp:TextBox ID="tbIndividualNickName" runat="server" TabIndex="60" />
                                         </td>
-                                    </tr>-->
+                                    </tr>
                                     <tr>
                                         <td class="columnHeader">
                                             <asp:Literal ID="lEmailAddress" runat="server">Email Address:</asp:Literal>
@@ -287,22 +310,22 @@
                                                 ControlToValidate="tbIndividualEmail" Display="None" />
                                         </td>
                                     </tr>
-                                    <!--  <tr>
+                                    <tr id="trEmailAddress2" runat="server" Visible="False">
                                         <td class="columnHeader">
-                                            Email Address #2:
+                                            <asp:Literal ID="lEmailAddress2" runat="server">Email Address #2:</asp:Literal>
                                         </td>
                                         <td>
                                             <asp:TextBox ID="tbIndividualEmail2" runat="server" TabIndex="110" />
                                         </td>
                                     </tr>
-                                    <tr>
+                                    <tr id="trEmailAddress3" runat="server" Visible="False">
                                         <td class="columnHeader">
-                                            Email Address #3:
+                                            <asp:Literal ID="lEmailAddress3" runat="server">Email Address #3:</asp:Literal>
                                         </td>
                                         <td>
                                             <asp:TextBox ID="tbIndividualEmail3" runat="server" TabIndex="120" />
                                         </td>
-                                    </tr>-->
+                                    </tr>
                                 </table>
                             </td>
                             <td>

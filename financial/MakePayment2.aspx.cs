@@ -4,6 +4,9 @@ using System.Linq;
 using System.Web.UI.WebControls;
 using MemberSuite.SDK.Concierge;
 using MemberSuite.SDK.Constants;
+using MemberSuite.SDK.Results;
+using MemberSuite.SDK.Searching;
+using MemberSuite.SDK.Searching.Operations;
 using MemberSuite.SDK.Types;
 
 public partial class financial_MakePayment2 : CreditCardLogic
@@ -38,6 +41,8 @@ public partial class financial_MakePayment2 : CreditCardLogic
         {
             using (var api = GetServiceAPIProxy())
                 BillingInfoWidget.AllowableMethods = api.DetermineAllowableInvoicePaymentMethods(targetPayment).ResultValue;
+
+            BillingInfoWidget.SetBillingAddress(new Address());
         }
     }
 
@@ -76,6 +81,8 @@ public partial class financial_MakePayment2 : CreditCardLogic
 
         var payment = BillingInfoWidget.GetPaymentInfo();
         targetPayment.PaymentMethod = payment.PaymentMethod;
+        // MSIV-330
+        targetPayment.Total = targetPayment.LineItems.Sum(x => x.Total);
 
         processPayment(payment);
 
@@ -106,8 +113,9 @@ public partial class financial_MakePayment2 : CreditCardLogic
         string antiDupeKey = (string)Request["AntiDupeKey"];
         using (var api = GetServiceAPIProxy())
         {
-            if (targetPayment.Total > 0)
-            {
+            
+                var merchantAccount = DetermineMerchantAccount();
+                targetPayment.CashAccount = merchantAccount;
                 var r = api.ProcessPayment(targetPayment, payment , null );
                 if (!r.Success)
                     throw new ConciergeClientException(MemberSuite.SDK.Concierge.ConciergeErrorCode.GeneralException, r.FirstErrorMessage);
@@ -120,19 +128,27 @@ public partial class financial_MakePayment2 : CreditCardLogic
                         "Unable to process payment: [{0}] - {1}", resp.GatewayResponseReasonCode, resp.GatewayResponseReasonText);
 
                 targetPayment = LoadObjectFromAPI<msPayment>(resp.PaymentID);
-            }
-            else
-            {
-                throw new NotSupportedException();
-                
-            }
-
+            
 
             // now, send a confirmation email
             api.SendTransactionalEmail(EmailTemplates.Financial.Payment, targetPayment.ID , ConciergeAPI.CurrentUser.EmailAddress);
         }
     }
 
+    private string DetermineMerchantAccount()
+    {
+        var businessUnit = ElectronicPaymentLogic.GetDefaultBusinessUnit();
+        if (businessUnit == null)
+            throw new ConciergeClientException(MemberSuite.SDK.Concierge.ConciergeErrorCode.RecordNotFound,
+                                    "Default Business Unit has not been set.");
+
+        var merchantAccount = ElectronicPaymentLogic.GetDefaultMerchantAccount(businessUnit.ID);
+        if (merchantAccount == null)
+            throw new ConciergeClientException(MemberSuite.SDK.Concierge.ConciergeErrorCode.RecordNotFound,
+                                    "Default Merchant Account has not been set.");
+
+        return merchantAccount.ID;
+    }
 
     protected void lbCancel_Click(object sender, EventArgs e)
     {

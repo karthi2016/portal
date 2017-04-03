@@ -390,7 +390,8 @@ public partial class membership_PurchaseMembership2 : PortalPage
         CustomFieldSet1.Harvest();
 
         foreach (var fieldValuePair in targetMembership.Fields)
-            if (fieldValuePair.Key.EndsWith("__c"))  // make it an option
+        {
+            if (fieldValuePair.Key.EndsWith("__c")) // make it an option
             {
                 string value = null;
 
@@ -398,7 +399,7 @@ public partial class membership_PurchaseMembership2 : PortalPage
                 {
                     if (fieldValuePair.Value is List<string>)
                     {
-                        var valueAsList = (List<string>)fieldValuePair.Value;
+                        var valueAsList = (List<string>) fieldValuePair.Value;
                         value = string.Join("|", valueAsList);
                     }
                     else
@@ -406,11 +407,14 @@ public partial class membership_PurchaseMembership2 : PortalPage
                         value = fieldValuePair.Value.ToString();
                     }
                 }
-
+                
                 msPrimaryMembershipItem.Options.Add(new NameValueStringPair(fieldValuePair.Key, value));
             }
-
-
+            else if (fieldValuePair.Key.EndsWith("_Contents"))
+            {
+                msPrimaryMembershipItem[fieldValuePair.Key] = fieldValuePair.Value;
+            }
+        }
         // now, everything else
         unbindChapters(mso, parentItem);
         unbindSections(mso, parentItem);

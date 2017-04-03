@@ -103,11 +103,20 @@ public partial class competitions_JudgeEntries : PortalPage
                 // Do current selection code 
                 //Select the current judging round by default if possible
                 foreach (DataRow judgingRound in dtJudgingRounds.Rows)
-                    if ((judgingRound["JudgingBegins"] == DBNull.Value || (DateTime.Now > (DateTime)judgingRound["JudgingBegins"])) && (judgingRound["JudgingBegins"] == DBNull.Value || (DateTime.Now < (DateTime)judgingRound["JudgingEnds"])))
+                {
+                    DateTime judgingBegins;
+                    DateTime.TryParse(Convert.ToString(judgingRound["JudgingBegins"]), out judgingBegins);
+
+                    DateTime judgingEnds;
+                    DateTime.TryParse(Convert.ToString(judgingRound["JudgingEnds"]), out judgingEnds);
+
+                    if ((judgingBegins == DateTime.MinValue || (DateTime.Now > judgingBegins)) 
+                        && (judgingEnds == DateTime.MinValue || (DateTime.Now < judgingEnds)))
                     {
                         ddlJudgingRounds.SelectedValue = judgingRound["ID"].ToString();
                         break;
                     }
+                }
 
 
                 if (targetRound != null)

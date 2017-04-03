@@ -22,6 +22,7 @@
                     <asp:BoundField DataField="Event.Name" HeaderText="Event" />                    
                     <asp:BoundField DataField="Event.StartDate" DataFormatString="{0:d}" HeaderStyle-HorizontalAlign="Left" HeaderText="Event Date" />
                     <asp:BoundField DataField="CreatedDate" HeaderText="Registration Date" />
+                    <asp:HyperLinkField DataNavigateUrlFormatString="~\events\Register_CreateRegistration.aspx?contextID={0}" DataNavigateUrlFields="ID" Text="(change sessions)" />
                     <asp:HyperLinkField DataNavigateUrlFormatString="~\events\ViewEventRegistration.aspx?contextID={0}" DataNavigateUrlFields="ID" Text="(view)" />
                 </Columns>
             </asp:GridView>

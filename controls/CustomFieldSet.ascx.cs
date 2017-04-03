@@ -260,7 +260,23 @@ public partial class controls_CustomFieldSet : System.Web.UI.UserControl, IContr
                 if (manager.CustomLabel)
                 {
                     var labelBuilder = new StringBuilder();
-                    labelBuilder.Append(manager.GetLabel());
+
+                    var label = manager.GetLabel();
+                    if (fieldMeta != null && !string.IsNullOrEmpty(fieldMeta.PortalPrompt))
+                    {
+                        label = fieldMeta.PortalPrompt;
+                    }
+
+                    labelBuilder.Append(label);
+
+
+                    // now, add the help text
+                    if (fieldMeta != null && !string.IsNullOrEmpty(fieldMeta.HelpText))
+                    {
+                        labelBuilder.Append(string.Format("<BR/><span class='helpText'>{0}</span><BR/>&nbsp;",
+                            fieldMeta.HelpText.Replace("\n", "<BR/>")));
+                    }
+
                     if (manager.IsRequired())
                     {
                         labelBuilder.Append("<span class=\"requiredField\">*</span>");

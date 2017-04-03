@@ -81,7 +81,21 @@ public partial class events_RegisterForEvent : PortalPage
         // MS-4745
         if (EventLogic.IsRegistrationClosed(targetEvent))
             return false;
-        
+
+        // is the registration open?
+        if (targetEvent.RegistrationOpenDate != null && targetEvent.RegistrationOpenDate > DateTime.Now)
+            return false;
+
+
+        if (targetEvent.RegistrationMode == EventRegistrationMode.Normal &&
+            ConciergeAPI.CurrentEntity != null && EventLogic.IsRegistered(targetEvent.ID, ConciergeAPI.CurrentEntity.ID)
+
+            )
+            return false;
+
+        if (targetEvent.RegistrationMode == EventRegistrationMode.Tabled) // tabled event
+            return false;
+
         return true;
     }
     #endregion

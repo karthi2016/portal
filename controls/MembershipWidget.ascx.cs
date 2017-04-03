@@ -276,6 +276,9 @@ public partial class controls_MembershipWidget : System.Web.UI.UserControl
         if (!PortalConfiguration.Current.MembershipDirectoryEnabled)
             return false;
 
+        if (PortalConfiguration.Current.MembershipDirectoryIsPublic)
+            return true;
+
         //If the directory is enabled and not restricted to members it's available and no need to check membership status
         if (!PortalConfiguration.Current.MembershipDirectoryForMembersOnly)
             return true;

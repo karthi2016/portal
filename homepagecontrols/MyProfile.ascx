@@ -42,7 +42,7 @@
         </span>
         <br />
          <asp:Literal ID="Widget_MyProfile_LoginID" runat="Server"><b>Login ID:</b></asp:Literal>
-         <%=ConciergeAPI.CurrentUser.Name %> <a href="/Profile/ChangeLoginId.aspx">(change)</a>
+         <%=ConciergeAPI.CurrentUser.Name %> <asp:HyperLink runat="server" ID="hlLoginChange" NavigateUrl="/Profile/ChangeLoginId.aspx">(change)</asp:HyperLink>
     </p>
     <br />
     <ul class="buttonList">

@@ -231,7 +231,7 @@ public partial class chapters_EditChapterInfo : PortalPage
         if (linkedOrganization != null)
             linkedOrganization = SaveObject(linkedOrganization).ConvertTo<msOrganization>();
 
-        QueueBannerMessage("Chapter information was updated sucessfully.");
+        QueueBannerMessage("Chapter information was updated successfully.");
 
         GoTo(string.Format("~/chapters/ViewChapter.aspx?contextID={0}",ContextID));
     }

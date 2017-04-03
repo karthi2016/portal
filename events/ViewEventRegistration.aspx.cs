@@ -71,6 +71,13 @@ public partial class events_ViewEventRegistration : PortalPage
             return;
         }
 
+        if (!targetEvent.AllowRegistrantsToChangeSessions ||
+            (targetEvent.DeadlineForChangingSessions.HasValue && targetEvent.DeadlineForChangingSessions < DateTime.Now) ||
+            !EventLogic.HasSessions(targetEvent.ID))
+        {
+            liChangeSessions.Visible = false;
+        }
+
         initializeRegistrationFields();
 
         createdBy = LoadObjectFromAPI<msUser>(targetRegistration.CreatedBy);
@@ -183,18 +190,21 @@ public partial class events_ViewEventRegistration : PortalPage
         sPayments.AddOutputColumn("Payment.Name");
         sPayments.AddOutputColumn("Payment.Date");
         sPayments.AddOutputColumn(msPaymentLineItem.FIELDS.Total);
+        sPayments.AddCriteria(Expr.IsNotBlank("Invoice.Order"));   // MSIV-252
         sPayments.AddCriteria(Expr.Equals("Invoice.Order", targetRegistration.Order));
         sPayments.AddSortColumn("Payment.ID");
         sPayments.AddSortColumn("Payment.Date");
         searches.Add(sPayments);
 
         // Search for Historical Transactions
+        
         var sHistoricalTransactions = new Search(msHistoricalTransaction.CLASS_NAME);
         sHistoricalTransactions.AddOutputColumn("ID");
         sHistoricalTransactions.AddOutputColumn("Name");
         sHistoricalTransactions.AddOutputColumn("Date");
         sHistoricalTransactions.AddOutputColumn("Type");
         sHistoricalTransactions.AddOutputColumn("Total");
+        sHistoricalTransactions.AddCriteria(Expr.IsNotBlank("Order"));   // MSIV-252
         sHistoricalTransactions.AddCriteria(Expr.Equals("Order", targetRegistration.Order));
         sHistoricalTransactions.AddSortColumn("Date");
         searches.Add(sHistoricalTransactions);

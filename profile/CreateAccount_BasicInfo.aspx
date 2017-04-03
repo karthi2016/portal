@@ -88,7 +88,9 @@
                             <tr>
                                 <td colspan="2" align="center">
                                     <asp:Button runat="server" ID="btnNewContinue" OnClick="btnNewContinue_Click" TabIndex="60"
-                                        ValidationGroup="NewUser" CausesValidation="true" Text="Continue" />
+                                        CssClass="btn-new-continue"
+                                        ValidationGroup="NewUser" CausesValidation="true" Text="Continue"  
+                                        OnClientClick="return memerSuitePortal.createAccountBasicInfo.preventNewContinueDoubleClick();" />
                                 </td>
                             </tr>
                         </table>
@@ -134,7 +136,7 @@
                         <tr>
                             <td colspan="2" align="center">
                                 <asp:Button runat="server" ID="btnExistingContinue" OnClick="btnExistingContinue_Click"
-                                    ValidationGroup="ExistingUser" TabIndex="90" Text="Continue" />
+                                    ValidationGroup="ExistingUser" TabIndex="90" Text="Continue"   />
                             </td>
                         </tr>
                     </table>
@@ -147,4 +149,7 @@
     </table>
 </asp:Content>
 <asp:Content ID="Content6" ContentPlaceHolderID="FooterContent" runat="Server">
+</asp:Content>
+<asp:Content runat="server" ID="scriptLinks" ContentPlaceHolderID="javascriptLinks">
+       <script type="text/javascript" src="/js/createAccountBasicInfo.js"></script>
 </asp:Content>

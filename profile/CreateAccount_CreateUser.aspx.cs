@@ -143,6 +143,10 @@ public partial class profile_CreateAccount_Complete : PortalPage
         trOrganizationRole_New.Visible = trOrganizationRole.Visible;
 
         SetupWizardPanels();
+
+        var individualMetadata = MetadataLogic.DescribeObject(msIndividual.CLASS_NAME);
+        CRMLogic.InitPickList(individualMetadata.Fields.FirstOrDefault(f => f.Name == msIndividual.FIELDS.Prefix), tbIndividualPrefix);
+        CRMLogic.InitPickList(individualMetadata.Fields.FirstOrDefault(f => f.Name == msIndividual.FIELDS.Suffix), tbIndividualSuffix);
     }
 
     private void bindOrganization()
@@ -482,6 +486,7 @@ public partial class profile_CreateAccount_Complete : PortalPage
         targetPortalUser.MustChangePassword = false;
 
         targetIndividual.Title = tbIndividualTitle.Text;
+        targetIndividual.Prefix = tbIndividualPrefix.Text;
         targetIndividual.FirstName = tbIndividualFirstName.Text;
         targetIndividual.MiddleName = tbIndividualMiddleName.Text;
         targetIndividual.LastName = tbIndividualLastName.Text;
@@ -710,7 +715,7 @@ public partial class profile_CreateAccount_Complete : PortalPage
 
     private void getAddressTypes(IConciergeAPIService proxy)
     {
-        individualAddressTypes = GetAllObjects<msAddressType>(proxy, msAddressType.CLASS_NAME);
+        individualAddressTypes = proxy.GetAllObjects<msAddressType>(msAddressType.CLASS_NAME);
         organizationAddressTypes = individualAddressTypes.ToList();
 
         // we only want active address types, and address types that apply to individuals
@@ -726,7 +731,7 @@ public partial class profile_CreateAccount_Complete : PortalPage
 
     private void getPhoneNumberTypes(IConciergeAPIService proxy)
     {
-        individualPhoneNumberTypes = GetAllObjects<msPhoneNumberType>(proxy, msPhoneNumberType.CLASS_NAME);
+        individualPhoneNumberTypes = proxy.GetAllObjects<msPhoneNumberType>(msPhoneNumberType.CLASS_NAME);
         organizationPhoneNumberTypes = individualPhoneNumberTypes.ToList();
 
         // we only want active phone number types, and phone number types that apply to individuals
@@ -785,7 +790,7 @@ public partial class profile_CreateAccount_Complete : PortalPage
         if (!saveResult.Success)
         {
             QueueBannerError(saveResult.FirstErrorMessage);
-            QueueBannerMessage(string.Format("Individual #{0} - {1} has been saved sucessfully.", targetIndividual.LocalID, targetIndividual.Name));
+            QueueBannerMessage(string.Format("Individual #{0} - {1} has been saved successfully.", targetIndividual.LocalID, targetIndividual.Name));
             return;
         }
 
@@ -900,7 +905,7 @@ public partial class profile_CreateAccount_Complete : PortalPage
             ConciergeAPI.SetSession(loginResult.ResultValue);
         }
 
-        QueueBannerMessage(string.Format("Individual #{0} - {1} has been saved sucessfully.", targetIndividual.LocalID, targetIndividual.Name));
+        QueueBannerMessage(string.Format("Individual #{0} - {1} has been saved successfully.", targetIndividual.LocalID, targetIndividual.Name));
 
         if (!string.IsNullOrWhiteSpace(MultiStepWizards.CreateAccount.CompleteUrl))
         {

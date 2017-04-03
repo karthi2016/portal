@@ -51,6 +51,10 @@ public partial class profile_EditIndividualInfo : PortalPage
     {
         base.InitializePage();
 
+        var individualMetadata = MetadataLogic.DescribeObject(msIndividual.CLASS_NAME);
+        CRMLogic.InitPickList(individualMetadata.Fields.FirstOrDefault(f => f.Name == msIndividual.FIELDS.Prefix), tbPrefix);
+        CRMLogic.InitPickList(individualMetadata.Fields.FirstOrDefault(f => f.Name == msIndividual.FIELDS.Suffix), tbSuffix);
+
         setProfileImage(img, targetObject);
         bindObjectToPage();
     }
@@ -78,11 +82,17 @@ public partial class profile_EditIndividualInfo : PortalPage
 
     private void bindObjectToPage()
     {
+        if (string.IsNullOrWhiteSpace(targetObject.Image))
+        {
+            btnDeleteProfilePhoto.Visible = false;
+        }
+
         tbTitle.Text = targetObject.Title;
+        tbPrefix.SelectedValue = targetObject.Prefix;
         tbFirstName.Text = targetObject.FirstName;
         tbMiddleName.Text = targetObject.MiddleName;
         tbLastName.Text = targetObject.LastName;
-        tbSuffix.Text = targetObject.Suffix;
+        tbSuffix.SelectedValue = targetObject.Suffix;
         tbNickName.Text = targetObject.Nickname;
 
         // now, the email
@@ -201,6 +211,7 @@ public partial class profile_EditIndividualInfo : PortalPage
     private bool unbindObjectFromPage()
     {
         targetObject.Title = tbTitle.Text;
+        targetObject.Prefix = tbPrefix.Text;
         targetObject.FirstName = tbFirstName.Text;
         targetObject.MiddleName = tbMiddleName.Text;
         targetObject.LastName = tbLastName.Text;
@@ -365,12 +376,21 @@ public partial class profile_EditIndividualInfo : PortalPage
 
     protected void btnSave_Click(object sender, EventArgs e)
     {
-        if (!IsValid)
-            return;
+        if (!prepareForSave()) return;
 
-        if (!unbindObjectFromPage())
-            return;
+        Save();
 
+        GoHome();
+    }
+
+    private bool prepareForSave()
+    {
+        if (!IsValid || !unbindObjectFromPage()) return false;
+        return true;
+    }
+
+    private void Save()
+    {
         var primaryOrganizationRoles = targetObject.SafeGetValue<List<string>>("PrimaryOrganizationRoles__rtg");
         if (primaryOrganizationRoles != null)
         {
@@ -391,15 +411,28 @@ public partial class profile_EditIndividualInfo : PortalPage
         {
             //Send the update confirmation email
             using (IConciergeAPIService proxy = GetConciegeAPIProxy())
-                proxy.SendTransactionalEmail(EmailTemplates.CRM.UserInformationUpdate, targetObject.ID , null);
-            
+                proxy.SendTransactionalEmail(EmailTemplates.CRM.UserInformationUpdate, targetObject.ID, null);
+
         }
 
         QueueBannerMessage("Your profile was updated successfully.");
 
-        GoHome();
     }
 
+    protected void btnDeleteProfilePhoto_Click(object sender, EventArgs e)
+    {
+        if (!prepareForSave()) return;
+
+        //delete image
+        targetObject["Image_Contents"] = null;
+
+        //Set the session variable forcing any cached images to be refreshed from the MemberSuite Image content server
+        SessionManager.Set("ImageUrlUpper", !SessionManager.Get<bool>("ImageUrlUpper"));
+
+        Save();
+
+        Refresh();
+    }
 
     protected void btnCancel_Click(object sender, EventArgs e)
     {

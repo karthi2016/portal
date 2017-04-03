@@ -188,7 +188,9 @@
         <div class="sectionContent">
             <ul>
                 <li runat="server" id="liPrintAgenda"> <asp:HyperLink ID="hlPrintAgenda" runat="server">Print Agenda</asp:HyperLink></li>
-              
+                <li runat="server" id="liChangeSessions">
+                    <a href="/events/Register_CreateRegistration.aspx?contextID=<%=targetRegistration.ID %>">Change Sessions</a>
+                </li>              
                 <li runat="server" id="liEditRegistration">
                     <a href="/events/EditEventRegistration.aspx?contextID=<%=targetRegistration.ID %>">Edit Registration</a></li>
                 <li runat="server" id="liCancelRegistration">

@@ -11,7 +11,7 @@
             <asp:Literal ID="lStartupScript" runat="server" />;    
             updateSummary();     
         }
-        function setTextBoxValue(cb, textBoxID, valueToSet, optionalPanel) {
+        function setTextBoxValue(cb, textBoxID, valueToSet, optionalPanel, disablePartialPayments) {
 
             if (cb == null) return;
             var tb = document.getElementById(textBoxID);
@@ -30,7 +30,7 @@
                 }
             }
             else {
-                tb.disabled = false;
+                tb.disabled = disablePartialPayments == 'True';
                 tb.value = valueToSet;
 
                 if (optionalPanel && optionalPanel.length > 0) {
@@ -139,6 +139,7 @@
                             </td>
                             <td style="text-align: right;">
                                 <asp:Literal runat="server" ID="lBalanceDue"></asp:Literal>
+                                <asp:HiddenField ID="hiddenBalance" runat="server"/>
                             </td>
                             <td style="text-align: right;">
                                 $<asp:TextBox runat="server" ID="tbAmountToPay" Width="60" Enabled="false" onfocus="blur();" CssClass="disabledInput" style="text-align: right;" />
@@ -169,8 +170,7 @@
             </table>
         </div>
     </div>
-    <%--
-    <div class="section" style="margin-top: 10px">
+    <div class="section" style="margin-top: 10px" runat="server" id="secCredits">
         <div class="sectionHeaderTitle">
             <h2>
                 <asp:Literal ID="lAvailableCredits" runat="server">Available Credits</asp:Literal></h2>
@@ -189,8 +189,10 @@
                         DataTextField="Name" />
                     <asp:BoundField DataField="Date" HeaderStyle-HorizontalAlign="Left" HeaderText="Date"
                         DataFormatString="{0:d}" />
+                    <%--
                     <asp:BoundField DataField="UseThrough" HeaderStyle-HorizontalAlign="Left" HeaderText="Expires"
                         DataFormatString="{0:d}" />
+                        --%>
                     <asp:BoundField DataField="AmountAvailable" HeaderStyle-HorizontalAlign="Left" HeaderText="Available"
                         DataFormatString="{0:C}" />
                     <asp:TemplateField HeaderText="Amount To Use" HeaderStyle-HorizontalAlign="Left">
@@ -202,7 +204,6 @@
             </asp:GridView>
         </div>
     </div>
-    --%>
     <div class="section" style="margin-top: 10px">
         <div class="sectionHeaderTitle">
             <h2>

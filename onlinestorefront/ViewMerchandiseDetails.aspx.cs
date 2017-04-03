@@ -59,6 +59,7 @@ public partial class onlinestorefront_ViewMerchandiseDetails : PortalPage
         using (IConciergeAPIService proxy = ConciergeAPIProxyGenerator.GenerateProxy())
         {
             loadDataFromConcierge(proxy);
+            loadUIElements();
         }
 
         if (targetMerchandise == null)
@@ -66,6 +67,16 @@ public partial class onlinestorefront_ViewMerchandiseDetails : PortalPage
             GoToMissingRecordPage();
             return;
         }
+    }
+
+    private void loadUIElements()
+    {
+        var isActive = (bool) targetMerchandise["IsActive"];
+        lbAddToCart.Visible = isActive;
+
+        lblProductName.Text = isActive
+            ? targetMerchandise["Name"].ToString()
+            : targetMerchandise["Name"].ToString() + " (Product Unavailable for Purchase)";
     }
 
     /// <summary>
@@ -149,6 +160,7 @@ public partial class onlinestorefront_ViewMerchandiseDetails : PortalPage
         sMerchandise.AddOutputColumn("Price");
         sMerchandise.AddOutputColumn("MemberPrice");
         sMerchandise.AddOutputColumn("DisplayPriceAs");
+        sMerchandise.AddOutputColumn("IsActive");
         sMerchandise.AddCriteria(Expr.Equals("ID", ContextID));
 
         searches.Add(sMerchandise);

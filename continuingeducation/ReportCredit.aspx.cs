@@ -28,6 +28,8 @@ public partial class continuingeducation_ReportCredit : PortalPage
         // load the types
         Search s = new Search(msCEUType.CLASS_NAME);
         s.AddOutputColumn("Name");
+        s.AddSortColumn("DisplayOrder");
+        s.AddSortColumn("Name");
 
         foreach (DataRow dr in APIExtensions.GetSearchResult(s, 0, null).Table.Rows)
             ddlType.Items.Add(new ListItem(dr["Name"].ToString(),

@@ -204,6 +204,8 @@ public partial class competitions_Enter_EntryForm : PortalPage
         {
             targetCompetitionEntry = proxy.Save(targetCompetitionEntry).ResultValue.ConvertTo<msCompetitionEntry>();
 
+            // clear cached info as certain info may change
+            targetCompetition.ClearCompetitionEntryInformation();
 
             if (MultiStepWizards.EnterCompetition.EntryFee != null)
             {
@@ -271,7 +273,14 @@ public partial class competitions_Enter_EntryForm : PortalPage
 
     protected void btnBack_Click(object sender, EventArgs e)
     {
-        GoTo(string.Format("~/competitions/ApplyToCompetition.aspx?contextID={0}", ContextID));
+        // If no Entry created yet, go back to the Competition Page
+        if (string.IsNullOrEmpty(targetCompetitionEntry.ID))
+        {
+            GoTo(string.Format("~/competitions/ApplyToCompetition.aspx?contextID={0}", targetCompetition.ID));
+        }
+
+        // If there was already an entry, most likely came from the My Entries page
+        GoTo(string.Format("~/competitions/ViewMyCompetitionEntries.aspx"));
     }
 
     protected void btnContinue_Click(object sender, EventArgs e)
@@ -291,6 +300,9 @@ public partial class competitions_Enter_EntryForm : PortalPage
         using (IConciergeAPIService proxy = GetConciegeAPIProxy())
         {
             targetCompetitionEntry = proxy.Save(targetCompetitionEntry).ResultValue.ConvertTo<msCompetitionEntry>();
+
+            // clear cached info as certain info may change
+            targetCompetition.ClearCompetitionEntryInformation();
         }
 
         QueueBannerMessage(string.Format("Competition Entry #{0} was successfully saved as a draft.",
